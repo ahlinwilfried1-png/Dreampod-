@@ -79,9 +79,9 @@ export default function App() {
     try {
       const stats = await api.getStats();
       setUser(stats.user);
-      setInvestments(stats.investments);
-      setTransactions(stats.transactions);
-      setProducts(stats.products);
+      setInvestments(stats.investments || []);
+      setTransactions(stats.transactions || []);
+      setProducts(stats.products || []);
       setTeam(stats.team || []);
     } catch (error: any) {
       console.error("Session stats retrieval failure indeed:", error);

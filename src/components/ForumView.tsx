@@ -167,70 +167,70 @@ export default function ForumView({ user, onRefresh }: ForumViewProps) {
   };
 
   return (
-    <div className="space-y-6 text-white select-none pb-20">
+    <div className="space-y-6 text-slate-800 select-none pb-20">
       
       {/* Title */}
       <div className="flex items-center justify-between py-1 relative">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-emerald-950/40 text-emerald-400">
+          <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100">
             <MessageSquare className="h-4 w-4" />
           </div>
           <div>
-            <h2 className="text-xl font-extrabold tracking-tight">Forum de Discussion</h2>
-            <p className="text-[10px] text-gray-400 uppercase tracking-widest mt-0.5">Partagez vos Preuves de Retrait</p>
+            <h2 className="text-xl font-black tracking-tight text-slate-900">Forum de Discussion</h2>
+            <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-0.5 font-bold">Partagez vos Preuves de Retrait</p>
           </div>
         </div>
 
         <button
           onClick={loadPosts}
           disabled={loading}
-          className="p-2 rounded-xl bg-blue-950/40 text-blue-300 hover:text-white border border-blue-900/30 transition-colors"
+          className="p-2 rounded-xl bg-white text-slate-700 hover:text-slate-900 border border-slate-150 transition-colors shadow-xs cursor-pointer"
         >
           <RefreshCw className={`h-4.5 w-4.5 ${loading ? "animate-spin" : ""}`} />
         </button>
       </div>
 
       {/* Submitter Box */}
-      <div className="bg-[#050a1a] border border-blue-950/60 p-5 rounded-2xl shadow-xl">
-        <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-3.5 flex items-center gap-2">
+      <div className="bg-white border border-slate-100 p-5 rounded-3xl shadow-xs">
+        <h3 className="text-xs font-black text-emerald-600 uppercase tracking-widest mb-3.5 flex items-center gap-2">
           <PlusCircle className="h-4 w-4" />
           Publier votre Preuve de Retrait
         </h3>
 
         {errorMessage && (
-          <div className="p-3 bg-red-950/50 border border-red-500/30 rounded-xl text-[11px] text-red-200 mb-3">
+          <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-[11px] text-red-600 mb-3 font-semibold">
             ⚠️ {errorMessage}
           </div>
         )}
 
         {successMessage && (
-          <div className="p-3 bg-green-950/50 border border-green-500/30 rounded-xl text-[11px] text-green-200 mb-3 animate-fade-in">
+          <div className="p-3 bg-green-50 border border-green-100 rounded-xl text-[11px] text-green-600 mb-3 animate-fade-in font-semibold">
             ✅ {successMessage}
           </div>
         )}
 
-        <form onSubmit={handleCreatePost} className="space-y-4">
+        <form onSubmit={handleCreatePost} className="space-y-4 font-semibold">
           {/* Content field */}
           <div className="space-y-1">
-            <label className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Légende / Message descriptif :</label>
+            <label className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">Légende / Message descriptif :</label>
             <textarea
               required
               rows={2}
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Ex: Mon retrait de 50 000 F bien reçu ! Dreampod est le meilleur !"
-              className="w-full bg-[#030612] border border-blue-950 p-3 rounded-xl text-xs text-white placeholder-gray-600 focus:outline-emerald-500/50"
+              className="w-full bg-slate-50 border border-slate-100 p-3 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-emerald-500/50 focus:bg-white"
             />
           </div>
 
           {/* Preset attachment quick selectors */}
           <div className="space-y-1.5">
             <div className="flex justify-between items-center">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Pièces Jointes (Max 2 captures) :</label>
+              <label className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">Pièces Jointes (Max 2 captures) :</label>
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="text-[10px] text-blue-400 hover:text-white font-bold flex items-center gap-1 bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20 cursor-pointer"
+                className="text-[10px] text-blue-600 hover:text-blue-700 font-bold flex items-center gap-1 bg-blue-50 border border-blue-100 px-2 py-1 rounded cursor-pointer"
               >
                 <Upload className="h-3 w-3" />
                 Téléverser Image
@@ -253,7 +253,7 @@ export default function ForumView({ user, onRefresh }: ForumViewProps) {
                   key={rec.name}
                   type="button"
                   onClick={() => selectPresetScreenshot(rec.url)}
-                  className="shrink-0 bg-white/5 border border-white/8 hover:border-emerald-500/50 px-2.5 py-1.5 rounded-lg text-[9.5px] font-bold text-left flex items-center gap-1.5 transition-colors cursor-pointer"
+                  className="shrink-0 bg-slate-50 border border-slate-150 hover:border-emerald-500 px-2.5 py-1.5 rounded-lg text-[9.5px] font-bold text-left text-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
                 >
                   <div className={`w-2 h-2 rounded-full bg-gradient-to-r ${rec.color}`} />
                   <span>+ {rec.name}</span>
@@ -265,14 +265,14 @@ export default function ForumView({ user, onRefresh }: ForumViewProps) {
             {uploadedScreenshots.length > 0 && (
               <div className="grid grid-cols-2 gap-3.5 pt-2">
                 {uploadedScreenshots.map((scr, idx) => (
-                  <div key={idx} className="relative aspect-video rounded-xl overflow-hidden border border-emerald-500/30 bg-black group shadow-lg">
+                  <div key={idx} className="relative aspect-video rounded-xl overflow-hidden border border-emerald-500/30 bg-slate-900 group shadow-md">
                     <img
                       src={scr}
                       alt={`screenshot-${idx}`}
                       className="w-full h-full object-cover"
                       referrerPolicy="no-referrer"
                     />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <button
                         type="button"
                         onClick={() => removeScreenshot(idx)}
@@ -281,7 +281,7 @@ export default function ForumView({ user, onRefresh }: ForumViewProps) {
                         <Trash className="h-4.5 w-4.5" />
                       </button>
                     </div>
-                    <span className="absolute bottom-1 right-1 text-[8px] font-black bg-emerald-950 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/35 uppercase">
+                    <span className="absolute bottom-1 right-1 text-[8px] font-black bg-emerald-900 text-emerald-100 px-1.5 py-0.5 rounded border border-emerald-500/35 uppercase">
                       Screenshot {idx + 1}
                     </span>
                   </div>
@@ -293,7 +293,7 @@ export default function ForumView({ user, onRefresh }: ForumViewProps) {
           <button
             type="submit"
             disabled={submittingPost}
-            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors shadow-lg shadow-emerald-600/25 cursor-pointer"
+            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors shadow-lg shadow-emerald-600/10 cursor-pointer"
           >
             {submittingPost ? (
               <>
@@ -312,15 +312,15 @@ export default function ForumView({ user, onRefresh }: ForumViewProps) {
 
       {/* Posts Feed */}
       <div className="space-y-4 pt-1">
-        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">Publications Récentes</h3>
+        <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest px-1">Publications Récentes</h3>
 
         {loading && posts.length === 0 ? (
-          <div className="py-12 flex flex-col items-center justify-center text-slate-500 gap-2">
+          <div className="py-12 flex flex-col items-center justify-center text-slate-400 gap-2">
             <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
-            <p className="text-xs">Chargement du flux forum...</p>
+            <p className="text-xs font-bold">Chargement du flux forum...</p>
           </div>
         ) : posts.length === 0 ? (
-          <div className="bg-[#050a1a] border border-blue-950/60 p-8 rounded-2xl text-center text-slate-500 text-xs">
+          <div className="bg-white border border-slate-100 p-8 rounded-3xl text-center text-slate-400 font-bold text-xs">
             Aucune publication sur le forum pour le moment.
           </div>
         ) : (
@@ -328,29 +328,29 @@ export default function ForumView({ user, onRefresh }: ForumViewProps) {
             {posts.map((post) => {
               const isLiked = post.likedBy?.includes(user.id);
               return (
-                <div key={post.id} className="p-4 bg-[#050a1a] border border-blue-950 rounded-2xl space-y-3 shadow-lg">
+                <div key={post.id} className="p-4 bg-white border border-slate-100 rounded-3xl space-y-3 shadow-xs">
                   
                   {/* Post header */}
                   <div className="flex justify-between items-center">
                     <div>
-                      <span className="text-xs font-extrabold text-white block">{post.userName}</span>
-                      <span className="text-[9px] text-gray-500 font-mono block mt-0.5">📞 {maskPhone(post.userPhone)}</span>
+                      <span className="text-xs font-black text-slate-800 block">{post.userName}</span>
+                      <span className="text-[9px] text-slate-400 font-mono block mt-0.5 font-bold">📞 {maskPhone(post.userPhone)}</span>
                     </div>
-                    <span className="text-[9px] text-gray-500 font-mono bg-white/5 px-2 py-0.5 rounded-full">
+                    <span className="text-[9px] text-slate-400 font-mono font-bold bg-slate-100 px-2 py-0.5 rounded-full">
                       {formatDate(post.createdAt)}
                     </span>
                   </div>
 
                   {/* Post message */}
-                  <p className="text-xs text-slate-300 font-normal leading-relaxed leading-snug">
+                  <p className="text-xs text-slate-600 font-semibold leading-relaxed">
                     {post.content}
                   </p>
 
                   {/* Screenshots (Grid collé side-by-side!) */}
                   {post.screenshots && post.screenshots.length > 0 && (
-                    <div className={`grid ${post.screenshots.length > 1 ? "grid-cols-2 gap-2" : "grid-cols-1"} bg-black/40 p-1.5 border border-white/5 rounded-xl overflow-hidden`}>
+                    <div className={`grid ${post.screenshots.length > 1 ? "grid-cols-2 gap-2" : "grid-cols-1"} bg-slate-50 p-1.5 border border-slate-100 rounded-2xl overflow-hidden`}>
                       {post.screenshots.map((url, i) => (
-                        <div key={i} className="relative aspect-square sm:aspect-video rounded-lg overflow-hidden border border-white/5 bg-slate-950">
+                        <div key={i} className="relative aspect-square sm:aspect-video rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
                           <img
                             src={url}
                             alt={`proof-${post.id}-${i}`}
@@ -363,20 +363,20 @@ export default function ForumView({ user, onRefresh }: ForumViewProps) {
                   )}
 
                   {/* Post footer / Actions */}
-                  <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
                     <button
                       onClick={() => handleLikePost(post.id)}
                       className={`flex items-center gap-1.5 text-xs font-bold transition-all duration-300 px-3 py-1.5 rounded-lg cursor-pointer ${
                         isLiked
-                          ? "text-red-400 bg-red-500/10 border border-red-500/20"
-                          : "text-slate-400 hover:text-white bg-white/5"
+                          ? "text-red-600 bg-red-50 border border-red-100"
+                          : "text-slate-400 hover:text-slate-600 bg-slate-50 border border-slate-100"
                       }`}
                     >
-                      <Heart className={`h-4 w-4 ${isLiked ? "fill-current text-red-400 animate-pulse" : ""}`} />
+                      <Heart className={`h-4 w-4 ${isLiked ? "fill-current text-red-600 animate-pulse" : ""}`} />
                       <span>{post.likes || 0} J'aime</span>
                     </button>
 
-                    <div className="text-[9.5px] text-emerald-400 font-extrabold flex items-center gap-1 uppercase bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                    <div className="text-[9.5px] text-emerald-600 font-extrabold flex items-center gap-1 uppercase bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
                       <Check className="h-3.5 w-3.5 stroke-[3]" />
                       <span>Retrait Validé</span>
                     </div>
