@@ -41,12 +41,26 @@ const getApiBase = (): string => {
 
 const API_BASE = getApiBase();
 
+const isLocalOrCloudRun = (): boolean => {
+  if (typeof window === "undefined") return false;
+  const hostname = window.location.hostname;
+  return (
+    hostname === "localhost" || 
+    hostname === "127.0.0.1" || 
+    hostname.includes("run.app")
+  );
+};
+
 let useLocalFallback = false;
 try {
-  useLocalFallback = localStorage.getItem("dreampod_use_local_fallback") === "true";
   const hostname = typeof window !== "undefined" ? window.location.hostname : "";
   if (hostname.includes("vercel.app") || hostname.includes("github.io") || hostname.includes("netlify.app")) {
     useLocalFallback = true;
+  } else if (isLocalOrCloudRun()) {
+    useLocalFallback = false;
+    localStorage.removeItem("dreampod_use_local_fallback");
+  } else {
+    useLocalFallback = localStorage.getItem("dreampod_use_local_fallback") === "true";
   }
 } catch (e) {}
 
@@ -1200,12 +1214,16 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
       headers,
     });
   } catch (err: any) {
-    console.warn("API request failed, switching/routing to Local Fallback Database:", err);
-    useLocalFallback = true;
-    try {
-      localStorage.setItem("dreampod_use_local_fallback", "true");
-    } catch (e) {}
-    return handleLocalRequest<T>(path, options);
+    console.warn("API request failed:", err);
+    if (!isLocalOrCloudRun()) {
+      console.warn("Switching/routing to Local Fallback Database:", err);
+      useLocalFallback = true;
+      try {
+        localStorage.setItem("dreampod_use_local_fallback", "true");
+      } catch (e) {}
+      return handleLocalRequest<T>(path, options);
+    }
+    throw err;
   }
 
   const text = await response.text();
@@ -1213,16 +1231,23 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   try {
     json = text ? JSON.parse(text) : {};
   } catch (e) {
-    console.warn("JSON parsing failed (possibly auth redirect or server offline), switching to Local Fallback Database:", e);
-    useLocalFallback = true;
-    try {
-      localStorage.setItem("dreampod_use_local_fallback", "true");
-    } catch (err2) {}
-    return handleLocalRequest<T>(path, options);
+    console.warn("JSON parsing failed (possibly auth redirect or server offline):", e);
+    if (!isLocalOrCloudRun()) {
+      console.warn("Switching to Local Fallback Database due to parser failure");
+      useLocalFallback = true;
+      try {
+        localStorage.setItem("dreampod_use_local_fallback", "true");
+      } catch (err2) {}
+      return handleLocalRequest<T>(path, options);
+    }
+    throw e;
   }
 
   if (!response.ok) {
-    throw new Error(json.error || json.message || "Une erreur est survenue lors de la communication.");
+    const errMsg = json.error || json.message || "Une erreur est survenue lors de la communication.";
+    const err = new Error(errMsg) as any;
+    err.status = response.status;
+    throw err;
   }
 
   return json as T;

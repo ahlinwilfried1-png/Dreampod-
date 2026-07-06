@@ -85,8 +85,16 @@ export default function App() {
       setTeam(stats.team || []);
     } catch (error: any) {
       console.error("Session stats retrieval failure indeed:", error);
-      // Auto logout if unauthorized
-      handleLogout();
+      // Auto logout ONLY if the session is explicitly unauthorized or user is missing/blocked
+      if (
+        error.status === 401 || 
+        error.status === 403 || 
+        error.message?.includes("Utilisateur non trouvé") ||
+        error.message?.includes("Authentification") ||
+        error.message?.includes("Session")
+      ) {
+        handleLogout();
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
