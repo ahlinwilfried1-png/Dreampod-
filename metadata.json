@@ -1,0 +1,6 @@
+{
+  "name": "Dreampod",
+  "description": "Plateforme d’investissement moderne, rapide, sécurisée et responsive avec tableau de bord dynamique et parrainage multiniveau.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
