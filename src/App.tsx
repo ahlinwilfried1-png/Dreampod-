@@ -111,17 +111,33 @@ export default function App() {
     }
   }, []);
 
-  // Show welcome modal when navigating between tabs/pages
+  // Show welcome modal once on initial load or login, but NOT when switching tabs/pages
   useEffect(() => {
-    if (user && activeTab) {
+    if (user && !sessionStorage.getItem("dreampod_welcome_shown")) {
       setShowWelcomeModal(true);
+      sessionStorage.setItem("dreampod_welcome_shown", "true");
     }
-  }, [activeTab, user]);
+  }, [user]);
+
+  // Clean up URL query parameters and pathname when logged in to prevent accidental resets
+  useEffect(() => {
+    if (user) {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has("ref") || window.location.pathname !== "/" || window.location.search !== "") {
+        try {
+          window.history.replaceState({}, document.title, "/");
+        } catch (e) {
+          console.warn("Failed to replace state:", e);
+        }
+      }
+    }
+  }, [user]);
 
   const handleAuthSuccess = (newToken: string, loggedInUser: User) => {
     setToken(newToken);
     setSessionToken(newToken);
     setUser(loggedInUser);
+    sessionStorage.setItem("dreampod_welcome_shown", "true");
     setShowWelcomeModal(true);
     setActiveTab("dashboard");
   };
@@ -135,6 +151,7 @@ export default function App() {
     setProducts([]);
     setTeam([]);
     setShowWelcomeModal(false);
+    sessionStorage.removeItem("dreampod_welcome_shown");
     setAuthView("register");
     setActiveTab("dashboard");
   };
