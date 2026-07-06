@@ -3,10 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import "dotenv/config";
 import express from "express";
 import path from "path";
 import fs from "fs";
 import { createServer as createViteServer } from "vite";
+import { createClient } from "@supabase/supabase-js";
 import { 
   User, 
   Product, 
@@ -93,7 +95,99 @@ interface DatabaseSchema {
 }
 
 // Ensure database file exists
-function loadDatabase(): DatabaseSchema {
+const supabaseUrl = process.env.SUPABASE_URL || "";
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+const supabase = (supabaseUrl && supabaseServiceKey)
+  ? createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        persistSession: false
+      }
+    })
+  : null;
+
+if (supabase) {
+  console.log("Supabase Client initialized with URL:", supabaseUrl);
+} else {
+  console.warn("Supabase Client NOT initialized. Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in env.");
+}
+
+async function saveToSupabase(dbData: DatabaseSchema) {
+  if (!supabase) return;
+  try {
+    const { error } = await supabase
+      .from("dreampod_state")
+      .upsert({
+        id: "global_db",
+        data: dbData,
+        updated_at: new Date().toISOString()
+      }, { onConflict: "id" });
+
+    if (error) {
+      console.error("Error upserting database state to Supabase:", error.message);
+      if (error.message?.includes("does not exist") || error.code === "42P01") {
+        console.warn("\n==================================================");
+        console.warn("ATTENTION: La table 'dreampod_state' n'existe pas dans Supabase.");
+        console.warn("Veuillez exécuter ce script SQL dans votre SQL Editor Supabase :");
+        console.warn(`
+          CREATE TABLE public.dreampod_state (
+            id TEXT PRIMARY KEY,
+            data JSONB NOT NULL,
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+          );
+          ALTER TABLE public.dreampod_state DISABLE ROW LEVEL SECURITY;
+        `);
+        console.warn("==================================================\n");
+      }
+    } else {
+      console.log("Database state successfully synchronized to Supabase!");
+    }
+  } catch (err: any) {
+    console.error("Failed to connect or save to Supabase:", err.message || err);
+  }
+}
+
+async function loadDatabase(): Promise<DatabaseSchema> {
+  // 1. Try loading from Supabase first
+  if (supabase) {
+    try {
+      console.log("Loading database state from Supabase table 'dreampod_state'...");
+      const { data, error } = await supabase
+        .from("dreampod_state")
+        .select("data")
+        .eq("id", "global_db")
+        .single();
+        
+      if (data && data.data) {
+        console.log("Successfully loaded database state from Supabase!");
+        // Sync local backup file
+        fs.writeFileSync(DB_FILE, JSON.stringify(data.data, null, 2), "utf8");
+        return data.data as DatabaseSchema;
+      } else if (error) {
+        if (error.code === "PGRST116") {
+          console.log("No data record found in 'dreampod_state' for key 'global_db'. It will be created on the first save.");
+        } else if (error.message?.includes("does not exist") || error.code === "42P01") {
+          console.warn("\n==================================================");
+          console.warn("ATTENTION: La table 'dreampod_state' n'existe pas dans Supabase.");
+          console.warn("Veuillez exécuter ce script SQL dans votre SQL Editor Supabase :");
+          console.warn(`
+            CREATE TABLE public.dreampod_state (
+              id TEXT PRIMARY KEY,
+              data JSONB NOT NULL,
+              updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+            );
+            ALTER TABLE public.dreampod_state DISABLE ROW LEVEL SECURITY;
+          `);
+          console.warn("==================================================\n");
+        } else {
+          console.error("Supabase load error:", error.message);
+        }
+      }
+    } catch (err: any) {
+      console.error("Error connecting to Supabase during load:", err.message || err);
+    }
+  }
+
+  // 2. Fallback to local file or initial generator
   if (!fs.existsSync(DB_FILE)) {
     // Generate initial database
     const adminUser = {
@@ -277,6 +371,7 @@ function loadDatabase(): DatabaseSchema {
       userReviews: initialUserReviews,
     };
     fs.writeFileSync(DB_FILE, JSON.stringify(dbData, null, 2), "utf8");
+    saveToSupabase(dbData);
     return dbData;
   }
 
@@ -358,12 +453,13 @@ function loadDatabase(): DatabaseSchema {
   } catch (error) {
     console.error("Database reading error, resetting file:", error);
     fs.unlinkSync(DB_FILE);
-    return loadDatabase();
+    return await loadDatabase();
   }
 }
 
 function saveDatabase(db: DatabaseSchema) {
   fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), "utf8");
+  saveToSupabase(db);
 }
 
 function processDailyRevenues(db: DatabaseSchema) {
@@ -475,7 +571,7 @@ async function startServer() {
   app.use(express.json());
 
   // Setup database local in-memory/JSON sync
-  let db = loadDatabase();
+  let db = await loadDatabase();
 
   // Simple JWT auth simulator middleware
   const authenticateUser = (req: express.Request, res: express.Response, next: express.NextFunction) => {

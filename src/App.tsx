@@ -111,13 +111,18 @@ export default function App() {
     }
   }, []);
 
+  // Show welcome modal when navigating between tabs/pages
+  useEffect(() => {
+    if (user && activeTab) {
+      setShowWelcomeModal(true);
+    }
+  }, [activeTab, user]);
+
   const handleAuthSuccess = (newToken: string, loggedInUser: User) => {
     setToken(newToken);
     setSessionToken(newToken);
     setUser(loggedInUser);
-    if (authView === "register") {
-      setShowWelcomeModal(true);
-    }
+    setShowWelcomeModal(true);
     setActiveTab("dashboard");
   };
 
