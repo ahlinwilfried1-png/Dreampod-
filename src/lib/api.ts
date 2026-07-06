@@ -21,35 +21,46 @@ export function removeToken() {
 
 const BACKEND_URL = "https://ais-pre-wpq5a34ir5qewcez66evtj-473372860465.europe-west1.run.app";
 
-// Determine if we need to call the remote Cloud Run URL (such as when running on Vercel)
-const getApiBase = (): string => {
-  if (typeof window === "undefined") return "";
-  const hostname = window.location.hostname;
-  
-  // If we are already on localhost, or on the Cloud Run domain directly, we use relative paths
-  if (
-    hostname === "localhost" || 
-    hostname === "127.0.0.1" || 
-    hostname.includes("run.app")
-  ) {
-    return "";
-  }
-  
-  // Otherwise (e.g. on Vercel or any other external domains), point to our live backend
-  return (import.meta as any).env.VITE_API_URL || BACKEND_URL;
-};
-
-const API_BASE = getApiBase();
-
+// Determine if we are running in a real full-stack environment where Express serves frontend + backend
 const isLocalOrCloudRun = (): boolean => {
   if (typeof window === "undefined") return false;
   const hostname = window.location.hostname;
-  return (
-    hostname === "localhost" || 
-    hostname === "127.0.0.1" || 
-    hostname.includes("run.app")
-  );
+  
+  // If we are on static hosting providers like Vercel, Netlify, or GitHub Pages, we don't have our Node backend
+  if (
+    hostname.includes("vercel.app") || 
+    hostname.includes("netlify.app") || 
+    hostname.includes("github.io")
+  ) {
+    return false;
+  }
+  
+  // For all other cases (localhost, Cloud Run, VPS, Railway, custom domains with custom backends),
+  // we are running a real full-stack application and should use the server API.
+  return true;
 };
+
+// Determine if we need to call the remote Cloud Run URL (such as when running on Vercel)
+const getApiBase = (): string => {
+  if (typeof window === "undefined") return "";
+  
+  // Explicit API URL overrides everything
+  const envApiUrl = (import.meta as any).env.VITE_API_URL;
+  if (envApiUrl) {
+    return envApiUrl;
+  }
+  
+  // If we are in a real full-stack environment (localhost, run.app, custom deployed domain, etc.)
+  // we use relative paths since Express serves the client and API on the same domain/origin
+  if (isLocalOrCloudRun()) {
+    return "";
+  }
+  
+  // Otherwise, if on Vercel/Netlify, we point to our live backend URL
+  return BACKEND_URL;
+};
+
+const API_BASE = getApiBase();
 
 let useLocalFallback = false;
 try {
