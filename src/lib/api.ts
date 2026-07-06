@@ -50,10 +50,18 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     ...(options.headers || {}),
   };
 
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers,
-  });
+  let response;
+  try {
+    response = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers,
+    });
+  } catch (err: any) {
+    console.error("Fetch request failed:", err);
+    throw new Error(
+      "Connexion impossible au serveur. Veuillez vous assurer de déployer l'application complète sur Cloud Run via le bouton 'Déployer' d'AI Studio pour que le serveur fonctionne."
+    );
+  }
 
   const text = await response.text();
   let json;
