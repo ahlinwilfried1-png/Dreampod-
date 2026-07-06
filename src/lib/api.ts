@@ -19,6 +19,28 @@ export function removeToken() {
   localStorage.removeItem(TOKEN_KEY);
 }
 
+const BACKEND_URL = "https://ais-pre-wpq5a34ir5qewcez66evtj-473372860465.europe-west1.run.app";
+
+// Determine if we need to call the remote Cloud Run URL (such as when running on Vercel)
+const getApiBase = (): string => {
+  if (typeof window === "undefined") return "";
+  const hostname = window.location.hostname;
+  
+  // If we are already on localhost, or on the Cloud Run domain directly, we use relative paths
+  if (
+    hostname === "localhost" || 
+    hostname === "127.0.0.1" || 
+    hostname.includes("run.app")
+  ) {
+    return "";
+  }
+  
+  // Otherwise (e.g. on Vercel or any other external domains), point to our live backend
+  return (import.meta as any).env.VITE_API_URL || BACKEND_URL;
+};
+
+const API_BASE = getApiBase();
+
 // Perform automated fetch with auth header
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken();
@@ -28,7 +50,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     ...(options.headers || {}),
   };
 
-  const response = await fetch(path, {
+  const response = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers,
   });

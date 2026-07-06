@@ -47,21 +47,15 @@ export default function RegisterPage({ onSuccess, onNavigateToLogin }: RegisterP
       setPasswordStrength({ score: 0, text: "Inexistant", color: "bg-red-200" });
       return;
     }
-    let score = 0;
-    if (password.length >= 6) score += 1;
-    if (password.length >= 10) score += 1;
-    if (/[A-Z]/.test(password)) score += 1;
-    if (/[0-9]/.test(password)) score += 1;
-    if (/[^A-Za-z0-9]/.test(password)) score += 1;
+    
+    let score = 1;
+    if (password.length >= 4) score = 5;
 
-    let text = "Faible";
+    let text = "Trop court";
     let color = "bg-red-500";
-    if (score >= 4) {
-      text = "Sécurisé 🔥";
+    if (score === 5) {
+      text = "Correct ✨";
       color = "bg-green-500 shadow-green-500/20 shadow-xs";
-    } else if (score >= 2) {
-      text = "Moyen ⚡";
-      color = "bg-yellow-500 shadow-yellow-500/20 shadow-xs";
     }
     setPasswordStrength({ score, text, color });
   }, [password]);
@@ -78,8 +72,8 @@ export default function RegisterPage({ onSuccess, onNavigateToLogin }: RegisterP
       setError("Veuillez entrer un numéro de téléphone valide.");
       return;
     }
-    if (password.length < 6) {
-      setError("Le mot de passe doit comporter au moins 6 caractères.");
+    if (password.length < 4) {
+      setError("Le mot de passe doit comporter au moins 4 caractères.");
       return;
     }
     if (password !== confirmPassword) {
