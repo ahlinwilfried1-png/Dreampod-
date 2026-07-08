@@ -130,17 +130,6 @@ export default function RegisterPage({ onSuccess, onNavigateToLogin }: RegisterP
           </p>
         </div>
 
-        {/* Sponsor/Referral Highlight */}
-        {referrerCode && (
-          <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 mb-4 flex items-center space-x-3 text-xs text-emerald-800 animate-slide-in">
-            <Shield className="h-5 w-5 shrink-0 text-emerald-600" />
-            <div>
-              <p className="font-bold">Vous êtes invité(e) !</p>
-              <p className="text-[11px] text-emerald-600 mt-0.5">Code de votre parrain : <span className="font-black bg-emerald-100 text-emerald-900 px-1.5 py-0.5 rounded-md text-xs">{referrerCode}</span></p>
-            </div>
-          </div>
-        )}
-
         {/* Error Box */}
         {error && (
           <div className="bg-red-50 border border-red-100 rounded-2xl p-4 mb-4 flex items-start space-x-2 text-xs text-red-700 animate-slide-in">

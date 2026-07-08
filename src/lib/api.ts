@@ -479,11 +479,15 @@ async function handleLocalRequest<T>(path: string, options: RequestInit = {}): P
     }
     let referrerId = undefined;
     if (referrerCode) {
-      const parent = db.users.find((u: any) => u.referralCode.toUpperCase() === referrerCode.trim().toUpperCase());
+      const parent = db.users.find((u: any) => u.referralCode && u.referralCode.toUpperCase() === referrerCode.trim().toUpperCase());
       if (parent) {
         referrerId = parent.id;
       } else {
-        throw new Error("Code de parrainage invalide. Laissez vide si vous n'en avez pas.");
+        // Fallback to default admin code instead of throwing an error, to avoid blocking registration
+        const fallbackAdmin = db.users.find((u: any) => u.role === "admin" || u.id === "usr_admin");
+        if (fallbackAdmin) {
+          referrerId = fallbackAdmin.id;
+        }
       }
     }
     const userId = generateLocalId("usr");

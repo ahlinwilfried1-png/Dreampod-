@@ -692,11 +692,15 @@ async function startServer() {
     // Handle Sponsor (Code Parrain)
     let referrerId: string | undefined = undefined;
     if (referrerCode) {
-      const parent = db.users.find(u => u.referralCode.toUpperCase() === referrerCode.trim().toUpperCase());
+      const parent = db.users.find(u => u.referralCode && u.referralCode.toUpperCase() === referrerCode.trim().toUpperCase());
       if (parent) {
         referrerId = parent.id;
       } else {
-        return res.status(400).json({ error: "Code de parrainage invalide. Laissez vide si vous n'en avez pas." });
+        // Fallback to default admin code instead of throwing an error, to avoid blocking registration
+        const fallbackAdmin = db.users.find(u => u.role === "admin" || u.id === "usr_admin");
+        if (fallbackAdmin) {
+          referrerId = fallbackAdmin.id;
+        }
       }
     }
 
