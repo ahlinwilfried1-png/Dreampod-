@@ -103,7 +103,9 @@ export default function App() {
 
   useEffect(() => {
     if (token) {
-      setLoading(true);
+      if (!user) {
+        setLoading(true);
+      }
       syncAccountStats();
     }
   }, [token]);

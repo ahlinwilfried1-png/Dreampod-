@@ -440,8 +440,12 @@ function getLocalCurrentUser(db: any): any {
   if (!token || !token.startsWith("token_")) {
     throw new Error("Authentification requise. Veuillez vous connecter.");
   }
-  const parts = token.split("_");
-  const userId = parts[1];
+  const tokenContent = token.substring("token_".length);
+  const lastUnderscoreIndex = tokenContent.lastIndexOf("_");
+  if (lastUnderscoreIndex === -1) {
+    throw new Error("Session invalide. Veuillez vous reconnecter.");
+  }
+  const userId = tokenContent.substring(0, lastUnderscoreIndex);
   const user = db.users.find((u: any) => u.id === userId);
   if (!user) {
     throw new Error("Utilisateur non trouvé.");
