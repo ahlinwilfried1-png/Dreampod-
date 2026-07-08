@@ -64,8 +64,13 @@ const API_BASE = getApiBase();
 
 let useLocalFallback = false;
 try {
-  // Try to use the server first by default. Only use fallback if explicitly saved in localStorage.
-  useLocalFallback = localStorage.getItem("dreampod_use_local_fallback") === "true";
+  if (isLocalOrCloudRun()) {
+    // Force false on server environments so we don't accidentally fall back to localStorage
+    useLocalFallback = false;
+    localStorage.setItem("dreampod_use_local_fallback", "false");
+  } else {
+    useLocalFallback = localStorage.getItem("dreampod_use_local_fallback") === "true";
+  }
 } catch (e) {}
 
 // --- LOCAL STORAGE DATABASE SIMULATION (MIRRORS SERVER.TS EXACTLY) ---
@@ -1239,12 +1244,15 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
       headers,
     });
   } catch (err: any) {
-    console.warn("API request failed, falling back to Local Database:", err);
-    useLocalFallback = true;
-    try {
-      localStorage.setItem("dreampod_use_local_fallback", "true");
-    } catch (e) {}
-    return handleLocalRequest<T>(path, options);
+    console.warn("API request failed:", err);
+    if (!isLocalOrCloudRun()) {
+      useLocalFallback = true;
+      try {
+        localStorage.setItem("dreampod_use_local_fallback", "true");
+      } catch (e) {}
+      return handleLocalRequest<T>(path, options);
+    }
+    throw new Error("Erreur de connexion au serveur. Veuillez vérifier votre connexion ou réessayer.");
   }
 
   const text = await response.text();
@@ -1252,12 +1260,15 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   try {
     json = text ? JSON.parse(text) : {};
   } catch (e) {
-    console.warn("JSON parsing failed (possibly auth redirect or server offline), falling back to Local Database:", e);
-    useLocalFallback = true;
-    try {
-      localStorage.setItem("dreampod_use_local_fallback", "true");
-    } catch (err2) {}
-    return handleLocalRequest<T>(path, options);
+    console.warn("JSON parsing failed:", e);
+    if (!isLocalOrCloudRun()) {
+      useLocalFallback = true;
+      try {
+        localStorage.setItem("dreampod_use_local_fallback", "true");
+      } catch (err2) {}
+      return handleLocalRequest<T>(path, options);
+    }
+    throw new Error("Erreur de communication avec le serveur.");
   }
 
   if (path === "/api/admin/sync" && response.ok) {
@@ -1268,8 +1279,8 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   }
 
   if (!response.ok) {
-    // If it's a 404 (route not found - e.g. purely static hosting) or a 5xx server/gateway error, fall back to local database simulation
-    if (response.status === 404 || response.status >= 500) {
+    // If it's a 404 (route not found - e.g. purely static hosting) or a 5xx server/gateway error, fall back to local database simulation (only if not in local or cloud run environment)
+    if (!isLocalOrCloudRun() && (response.status === 404 || response.status >= 500)) {
       console.warn(`Server status ${response.status}, falling back to Local Database simulation`);
       useLocalFallback = true;
       try {

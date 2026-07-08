@@ -619,6 +619,19 @@ async function startServer() {
   // Setup database local in-memory/JSON sync
   let db = await loadDatabase();
 
+  // Middleware to automatically reload the database from Supabase/local file on every API request.
+  // This guarantees that all devices (and multiple serverless containers) operate on the same real-time data.
+  app.use(async (req, res, next) => {
+    if (req.path.startsWith("/api/")) {
+      try {
+        db = await loadDatabase();
+      } catch (e: any) {
+        console.error("Failed to dynamically reload database in request middleware:", e.message || e);
+      }
+    }
+    next();
+  });
+
   // Simple JWT auth simulator middleware
   const authenticateUser = (req: express.Request, res: express.Response, next: express.NextFunction) => {
     // Automatically catch up and credit daily revenues for everyone
