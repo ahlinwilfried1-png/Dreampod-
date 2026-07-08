@@ -64,20 +64,8 @@ const API_BASE = getApiBase();
 
 let useLocalFallback = false;
 try {
-  const hostname = typeof window !== "undefined" ? window.location.hostname : "";
-  if (
-    hostname.includes("vercel.app") || 
-    hostname.includes("github.io") || 
-    hostname.includes("netlify.app") ||
-    hostname.includes("web.app") ||
-    hostname.includes("firebaseapp.com") ||
-    hostname.includes("surge.sh")
-  ) {
-    useLocalFallback = true;
-  } else {
-    // If we previously saved a fallback flag, use it; otherwise default to false (which tries the live backend first)
-    useLocalFallback = localStorage.getItem("dreampod_use_local_fallback") === "true";
-  }
+  // Try to use the server first by default. Only use fallback if explicitly saved in localStorage.
+  useLocalFallback = localStorage.getItem("dreampod_use_local_fallback") === "true";
 } catch (e) {}
 
 // --- LOCAL STORAGE DATABASE SIMULATION (MIRRORS SERVER.TS EXACTLY) ---
