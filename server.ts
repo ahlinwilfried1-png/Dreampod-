@@ -146,6 +146,109 @@ async function saveToSupabase(dbData: DatabaseSchema) {
   }
 }
 
+function migrateDatabase(parsed: any): DatabaseSchema {
+  if (!parsed) return parsed;
+
+  if (!parsed.users) parsed.users = [];
+  if (!parsed.products) parsed.products = [];
+  if (!parsed.investments) parsed.investments = [];
+  if (!parsed.transactions) parsed.transactions = [];
+  if (!parsed.bonusCodes) parsed.bonusCodes = [];
+  if (!parsed.notifications) parsed.notifications = [];
+
+  // Migrate: Ensure new admin2 exists in the users table
+  if (!parsed.users.some((u: any) => u.id === "usr_admin2")) {
+    parsed.users.push({
+      id: "usr_admin2",
+      name: "Super Administrateur Bénin",
+      phone: "+22900000002",
+      passwordHash: "admin123",
+      balance: 1000000,
+      dailyRevenue: 0,
+      totalRevenue: 500000,
+      referralCode: "CHEF10",
+      referralsCount: 10,
+      referralsN1: 5,
+      referralsN2: 3,
+      referralsN3: 2,
+      commissionEarned: 50000,
+      registeredAt: new Date().toISOString(),
+      isBlocked: false,
+      role: "admin",
+    });
+  }
+
+  if (!parsed.forumPosts) {
+    parsed.forumPosts = [
+      {
+        id: "post_1",
+        userId: "usr_demo",
+        userName: "Jean Kouassi",
+        userPhone: "+22890123456",
+        content: "Retrait reçu en moins de 10 minutes ! Dreampod est très fiable. Merci à l'administrateur !",
+        screenshots: [
+          "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=500&q=80",
+          "https://images.unsplash.com/photo-1563013544-824ae1d704d3?auto=format&fit=crop&w=500&q=80"
+        ],
+        likes: 5,
+        likedBy: [],
+        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      }
+    ];
+  }
+
+  if (!parsed.userReviews) {
+    parsed.userReviews = [
+      {
+        id: "rev_1",
+        userId: "usr_demo",
+        userName: "Jean Kouassi",
+        userPhone: "+22890123456",
+        rating: 5,
+        comment: "Superbe plateforme d'investissement. Les gains journaliers sont payés à l'heure.",
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+        status: "approved",
+      }
+    ];
+  }
+
+  // Migrate existing products to have categories and ensure all 6 VIP plans are always present
+  const defaultProducts = [
+    { id: "vip1", name: "VIP 1 - Plan Élite", price: 5000, dailyIncome: 1000, durationDays: 30, totalIncome: 30000, level: 1, category: "stability" },
+    { id: "vip2", name: "VIP 2 - Plan Premium", price: 10000, dailyIncome: 2500, durationDays: 30, totalIncome: 75000, level: 2, category: "stability" },
+    { id: "vip3", name: "VIP 3 - Plan Gold", price: 25000, dailyIncome: 7000, durationDays: 30, totalIncome: 210000, level: 3, category: "wellbeing" },
+    { id: "vip4", name: "VIP 4 - Plan Platinum", price: 50000, dailyIncome: 16000, durationDays: 30, totalIncome: 480000, level: 4, category: "wellbeing" },
+    { id: "vip5", name: "VIP 5 - Plan Infini", price: 100000, dailyIncome: 35000, durationDays: 30, totalIncome: 1050000, level: 5, category: "activity" },
+    { id: "vip6", name: "VIP 6 - Plan Saphir", price: 250000, dailyIncome: 95000, durationDays: 30, totalIncome: 2850000, level: 6, category: "activity" },
+  ];
+
+  if (!parsed.products || parsed.products.length === 0) {
+    parsed.products = defaultProducts;
+  } else {
+    parsed.products = parsed.products.map((p: any) => {
+      if (!p.category) {
+        if (p.id === "vip1" || p.id === "vip2") {
+          p.category = "stability";
+        } else if (p.id === "vip3" || p.id === "vip4") {
+          p.category = "wellbeing";
+        } else {
+          p.category = "activity";
+        }
+      }
+      return p;
+    });
+
+    // Ensure all default products exist in the array
+    defaultProducts.forEach(defProd => {
+      if (!parsed.products.some((p: any) => p.id === defProd.id)) {
+        parsed.products.push(defProd);
+      }
+    });
+  }
+
+  return parsed as DatabaseSchema;
+}
+
 async function loadDatabase(): Promise<DatabaseSchema> {
   // 1. Try loading from Supabase first
   if (supabase) {
@@ -159,9 +262,10 @@ async function loadDatabase(): Promise<DatabaseSchema> {
         
       if (data && data.data) {
         console.log("Successfully loaded database state from Supabase!");
+        const migrated = migrateDatabase(data.data);
         // Sync local backup file
-        fs.writeFileSync(DB_FILE, JSON.stringify(data.data, null, 2), "utf8");
-        return data.data as DatabaseSchema;
+        fs.writeFileSync(DB_FILE, JSON.stringify(migrated, null, 2), "utf8");
+        return migrated;
       } else if (error) {
         if (error.code === "PGRST116") {
           console.log("No data record found in 'dreampod_state' for key 'global_db'. It will be created on the first save.");
@@ -378,78 +482,9 @@ async function loadDatabase(): Promise<DatabaseSchema> {
   try {
     const data = fs.readFileSync(DB_FILE, "utf8");
     const parsed = JSON.parse(data) as DatabaseSchema;
-
-    // Migrate: Ensure new admin2 exists in the users table
-    if (parsed.users && !parsed.users.some(u => u.id === "usr_admin2")) {
-      parsed.users.push({
-        id: "usr_admin2",
-        name: "Super Administrateur Bénin",
-        phone: "+22900000002",
-        passwordHash: "admin123",
-        balance: 1000000,
-        dailyRevenue: 0,
-        totalRevenue: 500000,
-        referralCode: "CHEF10",
-        referralsCount: 10,
-        referralsN1: 5,
-        referralsN2: 3,
-        referralsN3: 2,
-        commissionEarned: 50000,
-        registeredAt: new Date().toISOString(),
-        isBlocked: false,
-        role: "admin",
-      });
-      fs.writeFileSync(DB_FILE, JSON.stringify(parsed, null, 2), "utf8");
-    }
-
-    if (!parsed.forumPosts) {
-      parsed.forumPosts = [
-        {
-          id: "post_1",
-          userId: "usr_demo",
-          userName: "Jean Kouassi",
-          userPhone: "+22890123456",
-          content: "Retrait reçu en moins de 10 minutes ! Dreampod est très fiable. Merci à l'administrateur !",
-          screenshots: [
-            "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=500&q=80",
-            "https://images.unsplash.com/photo-1563013544-824ae1d704d3?auto=format&fit=crop&w=500&q=80"
-          ],
-          likes: 5,
-          likedBy: [],
-          createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-        }
-      ];
-    }
-    if (!parsed.userReviews) {
-      parsed.userReviews = [
-        {
-          id: "rev_1",
-          userId: "usr_demo",
-          userName: "Jean Kouassi",
-          userPhone: "+22890123456",
-          rating: 5,
-          comment: "Superbe plateforme d'investissement. Les gains journaliers sont payés à l'heure.",
-          createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-          status: "approved",
-        }
-      ];
-    }
-    // Migrate existing products to have categories
-    if (parsed.products) {
-      parsed.products = parsed.products.map((p, idx) => {
-        if (!p.category) {
-          if (p.id === "vip1" || p.id === "vip2") {
-            p.category = "stability";
-          } else if (p.id === "vip3" || p.id === "vip4") {
-            p.category = "wellbeing";
-          } else {
-            p.category = "activity";
-          }
-        }
-        return p;
-      });
-    }
-    return parsed;
+    const migrated = migrateDatabase(parsed);
+    fs.writeFileSync(DB_FILE, JSON.stringify(migrated, null, 2), "utf8");
+    return migrated;
   } catch (error) {
     console.error("Database reading error, resetting file:", error);
     fs.unlinkSync(DB_FILE);
@@ -1697,6 +1732,164 @@ async function startServer() {
     res.json({
       message: "Notification globale diffusée avec succès !",
       notification: newNotif,
+    });
+  });
+
+  // Admin: Synchronize local storage state with server state
+  app.post("/api/admin/sync", authenticateAdmin, (req, res) => {
+    const { users, transactions, investments, bonusCodes, notifications, forumPosts, userReviews } = req.body;
+
+    let addedUsersCount = 0;
+    let addedTransactionsCount = 0;
+    let addedInvestmentsCount = 0;
+    let addedReviewsCount = 0;
+    let addedForumPostsCount = 0;
+
+    // 1. Merge users
+    if (Array.isArray(users)) {
+      users.forEach((u: any) => {
+        if (!u || !u.id || u.id === "usr_admin" || u.id === "usr_admin2") return;
+        const exists = db.users.find(existing => existing.id === u.id || existing.phone === u.phone);
+        if (!exists) {
+          db.users.push({
+            id: u.id,
+            name: u.name,
+            phone: u.phone,
+            passwordHash: u.password || u.passwordHash || "123456",
+            balance: typeof u.balance === "number" ? u.balance : 200,
+            dailyRevenue: typeof u.dailyRevenue === "number" ? u.dailyRevenue : 0,
+            totalRevenue: typeof u.totalRevenue === "number" ? u.totalRevenue : 0,
+            referralCode: u.referralCode || `REF${Math.floor(100000 + Math.random() * 900000)}`,
+            referrerId: u.referrerId || null,
+            referralsCount: typeof u.referralsCount === "number" ? u.referralsCount : 0,
+            referralsN1: typeof u.referralsN1 === "number" ? u.referralsN1 : 0,
+            referralsN2: typeof u.referralsN2 === "number" ? u.referralsN2 : 0,
+            referralsN3: typeof u.referralsN3 === "number" ? u.referralsN3 : 0,
+            commissionEarned: typeof u.commissionEarned === "number" ? u.commissionEarned : 0,
+            registeredAt: u.registeredAt || new Date().toISOString(),
+            isBlocked: !!u.isBlocked,
+            role: "user",
+          });
+          addedUsersCount++;
+        }
+      });
+    }
+
+    // 2. Merge transactions
+    if (Array.isArray(transactions)) {
+      transactions.forEach((tx: any) => {
+        if (!tx || !tx.id) return;
+        const exists = db.transactions.find(existing => existing.id === tx.id);
+        if (!exists) {
+          db.transactions.push({
+            id: tx.id,
+            userId: tx.userId,
+            userName: tx.userName,
+            userPhone: tx.userPhone,
+            type: tx.type,
+            amount: tx.amount,
+            method: tx.method || "T-money",
+            status: tx.status || "pending",
+            date: tx.date || new Date().toISOString(),
+          });
+          addedTransactionsCount++;
+        }
+      });
+    }
+
+    // 3. Merge investments
+    if (Array.isArray(investments)) {
+      if (!db.investments) db.investments = [];
+      investments.forEach((inv: any) => {
+        if (!inv || !inv.id) return;
+        const exists = db.investments.find(existing => existing.id === inv.id);
+        if (!exists) {
+          db.investments.push({
+            id: inv.id,
+            userId: inv.userId,
+            productId: inv.productId,
+            productName: inv.productName,
+            price: typeof inv.price === "number" ? inv.price : 0,
+            dailyIncome: typeof inv.dailyIncome === "number" ? inv.dailyIncome : 0,
+            durationDays: typeof inv.durationDays === "number" ? inv.durationDays : 30,
+            daysPassed: typeof inv.daysPassed === "number" ? inv.daysPassed : 0,
+            activatedAt: inv.activatedAt || inv.purchasedAt || new Date().toISOString(),
+            lastClaimAt: inv.lastClaimAt || inv.activatedAt || new Date().toISOString(),
+          });
+          addedInvestmentsCount++;
+        }
+      });
+    }
+
+    // 4. Merge userReviews
+    if (Array.isArray(userReviews)) {
+      if (!db.userReviews) db.userReviews = [];
+      userReviews.forEach((r: any) => {
+        if (!r || !r.id) return;
+        const exists = db.userReviews.find(existing => existing.id === r.id);
+        if (!exists) {
+          db.userReviews.push({
+            id: r.id,
+            userId: r.userId,
+            userName: r.userName,
+            userPhone: r.userPhone,
+            rating: r.rating || 5,
+            comment: r.comment || "",
+            createdAt: r.createdAt || new Date().toISOString(),
+            status: r.status || "pending",
+          });
+          addedReviewsCount++;
+        }
+      });
+    }
+
+    // 5. Merge forumPosts
+    if (Array.isArray(forumPosts)) {
+      if (!db.forumPosts) db.forumPosts = [];
+      forumPosts.forEach((p: any) => {
+        if (!p || !p.id) return;
+        const exists = db.forumPosts.find(existing => existing.id === p.id);
+        if (!exists) {
+          db.forumPosts.push({
+            id: p.id,
+            userId: p.userId,
+            userName: p.userName,
+            userPhone: p.userPhone,
+            content: p.content,
+            screenshots: p.screenshots || [],
+            likes: p.likes || 0,
+            likedBy: p.likedBy || [],
+            createdAt: p.createdAt || new Date().toISOString(),
+          });
+          addedForumPostsCount++;
+        }
+      });
+    }
+
+    // Save modifications to DB
+    if (addedUsersCount > 0 || addedTransactionsCount > 0 || addedInvestmentsCount > 0 || addedReviewsCount > 0 || addedForumPostsCount > 0) {
+      saveDatabase(db);
+    }
+
+    res.json({
+      message: "Synchronisation réussie !",
+      details: {
+        addedUsersCount,
+        addedTransactionsCount,
+        addedInvestmentsCount,
+        addedReviewsCount,
+        addedForumPostsCount,
+      },
+      db: {
+        users: db.users.map(({ passwordHash, ...u }) => ({ ...u, password: passwordHash })),
+        products: db.products,
+        investments: db.investments,
+        transactions: db.transactions,
+        bonusCodes: db.bonusCodes,
+        notifications: db.notifications,
+        forumPosts: db.forumPosts,
+        userReviews: db.userReviews,
+      }
     });
   });
 

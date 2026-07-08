@@ -65,12 +65,17 @@ const API_BASE = getApiBase();
 let useLocalFallback = false;
 try {
   const hostname = typeof window !== "undefined" ? window.location.hostname : "";
-  if (hostname.includes("vercel.app") || hostname.includes("github.io") || hostname.includes("netlify.app")) {
+  if (
+    hostname.includes("vercel.app") || 
+    hostname.includes("github.io") || 
+    hostname.includes("netlify.app") ||
+    hostname.includes("web.app") ||
+    hostname.includes("firebaseapp.com") ||
+    hostname.includes("surge.sh")
+  ) {
     useLocalFallback = true;
-  } else if (isLocalOrCloudRun()) {
-    useLocalFallback = false;
-    localStorage.removeItem("dreampod_use_local_fallback");
   } else {
+    // If we previously saved a fallback flag, use it; otherwise default to false (which tries the live backend first)
     useLocalFallback = localStorage.getItem("dreampod_use_local_fallback") === "true";
   }
 } catch (e) {}
@@ -1202,6 +1207,15 @@ async function handleLocalRequest<T>(path: string, options: RequestInit = {}): P
     return { message: "Investissement supprimé." } as any;
   }
 
+  // Admin: Local fallback mock for sync (returns local db for offline use)
+  if (path === "/api/admin/sync" && method === "POST") {
+    return {
+      message: "Synchronisation simulée en local (mode hors-ligne)",
+      details: { addedUsersCount: 0, addedTransactionsCount: 0, addedInvestmentsCount: 0, addedReviewsCount: 0, addedForumPostsCount: 0 },
+      db: db
+    } as any;
+  }
+
   throw new Error(`Route locale inconnue: ${path}`);
 }
 
@@ -1214,8 +1228,12 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     ...(options.headers || {}),
   };
 
-  if (useLocalFallback) {
-    return handleLocalRequest<T>(path, options);
+  if (useLocalFallback && path !== "/api/admin/sync") {
+    try {
+      return await handleLocalRequest<T>(path, options);
+    } catch (localErr) {
+      console.error("Local request handler failed, retrying server:", localErr);
+    }
   }
 
   let response;
@@ -1225,16 +1243,12 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
       headers,
     });
   } catch (err: any) {
-    console.warn("API request failed:", err);
-    if (!isLocalOrCloudRun()) {
-      console.warn("Switching/routing to Local Fallback Database:", err);
-      useLocalFallback = true;
-      try {
-        localStorage.setItem("dreampod_use_local_fallback", "true");
-      } catch (e) {}
-      return handleLocalRequest<T>(path, options);
-    }
-    throw err;
+    console.warn("API request failed, falling back to Local Database:", err);
+    useLocalFallback = true;
+    try {
+      localStorage.setItem("dreampod_use_local_fallback", "true");
+    } catch (e) {}
+    return handleLocalRequest<T>(path, options);
   }
 
   const text = await response.text();
@@ -1242,19 +1256,31 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   try {
     json = text ? JSON.parse(text) : {};
   } catch (e) {
-    console.warn("JSON parsing failed (possibly auth redirect or server offline):", e);
-    if (!isLocalOrCloudRun()) {
-      console.warn("Switching to Local Fallback Database due to parser failure");
-      useLocalFallback = true;
-      try {
-        localStorage.setItem("dreampod_use_local_fallback", "true");
-      } catch (err2) {}
-      return handleLocalRequest<T>(path, options);
-    }
-    throw e;
+    console.warn("JSON parsing failed (possibly auth redirect or server offline), falling back to Local Database:", e);
+    useLocalFallback = true;
+    try {
+      localStorage.setItem("dreampod_use_local_fallback", "true");
+    } catch (err2) {}
+    return handleLocalRequest<T>(path, options);
+  }
+
+  if (path === "/api/admin/sync" && response.ok) {
+    useLocalFallback = false;
+    try {
+      localStorage.setItem("dreampod_use_local_fallback", "false");
+    } catch (e) {}
   }
 
   if (!response.ok) {
+    // If it's a 404 (route not found - e.g. purely static hosting) or a 5xx server/gateway error, fall back to local database simulation
+    if (response.status === 404 || response.status >= 500) {
+      console.warn(`Server status ${response.status}, falling back to Local Database simulation`);
+      useLocalFallback = true;
+      try {
+        localStorage.setItem("dreampod_use_local_fallback", "true");
+      } catch (err3) {}
+      return handleLocalRequest<T>(path, options);
+    }
     const errMsg = json.error || json.message || "Une erreur est survenue lors de la communication.";
     const err = new Error(errMsg) as any;
     err.status = response.status;
@@ -1376,5 +1402,28 @@ export const api = {
     deleteInvestment: (id: string) => request<any>(`/api/admin/investments/${id}`, {
       method: "DELETE",
     }),
+    sync: (data: any) => request<{ message: string; details: any; db: any }>("/api/admin/sync", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
   }
 };
+
+export function getLocalDbExport() {
+  return getLocalDb();
+}
+
+export function saveLocalDbExport(db: any) {
+  saveLocalDb(db);
+}
+
+export function getUseLocalFallback() {
+  return useLocalFallback;
+}
+
+export function setUseLocalFallback(val: boolean) {
+  useLocalFallback = val;
+  try {
+    localStorage.setItem("dreampod_use_local_fallback", val ? "true" : "false");
+  } catch (e) {}
+}

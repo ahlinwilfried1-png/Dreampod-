@@ -5,7 +5,7 @@
 
 import React, { useState } from "react";
 import { Smartphone, Lock, LogIn, Info, Eye, EyeOff, MessageCircle, RefreshCw } from "lucide-react";
-import { api } from "../lib/api";
+import { api, getUseLocalFallback, setUseLocalFallback } from "../lib/api";
 
 interface LoginPageProps {
   onSuccess: (token: string, user: any) => void;
@@ -25,6 +25,15 @@ export default function LoginPage({ onSuccess, onNavigateToRegister }: LoginPage
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  
+  // Custom database simulation state
+  const [isLocalFallback, setIsLocalFallback] = useState(getUseLocalFallback());
+
+  const handleToggleMode = () => {
+    const newVal = !isLocalFallback;
+    setUseLocalFallback(newVal);
+    setIsLocalFallback(newVal);
+  };
   
   // Custom forgot password popup state
   const [showForgotModal, setShowForgotModal] = useState(false);
@@ -197,6 +206,23 @@ export default function LoginPage({ onSuccess, onNavigateToRegister }: LoginPage
             >
               S'inscrire / Créer un compte
             </button>
+          </p>
+        </div>
+
+        {/* Database Connection Mode Toggler */}
+        <div className="mt-4 pt-4 border-t border-dashed border-slate-200/80 text-center">
+          <button
+            type="button"
+            onClick={handleToggleMode}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border cursor-pointer hover:bg-slate-50 active:scale-95 bg-white text-slate-700 border-slate-200"
+          >
+            <span className={`h-1.5 w-1.5 rounded-full ${isLocalFallback ? "bg-amber-500 animate-pulse" : "bg-emerald-500 animate-pulse"}`} />
+            <span>Mode : <strong className={isLocalFallback ? "text-amber-600" : "text-emerald-600"}>{isLocalFallback ? "Simulation Locale" : "Serveur principal (Supabase)"}</strong></span>
+          </button>
+          <p className="text-[9px] text-slate-400 mt-1.5 max-w-[240px] mx-auto leading-normal">
+            {isLocalFallback 
+              ? "Les données sont stockées sur votre appareil. Pratique si le serveur est indisponible." 
+              : "Données connectées en temps réel sur notre serveur principal."}
           </p>
         </div>
 

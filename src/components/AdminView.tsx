@@ -32,7 +32,7 @@ import {
   Trash2
 } from "lucide-react";
 import { User, Transaction, Product, BonusCode, UserReview, Investment } from "../types";
-import { api } from "../lib/api";
+import { api, getLocalDbExport, saveLocalDbExport, getUseLocalFallback, setUseLocalFallback } from "../lib/api";
 
 interface AdminViewProps {
   onRefresh: () => void;
@@ -109,6 +109,74 @@ export default function AdminView({ onRefresh }: AdminViewProps) {
   // Notice Broadcaster State
   const [notifyTitle, setNotifyTitle] = useState("");
   const [notifyBody, setNotifyBody] = useState("");
+
+  // Database Mode and Synchronization State
+  const [isLocalFallback, setIsLocalFallback] = useState(getUseLocalFallback());
+  const [syncing, setSyncing] = useState(false);
+
+  // Sync with remote server logic
+  const handleDatabaseSync = async () => {
+    setSyncing(true);
+    setErrorMsg("");
+    setSuccessMsg("");
+    try {
+      const localDb = getLocalDbExport();
+      
+      const payload = {
+        users: localDb.users || [],
+        transactions: localDb.transactions || [],
+        investments: localDb.investments || [],
+        userReviews: localDb.userReviews || [],
+        forumPosts: localDb.forumPosts || [],
+      };
+
+      const syncResult = await api.admin.sync(payload);
+      
+      // Update local storage database with the fully synchronized state returned by the server
+      if (syncResult && syncResult.db) {
+        saveLocalDbExport(syncResult.db);
+      }
+      
+      // Toggle local fallback to false (switch to live server)
+      setUseLocalFallback(false);
+      setIsLocalFallback(false);
+      
+      const { addedUsersCount, addedTransactionsCount, addedInvestmentsCount, addedReviewsCount, addedForumPostsCount } = syncResult.details || {};
+      
+      setAlertState({
+        title: "🔄 Synchronisation Réussie !",
+        message: `La base de données locale a été fusionnée avec succès sur le serveur Cloud Run !
+        
+• Comptes ajoutés : ${addedUsersCount || 0}
+• Transactions ajoutées (dépôts/retraits) : ${addedTransactionsCount || 0}
+• Produits payés synchronisés : ${addedInvestmentsCount || 0}
+• Avis/Forum fusionnés : ${(addedReviewsCount || 0) + (addedForumPostsCount || 0)}
+
+Vous êtes maintenant connecté sur la base de données du serveur en temps réel.`,
+      });
+
+      // Reload admin data from the live server!
+      loadAdminData();
+      onRefresh();
+    } catch (err: any) {
+      setErrorMsg(err.message || "La synchronisation a échoué. Assurez-vous que le serveur est bien en ligne.");
+      setAlertState({
+        title: "Échec de Synchronisation",
+        message: err.message || "Impossible de joindre le serveur pour synchroniser les données."
+      });
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleToggleDatabaseMode = (useLocal: boolean) => {
+    setUseLocalFallback(useLocal);
+    setIsLocalFallback(useLocal);
+    setTimeout(() => {
+      loadAdminData();
+      onRefresh();
+    }, 100);
+  };
 
   // Fetch all administrative telemetry on mount / refresh
   const loadAdminData = async () => {
@@ -611,6 +679,50 @@ export default function AdminView({ onRefresh }: AdminViewProps) {
         >
           <RefreshCw className={`h-4.5 w-4.5 ${loading ? "animate-spin" : ""}`} />
         </button>
+      </div>
+
+      {/* Synchronization Control Center */}
+      <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-3 shadow-3xs">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div className="space-y-1">
+            <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+              <span className="flex h-2.5 w-2.5 relative">
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isLocalFallback ? "bg-amber-400" : "bg-emerald-400"}`}></span>
+                <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isLocalFallback ? "bg-amber-500" : "bg-emerald-500"}`}></span>
+              </span>
+              Source de Données Active :{" "}
+              <span className={`font-black ${isLocalFallback ? "text-amber-600" : "text-emerald-600"}`}>
+                {isLocalFallback ? "Simulation Locale" : "Serveur Cloud (Supabase)"}
+              </span>
+            </h3>
+            <p className="text-[11px] text-slate-500 leading-normal max-w-xl">
+              {isLocalFallback 
+                ? "Vous gérez les comptes, dépôts et retraits enregistrés sur votre navigateur. Cliquez sur Synchroniser pour fusionner et envoyer ces données sur le serveur de production."
+                : "Vous gérez les données réelles et comptes partagés du serveur principal en temps réel."}
+            </p>
+          </div>
+
+          <div className="flex gap-2 w-full sm:w-auto shrink-0">
+            <button
+              onClick={() => handleToggleDatabaseMode(!isLocalFallback)}
+              className="flex-1 sm:flex-initial py-1.5 px-3 rounded-xl text-[10px] font-bold border border-slate-300 hover:bg-slate-100 text-slate-700 transition-all cursor-pointer active:scale-95 bg-white"
+            >
+              Basculer vers {isLocalFallback ? "Serveur" : "Local"}
+            </button>
+            <button
+              onClick={handleDatabaseSync}
+              disabled={syncing}
+              className={`flex-1 sm:flex-initial py-1.5 px-4 rounded-xl text-[10px] font-black uppercase text-white flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer active:scale-95 ${
+                syncing 
+                  ? "bg-blue-400 cursor-not-allowed" 
+                  : "bg-blue-600 hover:bg-blue-700 hover:shadow-sm"
+              }`}
+            >
+              <RefreshCw className={`h-3 w-3 ${syncing ? "animate-spin" : ""}`} />
+              <span>{syncing ? "Synchronisation..." : "Synchroniser"}</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Admin navigation layout sub-tabs */}
