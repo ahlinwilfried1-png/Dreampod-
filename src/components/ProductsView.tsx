@@ -4,7 +4,7 @@
  */
 
 import { useState } from "react";
-import { Check, Cpu } from "lucide-react";
+import { Check, Cpu, Info, X, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Product, Investment } from "../types";
 import { api } from "../lib/api";
 
@@ -70,23 +70,37 @@ export default function ProductsView({
   onRefresh 
 }: ProductsViewProps) {
   const [buyingId, setBuyingId] = useState<string | null>(null);
+  const [activeConfirmProduct, setActiveConfirmProduct] = useState<Product | null>(null);
+  const [alertModal, setAlertModal] = useState<{ title: string; message: string; type: "success" | "error" | "info"; onClose?: () => void } | null>(null);
 
-  const handleInvest = async (product: Product) => {
+  const handleInvest = (product: Product) => {
     if (userBalance < product.price) {
-      alert(`Votre solde (${userBalance.toLocaleString()} FCFA) est insuffisant. Veuillez recharger votre portefeuille de ${(product.price - userBalance).toLocaleString()} FCFA.`);
+      setAlertModal({
+        title: "Solde Insuffisant",
+        message: `Votre solde (${userBalance.toLocaleString()} FCFA) est insuffisant. Veuillez recharger votre portefeuille de ${(product.price - userBalance).toLocaleString()} FCFA.`,
+        type: "error"
+      });
       return;
     }
+    setActiveConfirmProduct(product);
+  };
 
-    const confirmBuy = window.confirm(`Voulez-vous vraiment investir ${product.price.toLocaleString()} FCFA dans "${product.name}" ? Rendement de ${product.dailyIncome.toLocaleString()} FCFA par jour pendant ${product.durationDays} jours.`);
-    if (!confirmBuy) return;
-
+  const executeInvest = async (product: Product) => {
     setBuyingId(product.id);
     try {
       const response = await api.invest(product.id);
-      alert(response.message || "Investissement complété avec succès !");
-      onRefresh();
+      setAlertModal({
+        title: "Investissement Réussi",
+        message: response.message || `Votre investissement de ${product.price.toLocaleString()} FCFA dans "${product.name}" a été complété avec succès !`,
+        type: "success",
+        onClose: () => onRefresh()
+      });
     } catch (err: any) {
-      alert(err.message || "Erreur de communication.");
+      setAlertModal({
+        title: "Échec de l'Investissement",
+        message: err.message || "Une erreur est survenue lors de l'activation du produit d'investissement.",
+        type: "error"
+      });
     } finally {
       setBuyingId(null);
     }
@@ -101,6 +115,29 @@ export default function ProductsView({
   return (
     <div className="space-y-4 pb-28 text-slate-800 select-none">
       
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* Left Card: Nombre de produits */}
+        <div className="bg-white border border-slate-200/60 rounded-3xl p-4.5 shadow-2xs flex flex-col justify-center">
+          <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
+            Nombre de produits
+          </span>
+          <span className="text-xl font-black text-blue-600 mt-1 font-mono">
+            {investments.length}
+          </span>
+        </div>
+
+        {/* Right Card: Revenu total */}
+        <div className="bg-white border border-slate-200/60 rounded-3xl p-4.5 shadow-2xs flex flex-col justify-center text-right">
+          <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">
+            Revenu total
+          </span>
+          <span className="text-xl font-black text-green-600 mt-1 font-mono">
+            {investments.reduce((sum, inv) => sum + (inv.dailyIncome * inv.durationDays), 0).toLocaleString()} <span className="text-[10px] font-bold text-slate-500 font-sans">FCFA</span>
+          </span>
+        </div>
+      </div>
+
       {/* List of Products */}
       <div className="space-y-4">
         {activeProducts.length === 0 ? (
@@ -208,6 +245,93 @@ export default function ProductsView({
           })
         )}
       </div>
+
+      {/* Confirmation Modal */}
+      {activeConfirmProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 relative space-y-4">
+            <button
+              onClick={() => setActiveConfirmProduct(null)}
+              className="absolute top-4 right-4 p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            
+            <div className="text-center space-y-2">
+              <div className="mx-auto h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 text-xl">
+                💎
+              </div>
+              <h3 className="text-base font-black text-slate-900">Confirmer l'Investissement</h3>
+              <p className="text-[11.5px] text-slate-500 leading-relaxed">
+                Voulez-vous vraiment investir <span className="font-extrabold text-slate-800">{activeConfirmProduct.price.toLocaleString()} FCFA</span> dans le plan <span className="font-extrabold text-slate-800">"{activeConfirmProduct.name}"</span> ?
+              </p>
+            </div>
+
+            <div className="bg-slate-50 rounded-2xl p-4 text-xs space-y-2 text-slate-600">
+              <div className="flex justify-between font-bold">
+                <span>Rendement quotidien :</span>
+                <span className="text-green-600 font-extrabold">{activeConfirmProduct.dailyIncome.toLocaleString()} FCFA</span>
+              </div>
+              <div className="flex justify-between font-bold">
+                <span>Période de validité :</span>
+                <span className="text-slate-800 font-extrabold">{activeConfirmProduct.durationDays} Jours</span>
+              </div>
+              <div className="flex justify-between font-bold">
+                <span>Revenu total estimé :</span>
+                <span className="text-blue-600 font-extrabold">{activeConfirmProduct.totalIncome.toLocaleString()} FCFA</span>
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setActiveConfirmProduct(null)}
+                className="flex-1 py-3 border border-slate-200 hover:bg-slate-50 rounded-2xl text-xs font-black text-slate-600 cursor-pointer"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => {
+                  const prod = activeConfirmProduct;
+                  setActiveConfirmProduct(null);
+                  executeInvest(prod);
+                }}
+                className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl text-xs font-black cursor-pointer shadow-md shadow-blue-500/10"
+              >
+                Confirmer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Alert Modal */}
+      {alertModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 text-center space-y-4">
+            <div className="mx-auto h-12 w-12 rounded-full flex items-center justify-center text-2xl">
+              {alertModal.type === "success" && <CheckCircle2 className="h-10 w-10 text-green-500" />}
+              {alertModal.type === "error" && <AlertTriangle className="h-10 w-10 text-red-500" />}
+              {alertModal.type === "info" && <Info className="h-10 w-10 text-blue-500" />}
+            </div>
+
+            <div className="space-y-1">
+              <h3 className="text-sm font-black text-slate-900">{alertModal.title}</h3>
+              <p className="text-[11px] text-slate-500 leading-relaxed">{alertModal.message}</p>
+            </div>
+
+            <button
+              onClick={() => {
+                const action = alertModal.onClose;
+                setAlertModal(null);
+                if (action) action();
+              }}
+              className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-xs font-black cursor-pointer"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
 
     </div>
   );

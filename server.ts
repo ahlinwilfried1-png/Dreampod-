@@ -95,8 +95,17 @@ interface DatabaseSchema {
 }
 
 // Ensure database file exists
-const supabaseUrl = process.env.SUPABASE_URL || "";
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+const cleanEnvVar = (val: string | undefined): string => {
+  if (!val) return "";
+  let cleaned = val.trim();
+  if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
+    cleaned = cleaned.slice(1, -1).trim();
+  }
+  return cleaned;
+};
+
+const supabaseUrl = cleanEnvVar(process.env.SUPABASE_URL);
+const supabaseServiceKey = cleanEnvVar(process.env.SUPABASE_SERVICE_ROLE_KEY);
 const supabase = (supabaseUrl && supabaseServiceKey)
   ? createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
@@ -105,6 +114,11 @@ const supabase = (supabaseUrl && supabaseServiceKey)
     })
   : null;
 
+let isSupabaseHealthy = false;
+let lastDbLoadedTime = 0;
+const DB_LOAD_CACHE_MS = 2000;
+let db: DatabaseSchema;
+
 if (supabase) {
   console.log("Supabase Client initialized with URL:", supabaseUrl);
 } else {
@@ -112,7 +126,7 @@ if (supabase) {
 }
 
 async function saveToSupabase(dbData: DatabaseSchema) {
-  if (!supabase) return;
+  if (!supabase || !isSupabaseHealthy) return;
   try {
     const { error } = await supabase
       .from("dreampod_state")
@@ -123,7 +137,7 @@ async function saveToSupabase(dbData: DatabaseSchema) {
       }, { onConflict: "id" });
 
     if (error) {
-      console.error("Error upserting database state to Supabase:", error.message);
+      console.warn("Error upserting database state to Supabase:", error.message);
       if (error.message?.includes("does not exist") || error.code === "42P01") {
         console.warn("\n==================================================");
         console.warn("ATTENTION: La table 'dreampod_state' n'existe pas dans Supabase.");
@@ -142,7 +156,7 @@ async function saveToSupabase(dbData: DatabaseSchema) {
       console.log("Database state successfully synchronized to Supabase!");
     }
   } catch (err: any) {
-    console.error("Failed to connect or save to Supabase:", err.message || err);
+    console.warn("Failed to connect or save to Supabase:", err.message || err);
   }
 }
 
@@ -249,9 +263,14 @@ function migrateDatabase(parsed: any): DatabaseSchema {
   return parsed as DatabaseSchema;
 }
 
-async function loadDatabase(): Promise<DatabaseSchema> {
+async function loadDatabase(force = false): Promise<DatabaseSchema> {
+  const now = Date.now();
+  if (!force && typeof db !== "undefined" && db && (now - lastDbLoadedTime < DB_LOAD_CACHE_MS)) {
+    return db;
+  }
+
   // 1. Try loading from Supabase first
-  if (supabase) {
+  if (supabase && isSupabaseHealthy) {
     try {
       console.log("Loading database state from Supabase table 'dreampod_state'...");
       const { data, error } = await supabase
@@ -265,6 +284,7 @@ async function loadDatabase(): Promise<DatabaseSchema> {
         const migrated = migrateDatabase(data.data);
         // Sync local backup file
         fs.writeFileSync(DB_FILE, JSON.stringify(migrated, null, 2), "utf8");
+        lastDbLoadedTime = Date.now();
         return migrated;
       } else if (error) {
         if (error.code === "PGRST116") {
@@ -283,11 +303,11 @@ async function loadDatabase(): Promise<DatabaseSchema> {
           `);
           console.warn("==================================================\n");
         } else {
-          console.error("Supabase load error:", error.message);
+          console.warn("Supabase load error:", error.message);
         }
       }
     } catch (err: any) {
-      console.error("Error connecting to Supabase during load:", err.message || err);
+      console.warn("Error connecting to Supabase during load:", err.message || err);
     }
   }
 
@@ -476,6 +496,7 @@ async function loadDatabase(): Promise<DatabaseSchema> {
     };
     fs.writeFileSync(DB_FILE, JSON.stringify(dbData, null, 2), "utf8");
     saveToSupabase(dbData);
+    lastDbLoadedTime = Date.now();
     return dbData;
   }
 
@@ -484,6 +505,7 @@ async function loadDatabase(): Promise<DatabaseSchema> {
     const parsed = JSON.parse(data) as DatabaseSchema;
     const migrated = migrateDatabase(parsed);
     fs.writeFileSync(DB_FILE, JSON.stringify(migrated, null, 2), "utf8");
+    lastDbLoadedTime = Date.now();
     return migrated;
   } catch (error) {
     console.error("Database reading error, resetting file:", error);
@@ -616,8 +638,37 @@ async function startServer() {
 
   app.use(express.json());
 
+  // Verify Supabase health once at startup
+  if (supabase) {
+    try {
+      console.log("Running startup health check on Supabase connection...");
+      const { error } = await supabase.from("dreampod_state").select("id").limit(1);
+      if (error) {
+        const msg = error.message || "";
+        if (msg.includes("Invalid API key") || msg.includes("invalid") || msg.includes("JWT") || error.code === "PGRST301") {
+          console.warn("\n==================================================");
+          console.warn("ATTENTION: La clé API Supabase est INVALIDE ou incorrecte.");
+          console.warn("Supabase sera temporairement désactivé pour éviter les ralentissements.");
+          console.warn("Le serveur utilisera le stockage local ultra-rapide 'db.json'.");
+          console.warn("==================================================\n");
+          isSupabaseHealthy = false;
+        } else {
+          // If the table doesn't exist, the API key is still valid and we can write to it!
+          console.log("[Supabase] Connexion validée ! (La table n'existe pas encore ou a une structure différente, mais la clé API est valide).");
+          isSupabaseHealthy = true;
+        }
+      } else {
+        console.log("[Supabase] Connexion validée avec succès sur 'dreampod_state' !");
+        isSupabaseHealthy = true;
+      }
+    } catch (err: any) {
+      console.warn("[Supabase] Exception de connexion lors du démarrage :", err.message || err);
+      isSupabaseHealthy = false;
+    }
+  }
+
   // Setup database local in-memory/JSON sync
-  let db = await loadDatabase();
+  db = await loadDatabase();
 
   // Middleware to automatically reload the database from Supabase/local file on every API request.
   // This guarantees that all devices (and multiple serverless containers) operate on the same real-time data.
@@ -625,6 +676,7 @@ async function startServer() {
     if (req.path.startsWith("/api/")) {
       try {
         db = await loadDatabase();
+        processDailyRevenues(db);
       } catch (e: any) {
         console.error("Failed to dynamically reload database in request middleware:", e.message || e);
       }
@@ -1138,6 +1190,12 @@ async function startServer() {
     const { amount, method } = req.body;
     const userId = req.user!.id;
 
+    // Check if user has at least one active product (daysPassed < durationDays)
+    const hasActiveProduct = db.investments.some(inv => inv.userId === userId && inv.daysPassed < inv.durationDays);
+    if (!hasActiveProduct) {
+      return res.status(400).json({ error: "Vous devez posséder au moins un produit actif (un investissement en cours) pour pouvoir effectuer un retrait sur la plateforme." });
+    }
+
     if (!amount || amount < 500) {
       return res.status(400).json({ error: "Le montant minimum de retrait est de 500 FCFA." });
     }
@@ -1232,6 +1290,53 @@ async function startServer() {
     } else {
       res.status(400).json({ error: "Vos revenus ont déjà été collectés pour cette période." });
     }
+  });
+
+  // Daily Check-In (Pointage)
+  app.post("/api/user/checkin", authenticateUser, (req, res) => {
+    const userId = req.user!.id;
+    const now = new Date();
+    // Use local date string in YYYY-MM-DD or simple date matching to see if already checked in today
+    const todayStr = now.toISOString().split("T")[0];
+
+    const hasCheckedInToday = db.transactions.some(tx => 
+      tx.userId === userId && 
+      tx.type === "bonus" && 
+      tx.method === "Pointage quotidien" && 
+      tx.date.startsWith(todayStr)
+    );
+
+    if (hasCheckedInToday) {
+      return res.status(400).json({ error: "Vous avez déjà effectué votre pointage aujourd'hui. Revenez demain !" });
+    }
+
+    const uIdx = db.users.findIndex(u => u.id === userId);
+    if (uIdx === -1) return res.status(404).json({ error: "Utilisateur non trouvé" });
+
+    const checkInReward = 20; // 20 FCFA
+    db.users[uIdx].balance += checkInReward;
+    db.users[uIdx].totalRevenue += checkInReward;
+
+    const tx: Transaction = {
+      id: generateId("tx"),
+      userId: userId,
+      userName: req.user!.name,
+      userPhone: req.user!.phone,
+      type: "bonus",
+      amount: checkInReward,
+      status: "completed",
+      date: now.toISOString(),
+      method: "Pointage quotidien",
+    };
+    db.transactions.push(tx);
+
+    saveDatabase(db);
+
+    res.json({
+      message: `Félicitations ! Votre pointage a été validé. Un bonus de ${checkInReward} FCFA a été ajouté à votre solde.`,
+      reward: checkInReward,
+      balance: db.users[uIdx].balance,
+    });
   });
 
   // Claim Gift/Promo Code
@@ -1380,6 +1485,17 @@ async function startServer() {
 
   // --- ADMIN PORTAL ENDPOINTS ---
 
+  // Middleware to automatically synchronize and refresh the in-memory database
+  // before serving any admin actions, so they see registrations/updates from other devices instantly.
+  app.use("/api/admin", async (req, res, next) => {
+    try {
+      db = await loadDatabase();
+    } catch (err) {
+      console.warn("Error refreshing database for admin route:", err);
+    }
+    next();
+  });
+
   // Admin Stats
   app.get("/api/admin/stats", authenticateAdmin, (req, res) => {
     const totalUsers = db.users.length;
@@ -1429,7 +1545,8 @@ async function startServer() {
         totalPurchasedProductsAmount,
         numberOfProducts: db.products.length,
         numberOfBonusCodes: db.bonusCodes.length,
-      }
+      },
+      isSupabaseHealthy: isSupabaseHealthy
     });
   });
 

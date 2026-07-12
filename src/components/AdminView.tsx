@@ -113,6 +113,7 @@ export default function AdminView({ onRefresh }: AdminViewProps) {
   // Database Mode and Synchronization State
   const [isLocalFallback, setIsLocalFallback] = useState(getUseLocalFallback());
   const [syncing, setSyncing] = useState(false);
+  const [isSupabaseHealthy, setIsSupabaseHealthy] = useState<boolean | null>(null);
 
   // Sync with remote server logic
   const handleDatabaseSync = async () => {
@@ -179,12 +180,17 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
   };
 
   // Fetch all administrative telemetry on mount / refresh
-  const loadAdminData = async () => {
-    setLoading(true);
-    setErrorMsg("");
+  const loadAdminData = async (silent = false) => {
+    if (!silent) {
+      setLoading(true);
+      setErrorMsg("");
+    }
     try {
       const statsResp = await api.admin.getStats();
       setGlobalStats(statsResp.stats);
+      if (statsResp && typeof statsResp.isSupabaseHealthy === "boolean") {
+        setIsSupabaseHealthy(statsResp.isSupabaseHealthy);
+      }
 
       const usersResp = await api.admin.getUsers(searchQuery);
       setUsersList(usersResp.users);
@@ -212,14 +218,25 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
         console.warn("Investments loading failed:", invErr);
       }
     } catch (err: any) {
-      setErrorMsg(err.message || "Erreur de chargement des services admin.");
+      if (!silent) {
+        setErrorMsg(err.message || "Erreur de chargement des services admin.");
+      }
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
     loadAdminData();
+    
+    // Set up real-time automatic polling every 5 seconds to sync registrations/actions from other devices
+    const interval = setInterval(() => {
+      loadAdminData(true);
+    }, 5000);
+    
+    return () => clearInterval(interval);
   }, [adminTab, searchQuery]);
 
   // Actions
@@ -682,48 +699,59 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
       </div>
 
       {/* Synchronization Control Center */}
-      <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-3 shadow-3xs">
+      <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 shadow-3xs select-none">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div className="space-y-1">
-            <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+            <h3 className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
               <span className="flex h-2.5 w-2.5 relative">
-                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isLocalFallback ? "bg-amber-400" : "bg-emerald-400"}`}></span>
-                <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isLocalFallback ? "bg-amber-500" : "bg-emerald-500"}`}></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
               </span>
-              Source de Données Active :{" "}
-              <span className={`font-black ${isLocalFallback ? "text-amber-600" : "text-emerald-600"}`}>
-                {isLocalFallback ? "Simulation Locale" : "Serveur Cloud (Supabase)"}
+              Mode Synchro Temps Réel :{" "}
+              <span className="font-black text-emerald-800">
+                Activé
               </span>
             </h3>
-            <p className="text-[11px] text-slate-500 leading-normal max-w-xl">
-              {isLocalFallback 
-                ? "Vous gérez les comptes, dépôts et retraits enregistrés sur votre navigateur. Cliquez sur Synchroniser pour fusionner et envoyer ces données sur le serveur de production."
-                : "Vous gérez les données réelles et comptes partagés du serveur principal en temps réel."}
+            <p className="text-[11px] text-emerald-700 leading-normal max-w-xl">
+              Toutes les inscriptions, dépôts, retraits et opérations effectués sur n'importe quel appareil sont automatiquement enregistrés et synchronisés ici en temps réel toutes les 5 secondes sans rechargement.
             </p>
           </div>
-
           <div className="flex gap-2 w-full sm:w-auto shrink-0">
-            <button
-              onClick={() => handleToggleDatabaseMode(!isLocalFallback)}
-              className="flex-1 sm:flex-initial py-1.5 px-3 rounded-xl text-[10px] font-bold border border-slate-300 hover:bg-slate-100 text-slate-700 transition-all cursor-pointer active:scale-95 bg-white"
-            >
-              Basculer vers {isLocalFallback ? "Serveur" : "Local"}
-            </button>
-            <button
-              onClick={handleDatabaseSync}
-              disabled={syncing}
-              className={`flex-1 sm:flex-initial py-1.5 px-4 rounded-xl text-[10px] font-black uppercase text-white flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer active:scale-95 ${
-                syncing 
-                  ? "bg-blue-400 cursor-not-allowed" 
-                  : "bg-blue-600 hover:bg-blue-700 hover:shadow-sm"
-              }`}
-            >
-              <RefreshCw className={`h-3 w-3 ${syncing ? "animate-spin" : ""}`} />
-              <span>{syncing ? "Synchronisation..." : "Synchroniser"}</span>
-            </button>
+            <div className="py-1 px-2.5 rounded-lg bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider">
+              En Ligne
+            </div>
           </div>
         </div>
       </div>
+
+      {isSupabaseHealthy === false && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 shadow-3xs animate-slide-in">
+          <div className="flex items-start gap-3">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-800 text-xs font-black">
+              ⚠️
+            </span>
+            <div className="space-y-1">
+              <h4 className="text-xs font-black text-amber-900">
+                Liaison Base de Données Globale : Clé API Supabase Invalide
+              </h4>
+              <p className="text-[11px] text-amber-700 leading-normal">
+                Les clés API configurées dans les secrets de l'application (<code className="bg-amber-100 px-1 py-0.5 rounded text-amber-900 font-mono text-[10px]">SUPABASE_URL</code> et <code className="bg-amber-100 px-1 py-0.5 rounded text-amber-900 font-mono text-[10px]">SUPABASE_SERVICE_ROLE_KEY</code>) sont absentes, expirées ou incorrectes. 
+              </p>
+              <p className="text-[11px] text-amber-700 leading-normal font-bold">
+                💡 Conséquence : Les données sont stockées temporairement dans le stockage local du serveur et ne seront pas synchronisées si les utilisateurs se connectent depuis différents téléphones.
+              </p>
+              <div className="pt-1 text-[10.5px] text-amber-800 font-semibold leading-normal">
+                Comment résoudre ce problème :
+                <ol className="list-decimal pl-4 mt-1 space-y-0.5 font-normal">
+                  <li>Allez dans le menu <strong className="font-bold">Settings (Paramètres/Secrets)</strong> de AI Studio en haut à droite.</li>
+                  <li>Vérifiez et remplacez la clé de service <strong className="font-bold">SUPABASE_SERVICE_ROLE_KEY</strong> par une clé valide de votre projet Supabase.</li>
+                  <li>Assurez-vous que la table <strong className="font-bold">dreampod_state</strong> est créée dans votre base Supabase si nécessaire.</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Admin navigation layout sub-tabs */}
       <div className="flex gap-1.5 overflow-x-auto pb-1 select-none no-scrollbar">

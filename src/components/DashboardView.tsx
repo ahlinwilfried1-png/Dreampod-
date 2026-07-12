@@ -58,7 +58,7 @@ export default function DashboardView({
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
 
   // UI states
-  const [claiming, setClaiming] = useState(false);
+  const [alertModal, setAlertModal] = useState<{ title: string; message: string; type: "success" | "error" | "info"; onClose?: () => void } | null>(null);
 
   // Spin Wheel State
   const [rotation, setRotation] = useState(0);
@@ -104,23 +104,7 @@ export default function DashboardView({
 
 
 
-  const handleClaimRevenues = async () => {
-    if (investments.length === 0) {
-      alert("Vous n'avez aucun investissement actif aujourd'hui. Rendez-vous dans l'onglet 'Produits' pour investir !");
-      return;
-    }
 
-    setClaiming(true);
-    try {
-      const resp = await api.claimRevenues();
-      alert(resp.message || "Succès lors de la récolte !");
-      onRefresh();
-    } catch (err: any) {
-      alert(err.message || "Vos revenus ont déjà été collectés pour aujourd'hui.");
-    } finally {
-      setClaiming(false);
-    }
-  };
 
   return (
     <div className="space-y-6 pb-24 text-slate-800">
@@ -189,9 +173,9 @@ export default function DashboardView({
         </div>
       </div>
 
-      {/* Claim Machine Earnings Container */}
+      {/* Automatic Machine Earnings Status Indicator */}
       {investments.length > 0 && (
-        <div className="bg-white border border-slate-100 p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
+        <div className="bg-white border border-slate-100 p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs select-none">
           <div className="flex items-center gap-3">
             <div className="relative flex items-center justify-center p-3.5 bg-green-50 border border-green-100 rounded-full text-green-600">
               <Cpu className="h-5 w-5 animate-spin" style={{ animationDuration: '3s' }} />
@@ -199,22 +183,17 @@ export default function DashboardView({
             </div>
             <div>
               <p className="text-xs font-black text-slate-800 uppercase tracking-wider">Vos machines tournent ({investments.length})</p>
-              <p className="text-xs font-bold text-green-600 mt-0.5">+{user.dailyRevenue.toLocaleString()} FCFA récoltables / jour</p>
+              <p className="text-xs font-bold text-green-600 mt-0.5">+{user.dailyRevenue.toLocaleString()} FCFA crédités automatiquement / jour</p>
             </div>
           </div>
           
-          <button
-            id="btn-collect-revenues"
-            onClick={handleClaimRevenues}
-            disabled={claiming}
-            className="w-full sm:w-auto bg-green-600 hover:bg-green-500 active:bg-green-700 text-white font-bold px-6 py-2.5 rounded-xl transition-all shadow-md shadow-green-600/10 text-xs flex items-center justify-center space-x-2 disabled:opacity-50 cursor-pointer"
-          >
-            {claiming ? (
-              <div className="h-3.5 w-3.5 border-2 border-white/35 border-t-white rounded-full animate-spin" />
-            ) : (
-              <span>Récolter Revenus ({investments.length})</span>
-            )}
-          </button>
+          <div className="w-full sm:w-auto bg-green-50 text-green-600 border border-green-100 font-extrabold px-4 py-2 rounded-xl text-[10.5px] flex items-center justify-center gap-1.5 uppercase tracking-wider">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+            </span>
+            Automatique (Chaque 24H)
+          </div>
         </div>
       )}
 
@@ -432,6 +411,35 @@ export default function DashboardView({
           ))}
         </div>
       </div>
+
+      {/* Alert Modal */}
+      {alertModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in select-none">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 text-center space-y-4">
+            <div className="mx-auto h-12 w-12 rounded-full flex items-center justify-center text-2xl">
+              {alertModal.type === "success" && <CheckCircle className="h-10 w-10 text-green-500" />}
+              {alertModal.type === "error" && <div className="text-red-500 text-3xl">⚠️</div>}
+              {alertModal.type === "info" && <HelpCircle className="h-10 w-10 text-blue-500" />}
+            </div>
+
+            <div className="space-y-1">
+              <h3 className="text-sm font-black text-slate-900">{alertModal.title}</h3>
+              <p className="text-[11px] text-slate-500 leading-relaxed">{alertModal.message}</p>
+            </div>
+
+            <button
+              onClick={() => {
+                const action = alertModal.onClose;
+                setAlertModal(null);
+                if (action) action();
+              }}
+              className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-xs font-black cursor-pointer"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
 
     </div>
   );

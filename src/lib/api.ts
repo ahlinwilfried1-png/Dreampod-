@@ -63,15 +63,6 @@ const getApiBase = (): string => {
 const API_BASE = getApiBase();
 
 let useLocalFallback = false;
-try {
-  if (isLocalOrCloudRun()) {
-    // Force false on server environments so we don't accidentally fall back to localStorage
-    useLocalFallback = false;
-    localStorage.setItem("dreampod_use_local_fallback", "false");
-  } else {
-    useLocalFallback = localStorage.getItem("dreampod_use_local_fallback") === "true";
-  }
-} catch (e) {}
 
 // --- LOCAL STORAGE DATABASE SIMULATION (MIRRORS SERVER.TS EXACTLY) ---
 
@@ -1304,6 +1295,7 @@ export const api = {
     body: JSON.stringify({ productId }),
   }),
   claimRevenues: () => request<any>("/api/user/claim-revenues", { method: "POST" }),
+  checkIn: () => request<any>("/api/user/checkin", { method: "POST" }),
   claimBonusCode: (code: string) => request<any>("/api/user/claim-bonus", {
     method: "POST",
     body: JSON.stringify({ code }),
@@ -1344,7 +1336,7 @@ export const api = {
 
   // --- ADMIN API ---
   admin: {
-    getStats: () => request<{ stats: any }>("/api/admin/stats"),
+    getStats: () => request<{ stats: any; isSupabaseHealthy?: boolean }>("/api/admin/stats"),
     getUsers: (search?: string) => {
       const q = search ? `?search=${encodeURIComponent(search)}` : "";
       return request<{ users: any[] }>(`/api/admin/users${q}`);
@@ -1415,12 +1407,9 @@ export function saveLocalDbExport(db: any) {
 }
 
 export function getUseLocalFallback() {
-  return useLocalFallback;
+  return false;
 }
 
 export function setUseLocalFallback(val: boolean) {
-  useLocalFallback = val;
-  try {
-    localStorage.setItem("dreampod_use_local_fallback", val ? "true" : "false");
-  } catch (e) {}
+  // Mode simulation locale définitivement désactivé pour forcer la synchronisation avec le serveur
 }

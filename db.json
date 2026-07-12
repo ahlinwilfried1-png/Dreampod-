@@ -25,9 +25,9 @@
       "name": "Jean Kouassi",
       "phone": "+22890123456",
       "passwordHash": "user123",
-      "balance": 18500,
+      "balance": 39500,
       "dailyRevenue": 3500,
-      "totalRevenue": 15500,
+      "totalRevenue": 36500,
       "referralCode": "JEAN90",
       "referrerId": "usr_admin",
       "referralsCount": 2,
@@ -129,9 +129,9 @@
       "price": 5000,
       "dailyIncome": 1000,
       "durationDays": 30,
-      "daysPassed": 4,
+      "daysPassed": 10,
       "activatedAt": "2026-07-02T07:21:28.543Z",
-      "lastClaimAt": "2026-07-06T07:21:28.543Z"
+      "lastClaimAt": "2026-07-12T07:21:28.543Z"
     },
     {
       "id": "inv_2",
@@ -141,9 +141,9 @@
       "price": 10000,
       "dailyIncome": 2500,
       "durationDays": 30,
-      "daysPassed": 2,
+      "daysPassed": 8,
       "activatedAt": "2026-07-04T07:21:28.543Z",
-      "lastClaimAt": "2026-07-06T07:21:28.543Z"
+      "lastClaimAt": "2026-07-12T07:21:28.543Z"
     }
   ],
   "transactions": [
@@ -209,6 +209,28 @@
       "status": "completed",
       "date": "2026-07-06T07:21:48.852Z",
       "method": "Roue de la Chance 🎡"
+    },
+    {
+      "id": "tx_ic7t0uned",
+      "userId": "usr_demo",
+      "userName": "Jean Kouassi",
+      "userPhone": "+22890123456",
+      "type": "bonus",
+      "amount": 6000,
+      "status": "completed",
+      "date": "2026-07-12T10:20:10.467Z",
+      "method": "Revenu journalier VIP (6 jour(s)) - VIP 1 - Plan Élite"
+    },
+    {
+      "id": "tx_0hhuhzmc7",
+      "userId": "usr_demo",
+      "userName": "Jean Kouassi",
+      "userPhone": "+22890123456",
+      "type": "bonus",
+      "amount": 15000,
+      "status": "completed",
+      "date": "2026-07-12T10:20:10.467Z",
+      "method": "Revenu journalier VIP (6 jour(s)) - VIP 2 - Plan Premium"
     }
   ],
   "bonusCodes": [

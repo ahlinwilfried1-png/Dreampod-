@@ -19,7 +19,6 @@ import ProductsView from "./components/ProductsView";
 import TeamView from "./components/TeamView";
 import ProfileView from "./components/ProfileView";
 import AdminView from "./components/AdminView";
-import ForumView from "./components/ForumView";
 import DepositView from "./components/DepositView";
 import WithdrawView from "./components/WithdrawView";
 import HistoryView from "./components/HistoryView";
@@ -62,11 +61,14 @@ export default function App() {
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
   const handleSetActiveTab = (tab: string) => {
-    const primaryTabs = ["dashboard", "products", "team", "forum", "profile", "admin"];
+    const primaryTabs = ["dashboard", "products", "team", "profile", "admin"];
     if (primaryTabs.includes(activeTab)) {
       setPreviousTab(activeTab);
     }
     setActiveTab(tab);
+    if (tab === "dashboard") {
+      setShowWelcomeModal(true);
+    }
   };
 
   // Auto-Sync User status details from backend
@@ -113,6 +115,10 @@ export default function App() {
   // If the user visits with a referral code, display the register page directly
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref");
+    if (ref) {
+      sessionStorage.setItem("dreampod_referral_code", ref);
+    }
     if (params.has("ref") || window.location.pathname.toLowerCase().includes("register")) {
       removeToken();
       setSessionToken(null);
@@ -121,13 +127,12 @@ export default function App() {
     }
   }, []);
 
-  // Show welcome modal once on initial load or login, but NOT when switching tabs/pages
+  // Show welcome modal every time an active user visits or reloads the dashboard (page d'accueil)
   useEffect(() => {
-    if (user && !sessionStorage.getItem("dreampod_welcome_shown")) {
+    if (user && activeTab === "dashboard") {
       setShowWelcomeModal(true);
-      sessionStorage.setItem("dreampod_welcome_shown", "true");
     }
-  }, [user]);
+  }, [user, activeTab]);
 
   // Clean up URL query parameters and pathname when logged in to prevent accidental resets
   useEffect(() => {
@@ -147,7 +152,6 @@ export default function App() {
     setToken(newToken);
     setSessionToken(newToken);
     setUser(loggedInUser);
-    sessionStorage.setItem("dreampod_welcome_shown", "true");
     setShowWelcomeModal(true);
     setActiveTab("dashboard");
   };
@@ -161,7 +165,6 @@ export default function App() {
     setProducts([]);
     setTeam([]);
     setShowWelcomeModal(false);
-    sessionStorage.removeItem("dreampod_welcome_shown");
     setAuthView("register");
     setActiveTab("dashboard");
   };
@@ -251,13 +254,6 @@ export default function App() {
           />
         )}
 
-        {activeTab === "forum" && (
-          <ForumView
-            user={user}
-            onRefresh={handleRefreshData}
-          />
-        )}
-
         {activeTab === "profile" && (
           <ProfileView
             user={user}
@@ -286,6 +282,7 @@ export default function App() {
         {activeTab === "withdraw" && (
           <WithdrawView
             user={user}
+            investments={investments}
             onRefresh={handleRefreshData}
             onBack={() => setActiveTab(previousTab)}
           />
@@ -294,6 +291,7 @@ export default function App() {
         {activeTab === "history" && (
           <HistoryView
             transactions={transactions}
+            investments={investments}
             onBack={() => setActiveTab(previousTab)}
           />
         )}

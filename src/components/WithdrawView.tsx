@@ -4,12 +4,13 @@
  */
 
 import React, { useState } from "react";
-import { Coins, ArrowLeft, CheckCircle, Info, Clock } from "lucide-react";
-import { User } from "../types";
+import { Coins, ArrowLeft, CheckCircle, Info, Clock, AlertTriangle } from "lucide-react";
+import { User, Investment } from "../types";
 import { api } from "../lib/api";
 
 interface WithdrawViewProps {
   user: User;
+  investments: Investment[];
   onRefresh: () => void;
   onBack: () => void;
 }
@@ -20,7 +21,7 @@ const PAYMENT_METHODS = [
   { id: "moov", name: "Moov Money 🟢", countries: "Bénin, Burkina Faso" },
 ];
 
-export default function WithdrawView({ user, onRefresh, onBack }: WithdrawViewProps) {
+export default function WithdrawView({ user, investments, onRefresh, onBack }: WithdrawViewProps) {
   const [withdrawAmount, setWithdrawAmount] = useState("3000");
   const [withdrawMethod, setWithdrawMethod] = useState("mtn");
   const [withdrawPhone, setWithdrawPhone] = useState("");
@@ -29,10 +30,17 @@ export default function WithdrawView({ user, onRefresh, onBack }: WithdrawViewPr
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
+  const hasActiveProduct = investments && investments.some((inv) => inv.daysPassed < inv.durationDays);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
+
+    if (!hasActiveProduct) {
+      setError("Action impossible : Vous devez posséder au moins un produit d'investissement actif pour pouvoir effectuer un retrait.");
+      return;
+    }
 
     const val = Number(withdrawAmount);
     if (!val || val < 500) {
@@ -103,6 +111,21 @@ export default function WithdrawView({ user, onRefresh, onBack }: WithdrawViewPr
           </span>
         </div>
 
+        {!hasActiveProduct && (
+          <div className="bg-amber-50 border border-amber-200/80 text-amber-900 text-xs p-4.5 rounded-2xl font-semibold flex flex-col gap-2.5 shadow-2xs select-none">
+            <div className="flex items-center gap-2 text-amber-700 font-black uppercase text-[10px] tracking-wider">
+              <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
+              Retrait Suspendu (Produit requis)
+            </div>
+            <p className="text-[11px] leading-relaxed text-slate-600">
+              Vous devez posséder <span className="font-extrabold text-slate-800 underline">au moins un produit d'investissement actif</span> (un plan VIP en cours d'évolution) pour débloquer la fonctionnalité de retrait sur Dreampod.
+            </p>
+            <p className="text-[10px] text-amber-700 font-extrabold flex items-center gap-1 bg-amber-100/50 px-2 py-1.5 rounded-lg w-fit">
+              💡 Rendez-vous dans l'onglet "Produit" pour activer votre plan d'investissement.
+            </p>
+          </div>
+        )}
+
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-600 text-[11px] p-3 rounded-2xl font-bold flex gap-2">
             <span>⚠️</span>
@@ -129,9 +152,10 @@ export default function WithdrawView({ user, onRefresh, onBack }: WithdrawViewPr
               type="number"
               required
               min="500"
+              disabled={!hasActiveProduct}
               value={withdrawAmount}
               onChange={(e) => setWithdrawAmount(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-sm text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 font-black font-mono transition-all"
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-sm text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 font-black font-mono transition-all disabled:opacity-50"
             />
             <span className="text-[10px] text-slate-400 font-medium block px-1">
               Retrait minimum autorisé : 500 FCFA
@@ -146,8 +170,9 @@ export default function WithdrawView({ user, onRefresh, onBack }: WithdrawViewPr
             <select
               id="withdraw-method-select"
               value={withdrawMethod}
+              disabled={!hasActiveProduct}
               onChange={(e) => setWithdrawMethod(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-xs font-bold text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500"
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-xs font-bold text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 disabled:opacity-50"
             >
               {PAYMENT_METHODS.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -166,10 +191,11 @@ export default function WithdrawView({ user, onRefresh, onBack }: WithdrawViewPr
               id="withdraw-phone-input"
               type="tel"
               required
-              placeholder="Ex: 90123456 (avec l'indicatif de votre pays si nécessaire)"
+              disabled={!hasActiveProduct}
+              placeholder={hasActiveProduct ? "Ex: 90123456 (avec l'indicatif)" : "Produit actif requis pour saisir"}
               value={withdrawPhone}
               onChange={(e) => setWithdrawPhone(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-xs font-semibold text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500"
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-xs font-semibold text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 disabled:opacity-50"
             />
           </div>
 
@@ -186,10 +212,14 @@ export default function WithdrawView({ user, onRefresh, onBack }: WithdrawViewPr
           <button
             id="withdraw-submit-btn"
             type="submit"
-            disabled={loading}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs py-3.5 rounded-2xl transition-all cursor-pointer disabled:opacity-40 shadow-md shadow-emerald-500/10 active:scale-98"
+            disabled={loading || !hasActiveProduct}
+            className={`w-full font-black text-xs py-3.5 rounded-2xl transition-all shadow-md active:scale-98 ${
+              !hasActiveProduct
+                ? "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
+                : "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer hover:shadow-emerald-500/10"
+            }`}
           >
-            {loading ? "Envoi de la requête..." : "Confirmer la demande de retrait de fonds"}
+            {loading ? "Envoi de la requête..." : !hasActiveProduct ? "Retrait bloqué (produit requis)" : "Confirmer la demande de retrait de fonds"}
           </button>
         </form>
       </div>
