@@ -492,9 +492,9 @@ async function loadDatabase(): Promise<DatabaseSchema> {
   }
 }
 
-function saveDatabase(db: DatabaseSchema) {
+async function saveDatabase(db: DatabaseSchema) {
   fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), "utf8");
-  saveToSupabase(db);
+  await saveToSupabase(db);
 }
 
 function processDailyRevenues(db: DatabaseSchema) {
@@ -683,7 +683,7 @@ async function startServer() {
   // --- API ROUTES ---
 
   // Auth: Register
-  app.post("/api/auth/register", (req, res) => {
+  app.post("/api/auth/register", async (req, res) => {
     const { name, phone, password, referrerCode } = req.body;
 
     if (!phone || !password) {
@@ -787,7 +787,7 @@ async function startServer() {
     };
     db.transactions.push(tx);
 
-    saveDatabase(db);
+    await saveDatabase(db);
 
     // Create token
     const token = `token_${userId}_${Date.now()}`;
@@ -956,7 +956,7 @@ async function startServer() {
   });
 
   // Purchase/Invest
-  app.post("/api/user/invest", authenticateUser, (req, res) => {
+  app.post("/api/user/invest", authenticateUser, async (req, res) => {
     const { productId } = req.body;
     const userId = req.user!.id;
 
@@ -1091,7 +1091,7 @@ async function startServer() {
       }
     }
 
-    saveDatabase(db);
+    await saveDatabase(db);
     res.json({
       message: `${product.name} activé avec succès !`,
       investment,
@@ -1100,7 +1100,7 @@ async function startServer() {
   });
 
   // Manual Deposit request
-  app.post("/api/user/deposit", authenticateUser, (req, res) => {
+  app.post("/api/user/deposit", authenticateUser, async (req, res) => {
     const { amount, method } = req.body;
     const userId = req.user!.id;
 
@@ -1125,7 +1125,7 @@ async function startServer() {
     };
 
     db.transactions.push(tx);
-    saveDatabase(db);
+    await saveDatabase(db);
 
     res.json({
       message: "Requête de dépôt reçue ! Votre compte sera crédité dès la validation de la transaction par un administrateur sous peu.",
@@ -1134,7 +1134,7 @@ async function startServer() {
   });
 
   // Manual Withdrawal Request
-  app.post("/api/user/withdraw", authenticateUser, (req, res) => {
+  app.post("/api/user/withdraw", authenticateUser, async (req, res) => {
     const { amount, method } = req.body;
     const userId = req.user!.id;
 
@@ -1166,7 +1166,7 @@ async function startServer() {
     };
 
     db.transactions.push(tx);
-    saveDatabase(db);
+    await saveDatabase(db);
 
     res.json({
       message: "Votre demande de retrait a été soumise avec succès et est en cours d'évaluation.",
@@ -1520,7 +1520,7 @@ async function startServer() {
   });
 
   // Admin: Approve/Reject deposit or withdrawal
-  app.post("/api/admin/transactions/verify", authenticateAdmin, (req, res) => {
+  app.post("/api/admin/transactions/verify", authenticateAdmin, async (req, res) => {
     const { transactionId, action } = req.body; // action = "approve" | "reject"
     if (!transactionId || !action) {
       return res.status(400).json({ error: "Paramètres manquants." });
@@ -1560,7 +1560,7 @@ async function startServer() {
       return res.status(400).json({ error: "Action invalide. Choisissez 'approve' ou 'reject'." });
     }
 
-    saveDatabase(db);
+    await saveDatabase(db);
     res.json({ 
       message: `La transaction a été marquée comme ${action === 'approve' ? 'APPROUVÉE' : 'REJETÉE'}.`,
       transaction: tx,

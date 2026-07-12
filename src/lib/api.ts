@@ -1246,10 +1246,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   } catch (err: any) {
     console.warn("API request failed:", err);
     if (!isLocalOrCloudRun()) {
-      useLocalFallback = true;
-      try {
-        localStorage.setItem("dreampod_use_local_fallback", "true");
-      } catch (e) {}
+      console.warn("Falling back to local simulation for this request");
       return handleLocalRequest<T>(path, options);
     }
     throw new Error("Erreur de connexion au serveur. Veuillez vérifier votre connexion ou réessayer.");
@@ -1262,10 +1259,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   } catch (e) {
     console.warn("JSON parsing failed:", e);
     if (!isLocalOrCloudRun()) {
-      useLocalFallback = true;
-      try {
-        localStorage.setItem("dreampod_use_local_fallback", "true");
-      } catch (err2) {}
+      console.warn("Falling back to local simulation for this request");
       return handleLocalRequest<T>(path, options);
     }
     throw new Error("Erreur de communication avec le serveur.");
@@ -1281,11 +1275,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   if (!response.ok) {
     // If it's a 404 (route not found - e.g. purely static hosting) or a 5xx server/gateway error, fall back to local database simulation (only if not in local or cloud run environment)
     if (!isLocalOrCloudRun() && (response.status === 404 || response.status >= 500)) {
-      console.warn(`Server status ${response.status}, falling back to Local Database simulation`);
-      useLocalFallback = true;
-      try {
-        localStorage.setItem("dreampod_use_local_fallback", "true");
-      } catch (err3) {}
+      console.warn(`Server status ${response.status}, falling back to local simulation for this request`);
       return handleLocalRequest<T>(path, options);
     }
     const errMsg = json.error || json.message || "Une erreur est survenue lors de la communication.";
