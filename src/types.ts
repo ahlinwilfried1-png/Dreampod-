@@ -127,9 +127,11 @@ export interface TeamMember {
 export interface PaymentChannel {
   id: string;
   name: string;
+  operator?: string;
   countries: string;
   number: string;
   simOwnerName: string;
+  instructions?: string;
   active: boolean;
 }
 

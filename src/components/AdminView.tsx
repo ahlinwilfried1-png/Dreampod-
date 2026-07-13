@@ -256,9 +256,11 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
     const newChan = {
       id: "channel_" + Date.now(),
       name: "Nouveau Canal Mobile Money",
+      operator: "Opérateur SIM",
       countries: "Niger",
       number: "+227 00 00 00 00",
       simOwnerName: "DREAM SERVICES SIM",
+      instructions: "Faites le transfert de fonds vers le numéro ci-dessus, puis indiquez votre nom de carte SIM et la référence de la transaction.",
       active: true
     };
     setChannelsList([...channelsList, newChan]);
@@ -2056,7 +2058,7 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       <div className="space-y-1">
                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block px-1">ID (Clé unique)</label>
                         <input
@@ -2086,6 +2088,22 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
                           }}
                           className="w-full bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-800 font-bold focus:outline-none focus:border-blue-500"
                           placeholder="Ex: Orange Money 🟠"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block px-1">Opérateur (Réseau)</label>
+                        <input
+                          id={`channel-operator-input-${chan.id || idx}`}
+                          type="text"
+                          value={chan.operator || ""}
+                          onChange={(e) => {
+                            const copy = [...channelsList];
+                            copy[idx] = { ...copy[idx], operator: e.target.value };
+                            setChannelsList(copy);
+                          }}
+                          className="w-full bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-800 font-bold focus:outline-none focus:border-blue-500"
+                          placeholder="Ex: Orange, Airtel, Moov"
                         />
                       </div>
 
@@ -2136,6 +2154,22 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
                           className="w-full bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-800 font-bold focus:outline-none focus:border-blue-500"
                         />
                       </div>
+                    </div>
+
+                    <div className="space-y-1 pt-1.5">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block px-1">Instructions spécifiques de transfert (visible par l'utilisateur)</label>
+                      <textarea
+                        id={`channel-instructions-input-${chan.id || idx}`}
+                        value={chan.instructions || ""}
+                        rows={2}
+                        onChange={(e) => {
+                          const copy = [...channelsList];
+                          copy[idx] = { ...copy[idx], instructions: e.target.value };
+                          setChannelsList(copy);
+                        }}
+                        className="w-full bg-white border border-slate-200 rounded-2xl py-2 px-3 text-xs text-slate-800 font-medium focus:outline-none focus:border-indigo-500 resize-none"
+                        placeholder="Ex: Composez le *144*2*1*... ou effectuez un transfert simple vers le numéro."
+                      />
                     </div>
                   </div>
                 ))

@@ -299,9 +299,23 @@ export default function DepositView({ user, onRefresh, onBack }: DepositViewProp
               </div>
               <div className="text-right">
                 <p className="text-[9px] text-slate-400 uppercase font-black tracking-wider">Moyen de paiement</p>
-                <p className="text-xs font-bold text-slate-800">{selectedMethodObj.name}</p>
+                <p className="text-xs font-bold text-slate-800">
+                  {selectedMethodObj.name} {selectedMethodObj.operator && <span className="text-[9px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-black uppercase ml-1">{selectedMethodObj.operator}</span>}
+                </p>
               </div>
             </div>
+
+            {/* Dynamic Custom Channel Instructions */}
+            {selectedMethodObj.instructions && (
+              <div className="bg-indigo-50/40 border border-indigo-100 p-4 rounded-2xl space-y-1">
+                <p className="text-[9px] text-indigo-700 font-black uppercase tracking-wider flex items-center gap-1">
+                  <span className="p-0.5 bg-indigo-100 text-indigo-800 rounded">💡</span> Instructions importantes :
+                </p>
+                <p className="text-[11px] text-slate-700 font-bold leading-relaxed">
+                  {selectedMethodObj.instructions}
+                </p>
+              </div>
+            )}
 
             {/* Nom de l'identification de la carte SIM */}
             <div className="space-y-1.5">
