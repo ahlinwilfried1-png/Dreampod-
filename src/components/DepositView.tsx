@@ -28,8 +28,9 @@ const PRESETS = ["1000", "5000", "10000", "25000", "50000", "100000"];
 export default function DepositView({ user, onRefresh, onBack }: DepositViewProps) {
   const [step, setStep] = useState<1 | 2>(1);
   const [depositAmount, setDepositAmount] = useState("5000");
-  const [depositMethod, setDepositMethod] = useState("airtel");
-  const [channels, setChannels] = useState<any[]>(PAYMENT_METHODS);
+  const [depositMethod, setDepositMethod] = useState("");
+  const [channels, setChannels] = useState<any[]>([]);
+  const [isLoadingChannels, setIsLoadingChannels] = useState(true);
   
   // Step 2 Fields
   const [simOwnerName, setSimOwnerName] = useState("");
@@ -44,20 +45,32 @@ export default function DepositView({ user, onRefresh, onBack }: DepositViewProp
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    setIsLoadingChannels(true);
     api.getPaymentChannels()
       .then(res => {
-        if (res.channels && res.channels.length > 0) {
+        if (res.channels) {
           const activeChannels = res.channels.filter((c: any) => c.active);
           setChannels(activeChannels);
-          if (activeChannels.length > 0 && !activeChannels.some((c: any) => c.id === depositMethod)) {
+          if (activeChannels.length > 0) {
             setDepositMethod(activeChannels[0].id);
           }
         }
       })
-      .catch(err => console.error("Error loading channels:", err));
+      .catch(err => {
+        console.error("Error loading channels:", err);
+        // Fallback in case of absolute API failure
+        const activeFallback = PAYMENT_METHODS;
+        setChannels(activeFallback);
+        if (activeFallback.length > 0) {
+          setDepositMethod(activeFallback[0].id);
+        }
+      })
+      .finally(() => {
+        setIsLoadingChannels(false);
+      });
   }, []);
 
-  const selectedMethodObj = channels.find((p) => p.id === depositMethod) || channels[0] || PAYMENT_METHODS[0];
+  const selectedMethodObj = channels.find((p) => p.id === depositMethod) || channels[0];
 
   const handleCopyNumber = () => {
     navigator.clipboard.writeText(selectedMethodObj.number);
@@ -218,73 +231,88 @@ export default function DepositView({ user, onRefresh, onBack }: DepositViewProp
 
         {/* STEP 1: CONFIGURATION OF DEPOSIT */}
         {step === 1 && (
-          <form onSubmit={handleContinue} className="space-y-5">
-            {/* Amount input */}
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">
-                Montant à recharger (FCFA)
-              </label>
-              <input
-                id="deposit-amount-input"
-                type="number"
-                required
-                min="1000"
-                value={depositAmount}
-                onChange={(e) => setDepositAmount(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-sm text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 font-black font-mono transition-all"
-              />
-              <span className="text-[10px] text-slate-400 font-medium block px-1">
-                Dépôt minimum obligatoire : 1 000 FCFA
-              </span>
+          isLoadingChannels ? (
+            <div className="py-12 text-center space-y-3">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-blue-600"></div>
+              <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">Chargement des moyens de paiement sécurisés...</p>
             </div>
-
-            {/* Preset Buttons */}
-            <div className="grid grid-cols-3 gap-2">
-              {PRESETS.map((preset) => (
-                <button
-                  id={`preset-deposit-${preset}`}
-                  key={preset}
-                  type="button"
-                  onClick={() => setDepositAmount(preset)}
-                  className={`text-[10px] font-extrabold py-2.5 px-3 border rounded-xl transition-all cursor-pointer ${
-                    depositAmount === preset
-                      ? "bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/10"
-                      : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
-                  }`}
-                >
-                  {Number(preset).toLocaleString()} F
-                </button>
-              ))}
+          ) : channels.length === 0 ? (
+            <div className="bg-amber-50/50 border border-amber-100 p-6 rounded-3xl text-center space-y-3">
+              <div className="text-2xl">⚠️</div>
+              <h4 className="text-xs font-black text-amber-900 uppercase tracking-wider">Aucun moyen de paiement configuré</h4>
+              <p className="text-[11px] text-slate-600 font-medium leading-relaxed max-w-sm mx-auto">
+                L'administration n'a configuré aucun canal de dépôt actif pour le moment. Veuillez patienter ou contacter le support.
+              </p>
             </div>
+          ) : (
+            <form onSubmit={handleContinue} className="space-y-5">
+              {/* Amount input */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">
+                  Montant à recharger (FCFA)
+                </label>
+                <input
+                  id="deposit-amount-input"
+                  type="number"
+                  required
+                  min="1000"
+                  value={depositAmount}
+                  onChange={(e) => setDepositAmount(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-sm text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 font-black font-mono transition-all"
+                />
+                <span className="text-[10px] text-slate-400 font-medium block px-1">
+                  Dépôt minimum obligatoire : 1 000 FCFA
+                </span>
+              </div>
 
-            {/* Payment Method select */}
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">
-                Sélectionner Moyen de Dépôt
-              </label>
-              <select
-                id="deposit-method-select"
-                value={depositMethod}
-                onChange={(e) => setDepositMethod(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-xs font-bold text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500"
-              >
-                {channels.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name} ({m.countries})
-                  </option>
+              {/* Preset Buttons */}
+              <div className="grid grid-cols-3 gap-2">
+                {PRESETS.map((preset) => (
+                  <button
+                    id={`preset-deposit-${preset}`}
+                    key={preset}
+                    type="button"
+                    onClick={() => setDepositAmount(preset)}
+                    className={`text-[10px] font-extrabold py-2.5 px-3 border rounded-xl transition-all cursor-pointer ${
+                      depositAmount === preset
+                        ? "bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/10"
+                        : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
+                    }`}
+                  >
+                    {Number(preset).toLocaleString()} F
+                  </button>
                 ))}
-              </select>
-            </div>
+              </div>
 
-            {/* Submit step 1 button -> Continue */}
-            <button
-              id="deposit-submit-btn"
-              type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black text-xs py-3.5 rounded-2xl transition-all cursor-pointer shadow-md shadow-blue-500/10 active:scale-98 flex items-center justify-center gap-2 uppercase tracking-wider"
-            >
-              <span>Continuer</span>
-            </button>
-          </form>
+              {/* Payment Method select */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">
+                  Sélectionner Moyen de Dépôt
+                </label>
+                <select
+                  id="deposit-method-select"
+                  value={depositMethod}
+                  onChange={(e) => setDepositMethod(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-xs font-bold text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500"
+                >
+                  {channels.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name} ({m.countries})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Submit step 1 button -> Continue */}
+              <button
+                id="deposit-submit-btn"
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black text-xs py-3.5 rounded-2xl transition-all cursor-pointer shadow-md shadow-blue-500/10 active:scale-98 flex items-center justify-center gap-2 uppercase tracking-wider"
+              >
+                <span>Continuer</span>
+              </button>
+            </form>
+          )
         )}
 
         {/* STEP 2: DETAILS VALIDATION SCREEN */}
