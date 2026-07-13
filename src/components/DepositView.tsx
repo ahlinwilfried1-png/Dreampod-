@@ -14,14 +14,7 @@ interface DepositViewProps {
   onBack: () => void;
 }
 
-const PAYMENT_METHODS = [
-  { id: "airtel", name: "Airtel Money 🔴", countries: "Niger, Gabon, Tchad", number: "+227 99 88 77 66", simOwnerName: "DREAM SERVICES AIRTEL" },
-  { id: "moov", name: "Moov Money (Flooz) 🟢", countries: "Niger, Gabon, Tchad, Togo", number: "+227 90 44 55 66", simOwnerName: "DREAM SERVICES MOOV" },
-  { id: "orange", name: "Orange Money 🟠", countries: "Niger", number: "+227 96 11 22 33", simOwnerName: "DREAM SERVICES ORANGE" },
-  { id: "tmoney", name: "TMoney 🟡", countries: "Togo", number: "+228 90 12 34 56", simOwnerName: "DREAM SERVICES TOGO" },
-  { id: "amana", name: "Amana Transfert 🟣", countries: "Niger", number: "+227 92 11 22 33", simOwnerName: "DREAM SERVICES AMANA" },
-  { id: "nita", name: "Nita Transfert 🟤", countries: "Niger", number: "+227 93 11 22 33", simOwnerName: "DREAM SERVICES NITA" },
-];
+const PAYMENT_METHODS: any[] = [];
 
 const PRESETS = ["1000", "5000", "10000", "25000", "50000", "100000"];
 
@@ -33,7 +26,6 @@ export default function DepositView({ user, onRefresh, onBack }: DepositViewProp
   const [isLoadingChannels, setIsLoadingChannels] = useState(true);
   
   // Step 2 Fields
-  const [simOwnerName, setSimOwnerName] = useState("");
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [depositTransactionId, setDepositTransactionId] = useState("");
 
@@ -136,11 +128,6 @@ export default function DepositView({ user, onRefresh, onBack }: DepositViewProp
     setError("");
     setSuccess("");
 
-    if (!simOwnerName.trim()) {
-      setError("Veuillez saisir le Nom d'identification de votre carte SIM.");
-      return;
-    }
-
     if (!depositTransactionId.trim()) {
       setError("Veuillez renseigner l'ID ou Référence de votre transaction.");
       return;
@@ -151,7 +138,6 @@ export default function DepositView({ user, onRefresh, onBack }: DepositViewProp
 
     try {
       const response = await api.deposit(val, selectedMethodObj.name, {
-        simOwnerName: simOwnerName.trim(),
         receiverNumber: selectedMethodObj.number,
         screenshot: screenshot || undefined,
         txRefId: depositTransactionId.trim(),
@@ -160,7 +146,6 @@ export default function DepositView({ user, onRefresh, onBack }: DepositViewProp
       setSuccess(response.message || "Votre demande de dépôt a été transmise avec succès !");
       
       // Reset inputs
-      setSimOwnerName("");
       setScreenshot(null);
       setDepositTransactionId("");
       setStep(1);
@@ -344,26 +329,6 @@ export default function DepositView({ user, onRefresh, onBack }: DepositViewProp
                 </p>
               </div>
             )}
-
-            {/* Nom de l'identification de la carte SIM */}
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1 flex justify-between">
-                <span>Nom de l'identification de la carte SIM</span>
-                <span className="text-red-500 font-extrabold text-[12px]">*</span>
-              </label>
-              <input
-                id="deposit-sim-name-input"
-                type="text"
-                required
-                placeholder="Ex: Jean Dupont"
-                value={simOwnerName}
-                onChange={(e) => setSimOwnerName(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-xs font-semibold text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 transition-all placeholder-slate-400"
-              />
-              <span className="text-[9px] text-slate-400 font-semibold block px-1">
-                Le nom d'enregistrement légal de la puce SIM ayant envoyé les fonds.
-              </span>
-            </div>
 
             {/* Numéro du receveur */}
             <div className="space-y-1.5">

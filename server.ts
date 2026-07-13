@@ -284,15 +284,19 @@ function migrateDatabase(parsed: any): DatabaseSchema {
     });
   }
 
-  if (!parsed.paymentChannels || !Array.isArray(parsed.paymentChannels) || parsed.paymentChannels.length === 0) {
-    parsed.paymentChannels = [
-      { id: "airtel", name: "Airtel Money 🔴", countries: "Niger, Gabon, Tchad", number: "+227 99 88 77 66", simOwnerName: "DREAM SERVICES AIRTEL", active: true },
-      { id: "moov", name: "Moov Money (Flooz) 🟢", countries: "Niger, Gabon, Tchad, Togo", number: "+227 90 44 55 66", simOwnerName: "DREAM SERVICES MOOV", active: true },
-      { id: "orange", name: "Orange Money 🟠", countries: "Niger", number: "+227 96 11 22 33", simOwnerName: "DREAM SERVICES ORANGE", active: true },
-      { id: "tmoney", name: "TMoney 🟡", countries: "Togo", number: "+228 90 12 34 56", simOwnerName: "DREAM SERVICES TOGO", active: true },
-      { id: "amana", name: "Amana Transfert 🟣", countries: "Niger", number: "+227 92 11 22 33", simOwnerName: "DREAM SERVICES AMANA", active: true },
-      { id: "nita", name: "Nita Transfert 🟤", countries: "Niger", number: "+227 93 11 22 33", simOwnerName: "DREAM SERVICES NITA", active: true }
+  if (!parsed.paymentChannels || !Array.isArray(parsed.paymentChannels)) {
+    parsed.paymentChannels = [];
+  } else {
+    // If we have default channels with the original hardcoded test numbers, remove them to start completely fresh
+    const preconfiguredNumbers = [
+      "+227 99 88 77 66",
+      "+227 90 44 55 66",
+      "+227 96 11 22 33",
+      "+228 90 12 34 56",
+      "+227 92 11 22 33",
+      "+227 93 11 22 33"
     ];
+    parsed.paymentChannels = parsed.paymentChannels.filter((c: any) => c && c.number && !preconfiguredNumbers.includes(c.number));
   }
 
   return parsed as DatabaseSchema;
@@ -538,68 +542,7 @@ async function loadDatabase(force = false): Promise<DatabaseSchema> {
       }
     ];
 
-    const initialPaymentChannels: PaymentChannel[] = [
-      {
-        id: "airtel",
-        name: "Airtel Money",
-        operator: "Airtel",
-        countries: "Niger, Gabon, Tchad",
-        number: "+227 99 88 77 66",
-        simOwnerName: "DREAM SERVICES AIRTEL",
-        instructions: "Faites le transfert de fonds vers le numéro Airtel Money ci-dessus, puis indiquez votre nom de carte SIM et la référence de la transaction.",
-        active: true
-      },
-      {
-        id: "orange",
-        name: "Orange Money",
-        operator: "Orange",
-        countries: "Niger",
-        number: "+227 96 11 22 33",
-        simOwnerName: "DREAM SERVICES ORANGE",
-        instructions: "Faites le transfert de fonds vers le numéro Orange Money ci-dessus, puis indiquez votre nom de carte SIM et la référence de la transaction.",
-        active: true
-      },
-      {
-        id: "moov",
-        name: "Moov Flooz",
-        operator: "Moov",
-        countries: "Niger, Gabon, Tchad, Togo",
-        number: "+227 90 44 55 66",
-        simOwnerName: "DREAM SERVICES MOOV",
-        instructions: "Faites le transfert de fonds vers le numéro Moov Money ci-dessus, puis indiquez votre nom de carte SIM et la référence de la transaction.",
-        active: true
-      },
-      {
-        id: "tmoney",
-        name: "TMoney",
-        operator: "TMoney",
-        countries: "Togo",
-        number: "+228 90 12 34 56",
-        simOwnerName: "DREAM SERVICES TOGO",
-        instructions: "Faites le transfert de fonds vers le numéro TMoney ci-dessus, puis indiquez votre nom de carte SIM et la référence de la transaction.",
-        active: true
-      },
-      {
-        id: "amana",
-        name: "Amana Transfert",
-        operator: "Amana",
-        countries: "Niger",
-        number: "+227 92 11 22 33",
-        simOwnerName: "DREAM SERVICES AMANA",
-        instructions: "Envoyez le transfert Amana vers les coordonnées du receveur ci-dessus, puis indiquez les informations correspondantes.",
-        active: true
-      },
-      {
-        id: "nita",
-        name: "Nita Transfert",
-        operator: "Nita",
-        countries: "Niger",
-        number: "+227 93 11 22 33",
-        simOwnerName: "DREAM SERVICES NITA",
-        instructions: "Envoyez le transfert Nita vers les coordonnées du receveur ci-dessus, puis indiquez les informations correspondantes.",
-        active: true
-      }
-    ];
+    const initialPaymentChannels: PaymentChannel[] = [];
 
     const dbData: DatabaseSchema = {
       users: [adminUser, adminUser2, adminUserNiger, promoUser],

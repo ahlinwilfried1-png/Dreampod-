@@ -219,11 +219,13 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
         console.warn("Investments loading failed:", invErr);
       }
 
-      try {
-        const channelsResp = await api.getPaymentChannels();
-        setChannelsList(channelsResp.channels || []);
-      } catch (chanErr) {
-        console.warn("Channels loading failed:", chanErr);
+      if (!silent || adminTab !== "channels") {
+        try {
+          const channelsResp = await api.getPaymentChannels();
+          setChannelsList(channelsResp.channels || []);
+        } catch (chanErr) {
+          console.warn("Channels loading failed:", chanErr);
+        }
       }
     } catch (err: any) {
       if (!silent) {
@@ -255,16 +257,16 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
   const handleAddChannel = () => {
     const newChan = {
       id: "channel_" + Date.now(),
-      name: "Nouveau Canal Mobile Money",
-      operator: "Opérateur SIM",
-      countries: "Niger",
-      number: "+227 00 00 00 00",
-      simOwnerName: "DREAM SERVICES SIM",
-      instructions: "Faites le transfert de fonds vers le numéro ci-dessus, puis indiquez votre nom de carte SIM et la référence de la transaction.",
+      name: "",
+      operator: "",
+      countries: "",
+      number: "",
+      simOwnerName: "",
+      instructions: "",
       active: true
     };
     setChannelsList([...channelsList, newChan]);
-    setSuccessMsg("Nouveau canal ajouté en bas de liste ! N'oubliez pas de le configurer puis d'enregistrer.");
+    setSuccessMsg("Nouveau canal ajouté en bas de liste ! Veuillez configurer ses détails puis cliquer sur Enregistrer.");
   };
 
   useEffect(() => {
@@ -1328,7 +1330,7 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
                         
                         {tx.simOwnerName && (
                           <div className="text-[10px] text-slate-700 font-semibold mt-1 bg-slate-50 border border-slate-100 p-2 rounded-xl">
-                            <span className="font-extrabold text-slate-500 uppercase text-[8px] tracking-wider block">ID Carte SIM</span>
+                            <span className="font-extrabold text-slate-500 uppercase text-[8px] tracking-wider block">Nom d'identité SIM</span>
                             {tx.simOwnerName}
                           </div>
                         )}
