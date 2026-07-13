@@ -16,8 +16,9 @@ interface DepositViewProps {
 
 const PAYMENT_METHODS = [
   { id: "airtel", name: "Airtel Money 🔴", countries: "Niger, Gabon, Tchad", number: "+227 99 88 77 66", simOwnerName: "DREAM SERVICES AIRTEL" },
-  { id: "moov", name: "Moov Money (Flooz) 🟢", countries: "Niger, Gabon, Tchad", number: "+227 90 44 55 66", simOwnerName: "DREAM SERVICES MOOV" },
+  { id: "moov", name: "Moov Money (Flooz) 🟢", countries: "Niger, Gabon, Tchad, Togo", number: "+227 90 44 55 66", simOwnerName: "DREAM SERVICES MOOV" },
   { id: "orange", name: "Orange Money 🟠", countries: "Niger", number: "+227 96 11 22 33", simOwnerName: "DREAM SERVICES ORANGE" },
+  { id: "tmoney", name: "TMoney 🟡", countries: "Togo", number: "+228 90 12 34 56", simOwnerName: "DREAM SERVICES TOGO" },
   { id: "amana", name: "Amana Transfert 🟣", countries: "Niger", number: "+227 92 11 22 33", simOwnerName: "DREAM SERVICES AMANA" },
   { id: "nita", name: "Nita Transfert 🟤", countries: "Niger", number: "+227 93 11 22 33", simOwnerName: "DREAM SERVICES NITA" },
 ];

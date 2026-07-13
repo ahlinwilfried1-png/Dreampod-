@@ -287,8 +287,9 @@ function migrateDatabase(parsed: any): DatabaseSchema {
   if (!parsed.paymentChannels || !Array.isArray(parsed.paymentChannels) || parsed.paymentChannels.length === 0) {
     parsed.paymentChannels = [
       { id: "airtel", name: "Airtel Money 🔴", countries: "Niger, Gabon, Tchad", number: "+227 99 88 77 66", simOwnerName: "DREAM SERVICES AIRTEL", active: true },
-      { id: "moov", name: "Moov Money (Flooz) 🟢", countries: "Niger, Gabon, Tchad", number: "+227 90 44 55 66", simOwnerName: "DREAM SERVICES MOOV", active: true },
+      { id: "moov", name: "Moov Money (Flooz) 🟢", countries: "Niger, Gabon, Tchad, Togo", number: "+227 90 44 55 66", simOwnerName: "DREAM SERVICES MOOV", active: true },
       { id: "orange", name: "Orange Money 🟠", countries: "Niger", number: "+227 96 11 22 33", simOwnerName: "DREAM SERVICES ORANGE", active: true },
+      { id: "tmoney", name: "TMoney 🟡", countries: "Togo", number: "+228 90 12 34 56", simOwnerName: "DREAM SERVICES TOGO", active: true },
       { id: "amana", name: "Amana Transfert 🟣", countries: "Niger", number: "+227 92 11 22 33", simOwnerName: "DREAM SERVICES AMANA", active: true },
       { id: "nita", name: "Nita Transfert 🟤", countries: "Niger", number: "+227 93 11 22 33", simOwnerName: "DREAM SERVICES NITA", active: true }
     ];
@@ -557,9 +558,17 @@ async function loadDatabase(force = false): Promise<DatabaseSchema> {
       {
         id: "moov",
         name: "Moov Flooz",
-        countries: "Niger, Gabon, Tchad",
+        countries: "Niger, Gabon, Tchad, Togo",
         number: "+227 90 44 55 66",
         simOwnerName: "DREAM SERVICES MOOV",
+        active: true
+      },
+      {
+        id: "tmoney",
+        name: "TMoney",
+        countries: "Togo",
+        number: "+228 90 12 34 56",
+        simOwnerName: "DREAM SERVICES TOGO",
         active: true
       },
       {
@@ -1260,7 +1269,7 @@ async function startServer() {
     }
 
     if (!method) {
-      return res.status(400).json({ error: "Veuillez choisir un moyen de rechargement (Airtel, Moov, Orange, Amana, Nita)." });
+      return res.status(400).json({ error: "Veuillez choisir un moyen de rechargement (Airtel, Moov, Orange, TMoney, Amana, Nita)." });
     }
 
     const tx: Transaction = {

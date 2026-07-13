@@ -36,14 +36,15 @@ interface DashboardViewProps {
 
 const DYNAMIC_MESSAGES = [
   "🚀 RECHARGEZ ET INVESTISSEMENT : Plus de 40% de retour sur investissement mensuel avec nos plans VIP sécurisés !",
-  "💸 DES RETRAITS RAPIDES : Vos gains sont transférés sur vos comptes Airtel, Moov, Orange, Amana et Nita sous 2H maximum.",
+  "💸 DES RETRAITS RAPIDES : Vos gains sont transférés sur vos comptes Airtel, Moov, Orange, TMoney, Amana et Nita sous 2H maximum.",
   "🎁 PARRAINEZ ET GAGNEZ : Progressez en invitant vos amis. Gagnez 10% sur tous leurs dépôts directs !",
 ];
 
 const PAYMENT_METHODS = [
   { id: "airtel", name: "Airtel Money 🔴", countries: "Niger, Gabon, Tchad" },
-  { id: "moov", name: "Moov Money (Flooz) 🟢", countries: "Niger, Gabon, Tchad" },
+  { id: "moov", name: "Moov Money (Flooz) 🟢", countries: "Niger, Gabon, Tchad, Togo" },
   { id: "orange", name: "Orange Money 🟠", countries: "Niger" },
+  { id: "tmoney", name: "TMoney 🟡", countries: "Togo" },
   { id: "amana", name: "Amana Transfert 🟣", countries: "Niger" },
   { id: "nita", name: "Nita Transfert 🟤", countries: "Niger" },
 ];

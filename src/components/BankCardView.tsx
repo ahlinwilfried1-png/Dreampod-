@@ -135,6 +135,7 @@ export default function BankCardView({ user, onRefresh, onBack }: BankCardViewPr
               <option value="airtel">Airtel Money 🔴</option>
               <option value="moov">Moov Money (Flooz) 🟢</option>
               <option value="orange">Orange Money 🟠</option>
+              <option value="tmoney">TMoney 🟡</option>
               <option value="amana">Amana Transfert 🟣</option>
               <option value="nita">Nita Transfert 🟤</option>
             </select>

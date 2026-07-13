@@ -1944,7 +1944,7 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
               </div>
               <div>
                 <h3 className="text-sm font-extrabold text-slate-900">Configuration des Canaux de Dépôt (SIM & Numéros)</h3>
-                <p className="text-[10px] text-slate-500">Gérez les cartes SIM, les numéros de transfert officiels et les réseaux de réception pour Niger, Gabon, et Tchad</p>
+                <p className="text-[10px] text-slate-500">Gérez les cartes SIM, les numéros de transfert officiels et les réseaux de réception pour Niger, Gabon, Tchad, et Togo</p>
               </div>
             </div>
 

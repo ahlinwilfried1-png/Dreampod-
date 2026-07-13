@@ -16,6 +16,7 @@ const AFRICAN_COUNTRIES = [
   { code: "+227", name: "Niger 🇳🇪" },
   { code: "+241", name: "Gabon 🇬🇦" },
   { code: "+235", name: "Tchad 🇹🇩" },
+  { code: "+228", name: "Togo 🇹🇬" },
 ];
 
 export default function RegisterPage({ onSuccess, onNavigateToLogin }: RegisterPageProps) {

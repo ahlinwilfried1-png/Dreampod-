@@ -397,6 +397,9 @@ export default function App() {
                   <span className="bg-white border border-slate-200 py-1.5 px-3 rounded-xl flex items-center gap-1 shadow-2xs">
                     🇹🇩 Tchad
                   </span>
+                  <span className="bg-white border border-slate-200 py-1.5 px-3 rounded-xl flex items-center gap-1 shadow-2xs">
+                    🇹🇬 Togo
+                  </span>
                 </div>
               </div>
 
