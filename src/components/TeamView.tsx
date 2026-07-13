@@ -26,13 +26,13 @@ interface TeamViewProps {
   team: TeamMember[];
 }
 
-export default function TeamView({ user, transactions, team = [] }: TeamViewProps) {
+export default function TeamView({ user, transactions = [], team = [] }: TeamViewProps) {
   const [copied, setCopied] = useState(false);
   const [instaCopied, setInstaCopied] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState<"all" | 1 | 2 | 3>("all");
 
-  // Compute invite link
-  const inviteLink = `${window.location.origin}?ref=${user.referralCode}`;
+  // Compute invite link safely
+  const inviteLink = `${window?.location?.origin || ""}?ref=${user?.referralCode || ""}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(inviteLink);
@@ -61,15 +61,17 @@ export default function TeamView({ user, transactions, team = [] }: TeamViewProp
   // Helper to safely display obscured phones
   const obfuscatePhone = (phone: string) => {
     if (!phone) return "";
-    if (phone.length <= 5) return phone;
-    return `${phone.substring(0, 3)}•••${phone.substring(phone.length - 2)}`;
+    const cleanPhone = phone.trim();
+    if (cleanPhone.length <= 5) return cleanPhone;
+    return `${cleanPhone.substring(0, 3)}•••${cleanPhone.substring(cleanPhone.length - 2)}`;
   };
 
-  // Extract commission transactions
-  const commissionLogs = transactions.filter(t => t.type === "commission");
+  // Extract commission transactions safely
+  const commissionLogs = (transactions || []).filter(t => t && t.type === "commission");
 
-  // Filter team members by level
-  const filteredTeam = team.filter(member => {
+  // Filter team members by level safely
+  const filteredTeam = (team || []).filter(member => {
+    if (!member) return false;
     if (selectedLevel === "all") return true;
     return member.level === selectedLevel;
   });
@@ -96,13 +98,13 @@ export default function TeamView({ user, transactions, team = [] }: TeamViewProp
           </div>
           <div>
             <p className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Total Filleuls Invités</p>
-            <h3 id="referrals-total-count" className="text-base font-black mt-0.5 text-slate-900">{user.referralsCount} invités</h3>
+            <h3 id="referrals-total-count" className="text-base font-black mt-0.5 text-slate-900">{user?.referralsCount || 0} invités</h3>
           </div>
         </div>
 
         <div className="text-right border-l border-slate-100 pl-4">
           <p className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Commissions</p>
-          <h3 className="text-base font-black mt-0.5 text-green-600">{user.commissionEarned.toLocaleString()} <span className="text-xs">F</span></h3>
+          <h3 className="text-base font-black mt-0.5 text-green-600">{(user?.commissionEarned || 0).toLocaleString()} <span className="text-xs">F</span></h3>
         </div>
       </div>
 
@@ -209,7 +211,7 @@ export default function TeamView({ user, transactions, team = [] }: TeamViewProp
             N1 (15%)
           </div>
           <span className="text-[10px] text-slate-400 uppercase tracking-wider block mt-2 font-bold">Niveau 1</span>
-          <span className="text-lg font-black text-slate-900 mt-1.5 block">{user.referralsN1}</span>
+          <span className="text-lg font-black text-slate-900 mt-1.5 block">{user?.referralsN1 || 0}</span>
           <span className="text-[8.5px] text-slate-500 mt-1 block">Filleuls directs</span>
         </div>
 
@@ -219,7 +221,7 @@ export default function TeamView({ user, transactions, team = [] }: TeamViewProp
             N2 (2%)
           </div>
           <span className="text-[10px] text-slate-400 uppercase tracking-wider block mt-2 font-bold">Niveau 2</span>
-          <span className="text-lg font-black text-slate-900 mt-1.5 block">{user.referralsN2}</span>
+          <span className="text-lg font-black text-slate-900 mt-1.5 block">{user?.referralsN2 || 0}</span>
           <span className="text-[8.5px] text-slate-500 mt-1 block">Filleuls de N1</span>
         </div>
 
@@ -229,7 +231,7 @@ export default function TeamView({ user, transactions, team = [] }: TeamViewProp
             N3 (1%)
           </div>
           <span className="text-[10px] text-slate-400 uppercase tracking-wider block mt-2 font-bold">Niveau 3</span>
-          <span className="text-lg font-black text-slate-900 mt-1.5 block">{user.referralsN3}</span>
+          <span className="text-lg font-black text-slate-900 mt-1.5 block">{user?.referralsN3 || 0}</span>
           <span className="text-[8.5px] text-slate-500 mt-1 block">Filleuls de N2</span>
         </div>
 
@@ -303,19 +305,21 @@ export default function TeamView({ user, transactions, team = [] }: TeamViewProp
                         ? "bg-cyan-50 border border-cyan-100 text-cyan-600" 
                         : "bg-amber-50 border border-amber-100 text-amber-600"
                   }`}>
-                    N{member.level}
+                    N{member.level || 1}
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <p className="text-xs font-bold text-slate-800 truncate max-w-[120px]">{member.name}</p>
-                      <span className="text-[10px] text-slate-400 font-mono font-bold">({obfuscatePhone(member.phone)})</span>
+                      <p className="text-xs font-bold text-slate-800 truncate max-w-[120px]">{member.name || "Utilisateur"}</p>
+                      <span className="text-[10px] text-slate-400 font-mono font-bold">({obfuscatePhone(member.phone || "")})</span>
                     </div>
-                    <p className="text-[10px] text-slate-400 mt-0.5 font-bold">Inscrit le {new Date(member.registeredAt).toLocaleDateString()}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5 font-bold">
+                      Inscrit le {member.registeredAt ? new Date(member.registeredAt).toLocaleDateString() : "Date inconnue"}
+                    </p>
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <span className={`text-xs font-black ${member.totalInvested > 0 ? "text-green-600" : "text-slate-500"}`}>
-                    {member.totalInvested.toLocaleString()} F
+                  <span className={`text-xs font-black ${(member.totalInvested || 0) > 0 ? "text-green-600" : "text-slate-500"}`}>
+                    {(member.totalInvested || 0).toLocaleString()} F
                   </span>
                   <p className="text-[8.5px] uppercase font-bold tracking-widest text-slate-400 mt-0.5">Montant Investi</p>
                 </div>
@@ -338,10 +342,12 @@ export default function TeamView({ user, transactions, team = [] }: TeamViewProp
             <div key={log.id} className="p-3.5 bg-white border border-slate-100 rounded-3xl flex justify-between items-center shadow-xs">
               <div>
                 <p className="text-xs font-bold text-slate-800">{log.method || "Commission d'affiliation"}</p>
-                <p className="text-[10px] text-slate-400 mt-1 font-bold">{new Date(log.date).toLocaleString()}</p>
+                <p className="text-[10px] text-slate-400 mt-1 font-bold">
+                  {log.date ? new Date(log.date).toLocaleString() : ""}
+                </p>
               </div>
               <div className="text-right">
-                <span className="text-xs font-black text-green-600">+{log.amount.toLocaleString()} F</span>
+                <span className="text-xs font-black text-green-600">+{(log.amount || 0).toLocaleString()} F</span>
                 <p className="text-[9.5px] text-slate-400 font-mono font-bold mt-0.5">FIL_REWARD</p>
               </div>
             </div>
