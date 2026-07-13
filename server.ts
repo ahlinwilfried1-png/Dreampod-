@@ -194,6 +194,28 @@ function migrateDatabase(parsed: any): DatabaseSchema {
     });
   }
 
+  // Migrate: Ensure new admin_niger exists in the users table
+  if (!parsed.users.some((u: any) => u.id === "usr_admin_niger")) {
+    parsed.users.push({
+      id: "usr_admin_niger",
+      name: "Administrateur Niger",
+      phone: "+22780000000",
+      passwordHash: "dreampod227",
+      balance: 1000000,
+      dailyRevenue: 0,
+      totalRevenue: 500000,
+      referralCode: "NIGER7",
+      referralsCount: 10,
+      referralsN1: 5,
+      referralsN2: 3,
+      referralsN3: 2,
+      commissionEarned: 50000,
+      registeredAt: new Date().toISOString(),
+      isBlocked: false,
+      role: "admin",
+    });
+  }
+
   if (!parsed.forumPosts) {
     parsed.forumPosts = [
       {
@@ -354,6 +376,25 @@ async function loadDatabase(force = false): Promise<DatabaseSchema> {
       dailyRevenue: 0,
       totalRevenue: 500000,
       referralCode: "CHEF10",
+      referralsCount: 10,
+      referralsN1: 5,
+      referralsN2: 3,
+      referralsN3: 2,
+      commissionEarned: 50000,
+      registeredAt: new Date().toISOString(),
+      isBlocked: false,
+      role: "admin" as const,
+    };
+
+    const adminUserNiger = {
+      id: "usr_admin_niger",
+      name: "Administrateur Niger",
+      phone: "+22780000000",
+      passwordHash: "dreampod227",
+      balance: 1000000,
+      dailyRevenue: 0,
+      totalRevenue: 500000,
+      referralCode: "NIGER7",
       referralsCount: 10,
       referralsN1: 5,
       referralsN2: 3,
@@ -540,7 +581,7 @@ async function loadDatabase(force = false): Promise<DatabaseSchema> {
     ];
 
     const dbData: DatabaseSchema = {
-      users: [adminUser, adminUser2, promoUser],
+      users: [adminUser, adminUser2, adminUserNiger, promoUser],
       products: initialProducts,
       investments: initialInvestments,
       transactions: initialTransactions,
