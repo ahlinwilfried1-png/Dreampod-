@@ -1297,6 +1297,32 @@ async function startServer() {
     if (uIdx === -1) return res.status(404).json({ error: "Utilisateur non trouvé" });
     const user = db.users[uIdx];
 
+    // Check withdrawal time restriction: 9h to 17h (Niger/Niamey time, UTC+1) - admins can bypass
+    if (user.role !== "admin") {
+      try {
+        const niameyFormatter = new Intl.DateTimeFormat("en-US", {
+          timeZone: "Africa/Niamey",
+          hour: "numeric",
+          hour12: false,
+        });
+        const currentNiameyHour = parseInt(niameyFormatter.format(new Date()), 10);
+
+        if (currentNiameyHour < 9 || currentNiameyHour >= 17) {
+          return res.status(400).json({
+            error: "Les retraits ne sont autorisés qu'entre 09:00 et 17:00 (Heure de Niamey, Niger). Veuillez réessayer pendant cette plage horaire."
+          });
+        }
+      } catch (e) {
+        // Fallback to local server hour if timezone formatting is unsupported
+        const currentLocalHour = new Date().getHours();
+        if (currentLocalHour < 9 || currentLocalHour >= 17) {
+          return res.status(400).json({
+            error: "Les retraits ne sont autorisés qu'entre 09:00 et 17:00. Veuillez réessayer pendant cette plage horaire."
+          });
+        }
+      }
+    }
+
     // Check if user has linked a wallet
     if (!user.linkedWalletNumber || !user.linkedWalletOperator) {
       return res.status(400).json({ error: "Avant d'effectuer un retrait, vous devez lier votre portefeuille mobile money à votre compte." });

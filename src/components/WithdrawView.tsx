@@ -27,10 +27,31 @@ export default function WithdrawView({ user, investments, onRefresh, onBack, onN
   const hasActiveProduct = investments && investments.some((inv) => inv.daysPassed < inv.durationDays);
   const isWalletLinked = !!(user.linkedWalletNumber && user.linkedWalletOperator);
 
+  const getNiameyHour = () => {
+    try {
+      const formatter = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Africa/Niamey",
+        hour: "numeric",
+        hour12: false,
+      });
+      return parseInt(formatter.format(new Date()), 10);
+    } catch (e) {
+      return new Date().getHours(); // fallback
+    }
+  };
+
+  const currentNiameyHour = getNiameyHour();
+  const isWithdrawTimeAllowed = user.role === "admin" || (currentNiameyHour >= 9 && currentNiameyHour < 17);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
+
+    if (!isWithdrawTimeAllowed) {
+      setError("Les retraits sont fermés. Vous pouvez soumettre vos demandes uniquement de 09:00 à 17:00 (Heure du Niger).");
+      return;
+    }
 
     if (!isWalletLinked) {
       setError("Action impossible : Vous devez d'abord lier votre portefeuille mobile money à votre compte.");
@@ -175,6 +196,19 @@ export default function WithdrawView({ user, investments, onRefresh, onBack, onN
               </div>
             )}
 
+            {/* Time restriction notice */}
+            {!isWithdrawTimeAllowed && (
+              <div className="bg-rose-50 border border-rose-200 text-rose-900 text-xs p-4.5 rounded-2xl font-semibold flex flex-col gap-2.5 shadow-2xs select-none">
+                <div className="flex items-center gap-2 text-rose-700 font-black uppercase text-[10px] tracking-wider">
+                  <Clock className="h-4 w-4 text-rose-600 shrink-0" />
+                  Service de Retrait Fermé
+                </div>
+                <p className="text-[11px] leading-relaxed text-slate-600">
+                  Les retraits sont autorisés uniquement entre <span className="font-extrabold text-slate-800 underline">09:00 et 17:00 (Heure de Niamey, Niger)</span>.
+                </p>
+              </div>
+            )}
+
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-600 text-[11px] p-3 rounded-2xl font-bold flex gap-2">
                 <span>⚠️</span>
@@ -202,7 +236,7 @@ export default function WithdrawView({ user, investments, onRefresh, onBack, onN
                   type="number"
                   required
                   min="500"
-                  disabled={!hasActiveProduct}
+                  disabled={!hasActiveProduct || !isWithdrawTimeAllowed}
                   value={withdrawAmount}
                   onChange={(e) => setWithdrawAmount(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-4 text-sm text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 font-black font-mono transition-all disabled:opacity-50"
@@ -222,7 +256,7 @@ export default function WithdrawView({ user, investments, onRefresh, onBack, onN
                   type="password"
                   required
                   placeholder="Saisissez votre code PIN de retrait"
-                  disabled={!hasActiveProduct}
+                  disabled={!hasActiveProduct || !isWithdrawTimeAllowed}
                   value={withdrawalCode}
                   onChange={(e) => setWithdrawalCode(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-4 text-xs font-mono tracking-widest text-center text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 font-bold transition-all disabled:opacity-50"
@@ -236,8 +270,8 @@ export default function WithdrawView({ user, investments, onRefresh, onBack, onN
               <div className="p-3.5 bg-slate-50 border border-slate-200/60 rounded-xl flex items-start gap-2 text-[10px] text-slate-500 leading-relaxed font-semibold">
                 <Clock className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-extrabold text-slate-700 uppercase text-[9px] tracking-wider mb-0.5">Délai de traitement</p>
-                  <p>Traitement et envoi automatique sous 2 heures administratives.</p>
+                  <p className="font-extrabold text-slate-700 uppercase text-[9px] tracking-wider mb-0.5">Heures de service</p>
+                  <p>Ouvert tous les jours de 09:00 à 17:00 (Heure de Niamey).</p>
                 </div>
               </div>
 
@@ -245,14 +279,20 @@ export default function WithdrawView({ user, investments, onRefresh, onBack, onN
               <button
                 id="withdraw-submit-btn"
                 type="submit"
-                disabled={loading || !hasActiveProduct}
+                disabled={loading || !hasActiveProduct || !isWithdrawTimeAllowed}
                 className={`w-full font-black text-xs py-3.5 rounded-2xl transition-all shadow-md active:scale-98 ${
-                  !hasActiveProduct
+                  !hasActiveProduct || !isWithdrawTimeAllowed
                     ? "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
                     : "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer hover:shadow-emerald-500/10"
                 }`}
               >
-                {loading ? "Envoi de la demande..." : !hasActiveProduct ? "Retrait bloqué (produit requis)" : "Soumettre"}
+                {loading 
+                  ? "Envoi de la demande..." 
+                  : !isWithdrawTimeAllowed 
+                    ? "Service fermé (09h - 17h)" 
+                    : !hasActiveProduct 
+                      ? "Retrait bloqué (produit requis)" 
+                      : "Soumettre"}
               </button>
             </form>
           </div>
