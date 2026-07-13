@@ -58,7 +58,7 @@ export default function WithdrawView({ user, investments, onRefresh, onBack, onN
       return;
     }
 
-    if (!hasActiveProduct) {
+    if (!hasActiveProduct && user.role !== "admin") {
       setError("Action impossible : Vous devez posséder au moins un produit d'investissement actif pour pouvoir effectuer un retrait.");
       return;
     }
@@ -184,7 +184,7 @@ export default function WithdrawView({ user, investments, onRefresh, onBack, onN
             </div>
 
             {/* Product requirement check */}
-            {!hasActiveProduct && (
+            {!hasActiveProduct && user.role !== "admin" && (
               <div className="bg-amber-50 border border-amber-200/80 text-amber-900 text-xs p-4.5 rounded-2xl font-semibold flex flex-col gap-2.5 shadow-2xs select-none">
                 <div className="flex items-center gap-2 text-amber-700 font-black uppercase text-[10px] tracking-wider">
                   <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />

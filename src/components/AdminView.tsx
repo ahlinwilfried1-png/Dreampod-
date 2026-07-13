@@ -789,7 +789,7 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
           { id: "codes", label: "Codes/Bonus", icon: Gift },
           { id: "notifications", label: "Annonces", icon: Bell },
           { id: "reviews", label: "Avis Clients", icon: Star },
-          { id: "channels", label: "Canaux ⚙️", icon: Wallet },
+          { id: "channels", label: "Configuration des canaux", icon: Wallet },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = adminTab === tab.id;
@@ -1022,6 +1022,35 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
                   </span>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Section: Configuration rapide */}
+          <div className="space-y-2.5">
+            <h3 className="text-xs font-extrabold tracking-wider text-slate-500 uppercase px-1 flex items-center gap-2">
+              <Wallet className="h-4 w-4 text-indigo-500" />
+              Paramètres & Configuration de la Plateforme
+            </h3>
+            <div className="grid grid-cols-1 gap-3">
+              {/* Configuration des Canaux de Dépôt Card */}
+              <button
+                id="admin-dashboard-channels-shortcut"
+                onClick={() => setAdminTab("channels")}
+                className="text-left w-full bg-white border border-slate-200 p-4 rounded-2xl flex items-center justify-between shadow-xs hover:border-blue-400 hover:bg-blue-50/10 transition-all cursor-pointer active:scale-[0.98]"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                    <Wallet className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-800 font-sans">Configuration des canaux</p>
+                    <p className="text-[10px] text-slate-500">Gérer les réseaux de dépôt (Moov, Orange, Airtel, TMoney, Amana, Nita, etc.)</p>
+                  </div>
+                </div>
+                <span className="text-xs font-black text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 flex items-center gap-1">
+                  Configurer ⚙️
+                </span>
+              </button>
             </div>
           </div>
 
