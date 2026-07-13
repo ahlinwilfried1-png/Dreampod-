@@ -269,6 +269,15 @@ function getLocalDb() {
     }
   ];
 
+  const defaultPaymentChannels = [
+    { id: "airtel", name: "Airtel Money 🔴", countries: "Niger, Gabon, Tchad", number: "+227 99 88 77 66", simOwnerName: "DREAM SERVICES AIRTEL", active: true },
+    { id: "moov", name: "Moov Money (Flooz) 🟢", countries: "Niger, Gabon, Tchad, Togo", number: "+227 90 44 55 66", simOwnerName: "DREAM SERVICES MOOV", active: true },
+    { id: "orange", name: "Orange Money 🟠", countries: "Niger", number: "+227 96 11 22 33", simOwnerName: "DREAM SERVICES ORANGE", active: true },
+    { id: "tmoney", name: "TMoney 🟡", countries: "Togo", number: "+228 90 12 34 56", simOwnerName: "DREAM SERVICES TOGO", active: true },
+    { id: "amana", name: "Amana Transfert 🟣", countries: "Niger", number: "+227 92 11 22 33", simOwnerName: "DREAM SERVICES AMANA", active: true },
+    { id: "nita", name: "Nita Transfert 🟤", countries: "Niger", number: "+227 93 11 22 33", simOwnerName: "DREAM SERVICES NITA", active: true }
+  ];
+
   try {
     const raw = localStorage.getItem("dreampod_local_db");
     if (!raw) {
@@ -281,6 +290,7 @@ function getLocalDb() {
         notifications: defaultNotifications,
         forumPosts: defaultForumPosts,
         userReviews: defaultUserReviews,
+        paymentChannels: defaultPaymentChannels,
       };
       saveLocalDb(db);
       return db;
@@ -294,6 +304,7 @@ function getLocalDb() {
     if (!parsed.notifications) parsed.notifications = defaultNotifications;
     if (!parsed.forumPosts) parsed.forumPosts = defaultForumPosts;
     if (!parsed.userReviews) parsed.userReviews = defaultUserReviews;
+    if (!parsed.paymentChannels) parsed.paymentChannels = defaultPaymentChannels;
     return parsed;
   } catch (e) {
     const db = {
@@ -305,6 +316,7 @@ function getLocalDb() {
       notifications: defaultNotifications,
       forumPosts: defaultForumPosts,
       userReviews: defaultUserReviews,
+      paymentChannels: defaultPaymentChannels,
     };
     saveLocalDb(db);
     return db;
@@ -1205,6 +1217,27 @@ async function handleLocalRequest<T>(path: string, options: RequestInit = {}): P
       message: "Synchronisation simulée en local (mode hors-ligne)",
       details: { addedUsersCount: 0, addedTransactionsCount: 0, addedInvestmentsCount: 0, addedReviewsCount: 0, addedForumPostsCount: 0 },
       db: db
+    } as any;
+  }
+
+  // Get active payment channels (local fallback)
+  if (path === "/api/payment-channels" && method === "GET") {
+    return { channels: db.paymentChannels || [] } as any;
+  }
+
+  // Admin: Update payment channels (local fallback)
+  if (path === "/api/admin/payment-channels" && method === "POST") {
+    const admin = getLocalCurrentUser(db);
+    if (admin.role !== "admin") throw new Error("Accès refusé.");
+    const { channels } = body;
+    if (!channels || !Array.isArray(channels)) {
+      throw new Error("Format des canaux de paiement invalide.");
+    }
+    db.paymentChannels = channels;
+    saveLocalDb(db);
+    return {
+      message: "Configuration des canaux de paiement mise à jour avec succès !",
+      channels: db.paymentChannels,
     } as any;
   }
 
