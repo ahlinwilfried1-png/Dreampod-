@@ -818,6 +818,13 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
         </div>
       )}
 
+      {/* Main Success box if any */}
+      {successMsg && (
+        <div className="p-3 bg-green-50 border border-green-200 rounded-xl text-[11px] text-green-700 font-extrabold">
+          ✅ {successMsg}
+        </div>
+      )}
+
       {/* --- PANEL 1: STATISTICS ANALYTICOS --- */}
       {adminTab === "stats" && globalStats && (
         <div className="space-y-6">

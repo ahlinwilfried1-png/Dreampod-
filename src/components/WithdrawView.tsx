@@ -236,10 +236,9 @@ export default function WithdrawView({ user, investments, onRefresh, onBack, onN
                   type="number"
                   required
                   min="500"
-                  disabled={!hasActiveProduct || !isWithdrawTimeAllowed}
                   value={withdrawAmount}
                   onChange={(e) => setWithdrawAmount(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-4 text-sm text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 font-black font-mono transition-all disabled:opacity-50"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-4 text-sm text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 font-black font-mono transition-all"
                 />
                 <span className="text-[9px] text-slate-400 font-semibold block px-1">
                   Retrait minimum autorisé : 500 FCFA
@@ -256,10 +255,9 @@ export default function WithdrawView({ user, investments, onRefresh, onBack, onN
                   type="password"
                   required
                   placeholder="Saisissez votre code PIN de retrait"
-                  disabled={!hasActiveProduct || !isWithdrawTimeAllowed}
                   value={withdrawalCode}
                   onChange={(e) => setWithdrawalCode(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-4 text-xs font-mono tracking-widest text-center text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 font-bold transition-all disabled:opacity-50"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-4 text-xs font-mono tracking-widest text-center text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 font-bold transition-all"
                 />
                 <span className="text-[9px] text-slate-400 font-semibold block px-1">
                   Le code confidentiel défini lors de la liaison de votre portefeuille.
@@ -279,20 +277,10 @@ export default function WithdrawView({ user, investments, onRefresh, onBack, onN
               <button
                 id="withdraw-submit-btn"
                 type="submit"
-                disabled={loading || !hasActiveProduct || !isWithdrawTimeAllowed}
-                className={`w-full font-black text-xs py-3.5 rounded-2xl transition-all shadow-md active:scale-98 ${
-                  !hasActiveProduct || !isWithdrawTimeAllowed
-                    ? "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
-                    : "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer hover:shadow-emerald-500/10"
-                }`}
+                disabled={loading}
+                className="w-full font-black text-xs py-3.5 rounded-2xl transition-all shadow-md active:scale-98 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer hover:shadow-emerald-500/10 disabled:opacity-50"
               >
-                {loading 
-                  ? "Envoi de la demande..." 
-                  : !isWithdrawTimeAllowed 
-                    ? "Service fermé (09h - 17h)" 
-                    : !hasActiveProduct 
-                      ? "Retrait bloqué (produit requis)" 
-                      : "Soumettre"}
+                {loading ? "Envoi de la demande..." : "Soumettre"}
               </button>
             </form>
           </div>
