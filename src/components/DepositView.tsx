@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from "react";
-import { Wallet, ArrowLeft, CheckCircle, Info, QrCode } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { Wallet, ArrowLeft, CheckCircle, Info, Upload, Copy, Check, ShieldCheck, Image as ImageIcon } from "lucide-react";
 import { User } from "../types";
 import { api } from "../lib/api";
 
@@ -15,23 +15,95 @@ interface DepositViewProps {
 }
 
 const PAYMENT_METHODS = [
-  { id: "mtn", name: "MTN Mobile Money 🟡", countries: "Bénin, Cameroun" },
-  { id: "orange", name: "Orange Money 🟠", countries: "Cameroun" },
-  { id: "moov", name: "Moov Money 🟢", countries: "Bénin, Burkina Faso" },
+  { id: "airtel", name: "Airtel Money 🔴", countries: "Niger, Gabon, Tchad", number: "+227 99 88 77 66", simOwnerName: "DREAM SERVICES AIRTEL" },
+  { id: "moov", name: "Moov Money (Flooz) 🟢", countries: "Niger, Gabon, Tchad", number: "+227 90 44 55 66", simOwnerName: "DREAM SERVICES MOOV" },
+  { id: "orange", name: "Orange Money 🟠", countries: "Niger", number: "+227 96 11 22 33", simOwnerName: "DREAM SERVICES ORANGE" },
+  { id: "amana", name: "Amana Transfert 🟣", countries: "Niger", number: "+227 92 11 22 33", simOwnerName: "DREAM SERVICES AMANA" },
+  { id: "nita", name: "Nita Transfert 🟤", countries: "Niger", number: "+227 93 11 22 33", simOwnerName: "DREAM SERVICES NITA" },
 ];
 
 const PRESETS = ["1000", "5000", "10000", "25000", "50000", "100000"];
 
 export default function DepositView({ user, onRefresh, onBack }: DepositViewProps) {
+  const [step, setStep] = useState<1 | 2>(1);
   const [depositAmount, setDepositAmount] = useState("5000");
-  const [depositMethod, setDepositMethod] = useState("mtn");
-  const [depositTransactionId, setDepositTransactionId] = useState("");
+  const [depositMethod, setDepositMethod] = useState("airtel");
+  const [channels, setChannels] = useState<any[]>(PAYMENT_METHODS);
   
+  // Step 2 Fields
+  const [simOwnerName, setSimOwnerName] = useState("");
+  const [screenshot, setScreenshot] = useState<string | null>(null);
+  const [depositTransactionId, setDepositTransactionId] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    api.getPaymentChannels()
+      .then(res => {
+        if (res.channels && res.channels.length > 0) {
+          const activeChannels = res.channels.filter((c: any) => c.active);
+          setChannels(activeChannels);
+          if (activeChannels.length > 0 && !activeChannels.some((c: any) => c.id === depositMethod)) {
+            setDepositMethod(activeChannels[0].id);
+          }
+        }
+      })
+      .catch(err => console.error("Error loading channels:", err));
+  }, []);
+
+  const selectedMethodObj = channels.find((p) => p.id === depositMethod) || channels[0] || PAYMENT_METHODS[0];
+
+  const handleCopyNumber = () => {
+    navigator.clipboard.writeText(selectedMethodObj.number);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setError("La capture d'écran est trop lourde (maximum 5 Mo).");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setScreenshot(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setError("La capture d'écran est trop lourde (maximum 5 Mo).");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setScreenshot(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
@@ -42,24 +114,46 @@ export default function DepositView({ user, onRefresh, onBack }: DepositViewProp
       return;
     }
 
+    setStep(2);
+  };
+
+  const handleSubmitDeposit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+
+    if (!simOwnerName.trim()) {
+      setError("Veuillez saisir le Nom d'identification de votre carte SIM.");
+      return;
+    }
+
     if (!depositTransactionId.trim()) {
-      setError("Veuillez saisir l'ID/Référence de votre transaction mobile money.");
+      setError("Veuillez renseigner l'ID ou Référence de votre transaction.");
       return;
     }
 
     setLoading(true);
-    const selectedMethodObj = PAYMENT_METHODS.find((p) => p.id === depositMethod);
-    const methodName = selectedMethodObj
-      ? `${selectedMethodObj.name} - ID/Ref: ${depositTransactionId.trim()}`
-      : `Mobile money ID/Ref: ${depositTransactionId}`;
+    const val = Number(depositAmount);
 
     try {
-      const response = await api.deposit(val, methodName);
-      setSuccess(response.message || "Demande de dépôt enregistrée avec succès !");
+      const response = await api.deposit(val, selectedMethodObj.name, {
+        simOwnerName: simOwnerName.trim(),
+        receiverNumber: selectedMethodObj.number,
+        screenshot: screenshot || undefined,
+        txRefId: depositTransactionId.trim(),
+      });
+
+      setSuccess(response.message || "Votre demande de dépôt a été transmise avec succès !");
+      
+      // Reset inputs
+      setSimOwnerName("");
+      setScreenshot(null);
       setDepositTransactionId("");
+      setStep(1);
+      
       onRefresh();
     } catch (err: any) {
-      setError(err.message || "Erreur de communication avec la plateforme.");
+      setError(err.message || "Une erreur est survenue lors de la soumission de votre dépôt.");
     } finally {
       setLoading(false);
     }
@@ -71,31 +165,44 @@ export default function DepositView({ user, onRefresh, onBack }: DepositViewProp
       <div className="flex items-center gap-3.5">
         <button
           id="deposit-back-btn"
-          onClick={onBack}
+          onClick={step === 2 ? () => setStep(1) : onBack}
           className="p-2.5 bg-white hover:bg-slate-50 text-slate-700 rounded-xl border border-slate-200/80 transition-all cursor-pointer shadow-2xs"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
         <div>
-          <h2 className="text-lg font-black text-slate-900 tracking-tight">Faire un Dépôt</h2>
-          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Recharge de portefeuille sécurisée</p>
+          <h2 className="text-lg font-black text-slate-900 tracking-tight">
+            {step === 1 ? "Faire un Dépôt" : "Validation du Dépôt"}
+          </h2>
+          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+            {step === 1 ? "Étape 1 : Informations de Recharge" : "Étape 2 : Confirmation de Transfert"}
+          </p>
         </div>
       </div>
 
       {/* Main Content Card */}
       <div className="bg-white rounded-3xl p-6 border border-slate-200/60 shadow-xs space-y-6">
-        <div className="flex items-center gap-3 bg-blue-50/50 border border-blue-100 p-4 rounded-2xl">
-          <Wallet className="h-8 w-8 text-blue-600" />
-          <div>
-            <p className="text-[10px] uppercase font-black tracking-wider text-slate-400">Votre Solde Actuel</p>
-            <h3 className="text-xl font-black text-slate-900 font-mono">
-              {user.balance.toLocaleString()} <span className="text-xs font-normal text-slate-500">FCFA</span>
-            </h3>
-          </div>
+        
+        {/* Step Indicator */}
+        <div className="flex gap-2">
+          <div className={`h-1.5 flex-1 rounded-full transition-all ${step === 1 ? "bg-blue-600" : "bg-blue-200"}`} />
+          <div className={`h-1.5 flex-1 rounded-full transition-all ${step === 2 ? "bg-blue-600" : "bg-blue-200"}`} />
         </div>
 
+        {step === 1 && (
+          <div className="flex items-center gap-3 bg-blue-50/50 border border-blue-100 p-4 rounded-2xl">
+            <Wallet className="h-8 w-8 text-blue-600" />
+            <div>
+              <p className="text-[10px] uppercase font-black tracking-wider text-slate-400">Votre Solde Actuel</p>
+              <h3 className="text-xl font-black text-slate-900 font-mono">
+                {user.balance.toLocaleString()} <span className="text-xs font-normal text-slate-500">FCFA</span>
+              </h3>
+            </div>
+          </div>
+        )}
+
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 text-[11px] p-3 rounded-2xl font-bold flex gap-2">
+          <div className="bg-red-50 border border-red-200 text-red-600 text-[11px] p-3 rounded-2xl font-bold flex gap-2 animate-pulse">
             <span>⚠️</span>
             <span>{error}</span>
           </div>
@@ -103,105 +210,253 @@ export default function DepositView({ user, onRefresh, onBack }: DepositViewProp
 
         {success && (
           <div className="bg-green-50 border border-green-200 text-green-600 text-[11px] p-4 rounded-2xl text-center font-bold flex flex-col items-center gap-2">
-            <CheckCircle className="h-6 w-6 text-green-500" />
+            <CheckCircle className="h-6 w-6 text-green-500 animate-bounce" />
             <span>🌟 {success}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Amount input */}
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">
-              Montant à recharger (FCFA)
-            </label>
-            <input
-              id="deposit-amount-input"
-              type="number"
-              required
-              min="1000"
-              value={depositAmount}
-              onChange={(e) => setDepositAmount(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-sm text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 font-black font-mono transition-all"
-            />
-            <span className="text-[10px] text-slate-400 font-medium block px-1">
-              Dépôt minimum obligatoire : 1 000 FCFA
-            </span>
-          </div>
+        {/* STEP 1: CONFIGURATION OF DEPOSIT */}
+        {step === 1 && (
+          <form onSubmit={handleContinue} className="space-y-5">
+            {/* Amount input */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">
+                Montant à recharger (FCFA)
+              </label>
+              <input
+                id="deposit-amount-input"
+                type="number"
+                required
+                min="1000"
+                value={depositAmount}
+                onChange={(e) => setDepositAmount(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-sm text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 font-black font-mono transition-all"
+              />
+              <span className="text-[10px] text-slate-400 font-medium block px-1">
+                Dépôt minimum obligatoire : 1 000 FCFA
+              </span>
+            </div>
 
-          {/* Preset Buttons */}
-          <div className="grid grid-cols-3 gap-2">
-            {PRESETS.map((preset) => (
-              <button
-                id={`preset-deposit-${preset}`}
-                key={preset}
-                type="button"
-                onClick={() => setDepositAmount(preset)}
-                className={`text-[10px] font-extrabold py-2.5 px-3 border rounded-xl transition-all cursor-pointer ${
-                  depositAmount === preset
-                    ? "bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/10"
-                    : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
+            {/* Preset Buttons */}
+            <div className="grid grid-cols-3 gap-2">
+              {PRESETS.map((preset) => (
+                <button
+                  id={`preset-deposit-${preset}`}
+                  key={preset}
+                  type="button"
+                  onClick={() => setDepositAmount(preset)}
+                  className={`text-[10px] font-extrabold py-2.5 px-3 border rounded-xl transition-all cursor-pointer ${
+                    depositAmount === preset
+                      ? "bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/10"
+                      : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
+                  }`}
+                >
+                  {Number(preset).toLocaleString()} F
+                </button>
+              ))}
+            </div>
+
+            {/* Payment Method select */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">
+                Sélectionner Moyen de Dépôt
+              </label>
+              <select
+                id="deposit-method-select"
+                value={depositMethod}
+                onChange={(e) => setDepositMethod(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-xs font-bold text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500"
+              >
+                {channels.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name} ({m.countries})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Submit step 1 button -> Continue */}
+            <button
+              id="deposit-submit-btn"
+              type="submit"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black text-xs py-3.5 rounded-2xl transition-all cursor-pointer shadow-md shadow-blue-500/10 active:scale-98 flex items-center justify-center gap-2 uppercase tracking-wider"
+            >
+              <span>Continuer</span>
+            </button>
+          </form>
+        )}
+
+        {/* STEP 2: DETAILS VALIDATION SCREEN */}
+        {step === 2 && (
+          <form onSubmit={handleSubmitDeposit} className="space-y-5">
+            
+            {/* Amount Summary Indicator */}
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex justify-between items-center">
+              <div>
+                <p className="text-[9px] text-slate-400 uppercase font-black tracking-wider">Montant sélectionné</p>
+                <p className="text-base font-black text-slate-900 font-mono">{Number(depositAmount).toLocaleString()} FCFA</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[9px] text-slate-400 uppercase font-black tracking-wider">Moyen de paiement</p>
+                <p className="text-xs font-bold text-slate-800">{selectedMethodObj.name}</p>
+              </div>
+            </div>
+
+            {/* Nom de l'identification de la carte SIM */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1 flex justify-between">
+                <span>Nom de l'identification de la carte SIM</span>
+                <span className="text-red-500 font-extrabold text-[12px]">*</span>
+              </label>
+              <input
+                id="deposit-sim-name-input"
+                type="text"
+                required
+                placeholder="Ex: Jean Dupont"
+                value={simOwnerName}
+                onChange={(e) => setSimOwnerName(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-xs font-semibold text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 transition-all placeholder-slate-400"
+              />
+              <span className="text-[9px] text-slate-400 font-semibold block px-1">
+                Le nom d'enregistrement légal de la puce SIM ayant envoyé les fonds.
+              </span>
+            </div>
+
+            {/* Numéro du receveur */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">
+                Numéro du Receveur officiel
+              </label>
+              <div className="flex items-center justify-between bg-emerald-50/50 border border-emerald-100 p-3.5 rounded-2xl">
+                <div className="space-y-0.5">
+                  <p className="text-[9px] text-emerald-600 font-black uppercase tracking-wider">Envoyer votre transfert vers :</p>
+                  <p className="text-sm font-black text-slate-900 font-mono tracking-wide">{selectedMethodObj.number}</p>
+                  {selectedMethodObj.simOwnerName && (
+                    <p className="text-[10px] text-slate-500 font-bold mt-1">
+                      Nom d'identité SIM : <span className="text-emerald-700 font-black">{selectedMethodObj.simOwnerName}</span>
+                    </p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopyNumber}
+                  className="p-2.5 bg-white border border-emerald-200 rounded-xl text-emerald-600 hover:bg-emerald-50 active:scale-95 transition-all shadow-2xs flex items-center gap-1 cursor-pointer"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="h-3.5 w-3.5 text-green-600" />
+                      <span className="text-[9px] font-black uppercase">Copié</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3.5 w-3.5" />
+                      <span className="text-[9px] font-black uppercase">Copier</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Capture d'écran */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">
+                Capture d'écran (Reçu de la transaction)
+              </label>
+              <div
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                onClick={triggerFileInput}
+                className={`border-2 border-dashed rounded-2xl p-5 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-2 ${
+                  screenshot 
+                    ? "border-emerald-400 bg-emerald-50/20" 
+                    : "border-slate-300 hover:border-blue-500 bg-slate-50/50 hover:bg-slate-50"
                 }`}
               >
-                {Number(preset).toLocaleString()} F
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                
+                {screenshot ? (
+                  <div className="space-y-2">
+                    <img 
+                      src={screenshot} 
+                      alt="Capture de transfert" 
+                      className="max-h-24 mx-auto rounded-lg object-contain border border-slate-200 shadow-2xs"
+                    />
+                    <p className="text-[10px] text-emerald-600 font-black uppercase tracking-wider">Capture d'écran chargée ✓</p>
+                    <p className="text-[9px] text-slate-400 font-bold">Cliquez ou déposez un nouveau fichier pour remplacer</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="p-2.5 bg-white border border-slate-200 text-slate-400 rounded-full shadow-2xs">
+                      <Upload className="h-4 w-4 text-slate-500" />
+                    </div>
+                    <div>
+                      <p className="text-[10.5px] font-extrabold text-slate-700">Cliquez pour importer la capture d'écran</p>
+                      <p className="text-[9px] text-slate-400 mt-0.5">Glissez-déposez l'image ici (Max: 5Mo)</p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* ID de transaction */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1 flex justify-between">
+                <span>ID de Transaction unique (ID / Réf)</span>
+                <span className="text-red-500 font-extrabold text-[12px]">*</span>
+              </label>
+              <input
+                id="deposit-txid-input"
+                type="text"
+                required
+                placeholder="Ex: TXN_781920392 ou Réf: 28392102"
+                value={depositTransactionId}
+                onChange={(e) => setDepositTransactionId(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-xs font-semibold text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 font-mono placeholder-slate-400 transition-all"
+              />
+              <p className="text-[9px] text-slate-400 font-bold px-1">
+                L'identifiant unique présent dans votre SMS de confirmation ou reçu de paiement.
+              </p>
+            </div>
+
+            {/* Submit & Back Action Row */}
+            <div className="flex flex-col gap-2 pt-2">
+              <button
+                id="deposit-submit-btn"
+                type="submit"
+                disabled={loading}
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs py-3.5 rounded-2xl transition-all cursor-pointer disabled:opacity-40 shadow-md shadow-emerald-500/10 active:scale-98 flex items-center justify-center gap-2 uppercase tracking-wider"
+              >
+                {loading ? (
+                  <>
+                    <div className="h-4 w-4 border-2 border-white/35 border-t-white rounded-full animate-spin" />
+                    <span>Traitement en cours...</span>
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck className="h-4 w-4" />
+                    <span>Soumettre dépôt</span>
+                  </>
+                )}
               </button>
-            ))}
-          </div>
 
-          {/* Payment Method select */}
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">
-              Sélectionner Moyen de Dépôt
-            </label>
-            <select
-              id="deposit-method-select"
-              value={depositMethod}
-              onChange={(e) => setDepositMethod(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-xs font-bold text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500"
-            >
-              {PAYMENT_METHODS.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name} ({m.countries})
-                </option>
-              ))}
-            </select>
-          </div>
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs py-3 rounded-2xl transition-all cursor-pointer text-center uppercase tracking-wider"
+              >
+                Retour
+              </button>
+            </div>
 
-          {/* Detailed Instructions block */}
-          <div className="p-4 bg-slate-50 border border-slate-200/60 rounded-2xl text-[11px] text-slate-600 space-y-2 leading-relaxed">
-            <p className="font-extrabold text-[#00a3e0] uppercase tracking-wide flex items-center gap-1">
-              <Info className="h-4 w-4" /> Instructions Administratives :
-            </p>
-            <p>1. Effectuez le transfert de <span className="font-extrabold text-slate-800">{Number(depositAmount || 0).toLocaleString()} FCFA</span> vers le numéro Mobile Money officiel fourni par le support ou vos canaux de recharge.</p>
-            <p>2. Récupérez le numéro ou l'ID de transaction unique contenu dans le SMS de confirmation.</p>
-            <p>3. Renseignez-le obligatoirement dans le champ ci-dessous.</p>
-          </div>
+          </form>
+        )}
 
-          {/* Transaction ID input */}
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">
-              ID / Référence de Transaction Mobile Money
-            </label>
-            <input
-              id="deposit-txid-input"
-              type="text"
-              required
-              placeholder="Ex: TXN_892019402 ou Ref: 78923091"
-              value={depositTransactionId}
-              onChange={(e) => setDepositTransactionId(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-xs text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 font-mono placeholder-slate-400"
-            />
-          </div>
-
-          {/* Submit button */}
-          <button
-            id="deposit-submit-btn"
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black text-xs py-3.5 rounded-2xl transition-all cursor-pointer disabled:opacity-40 shadow-md shadow-blue-500/10 active:scale-98"
-          >
-            {loading ? "Vérification en cours..." : "Soumettre la demande de dépôt"}
-          </button>
-        </form>
       </div>
     </div>
   );

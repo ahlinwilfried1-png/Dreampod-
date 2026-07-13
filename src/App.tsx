@@ -285,6 +285,10 @@ export default function App() {
             investments={investments}
             onRefresh={handleRefreshData}
             onBack={() => setActiveTab(previousTab)}
+            onNavigateToBankCard={() => {
+              setPreviousTab("withdraw");
+              setActiveTab("bankcard");
+            }}
           />
         )}
 
@@ -385,13 +389,13 @@ export default function App() {
                 </p>
                 <div className="flex flex-wrap gap-2 text-[11px] font-bold">
                   <span className="bg-white border border-slate-200 py-1.5 px-3 rounded-xl flex items-center gap-1 shadow-2xs">
-                    🇨🇲 Cameroun
+                    🇳🇪 Niger
                   </span>
                   <span className="bg-white border border-slate-200 py-1.5 px-3 rounded-xl flex items-center gap-1 shadow-2xs">
-                    🇧🇫 Burkina Faso
+                    🇬🇦 Gabon
                   </span>
                   <span className="bg-white border border-slate-200 py-1.5 px-3 rounded-xl flex items-center gap-1 shadow-2xs">
-                    🇧🇯 Bénin
+                    🇹🇩 Tchad
                   </span>
                 </div>
               </div>
@@ -444,12 +448,12 @@ export default function App() {
                     <div className="bg-white border border-slate-200 rounded-xl p-2 shadow-3xs">
                       <div className="text-sm">🥇</div>
                       <div className="text-[8px] text-slate-400 uppercase mt-0.5">Niveau 1</div>
-                      <div className="text-blue-600 font-black text-xs mt-0.5">20 %</div>
+                      <div className="text-blue-600 font-black text-xs mt-0.5">15 %</div>
                     </div>
                     <div className="bg-white border border-slate-200 rounded-xl p-2 shadow-3xs">
                       <div className="text-sm">🥈</div>
                       <div className="text-[8px] text-slate-400 uppercase mt-0.5">Niveau 2</div>
-                      <div className="text-blue-600 font-black text-xs mt-0.5">3 %</div>
+                      <div className="text-blue-600 font-black text-xs mt-0.5">2 %</div>
                     </div>
                     <div className="bg-white border border-slate-200 rounded-xl p-2 shadow-3xs">
                       <div className="text-sm">🥉</div>

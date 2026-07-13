@@ -36,14 +36,16 @@ interface DashboardViewProps {
 
 const DYNAMIC_MESSAGES = [
   "🚀 RECHARGEZ ET INVESTISSEMENT : Plus de 40% de retour sur investissement mensuel avec nos plans VIP sécurisés !",
-  "💸 DES RETRAITS RAPIDES : Vos gains sont transférés sur vos comptes MTN Mobile Money, Orange Money et Moov Money sous 2H maximum.",
+  "💸 DES RETRAITS RAPIDES : Vos gains sont transférés sur vos comptes Airtel, Moov, Orange, Amana et Nita sous 2H maximum.",
   "🎁 PARRAINEZ ET GAGNEZ : Progressez en invitant vos amis. Gagnez 10% sur tous leurs dépôts directs !",
 ];
 
 const PAYMENT_METHODS = [
-  { id: "mtn", name: "MTN Mobile Money 🟡", countries: "Bénin, Cameroun" },
-  { id: "orange", name: "Orange Money 🟠", countries: "Cameroun" },
-  { id: "moov", name: "Moov Money 🟢", countries: "Bénin, Burkina Faso" },
+  { id: "airtel", name: "Airtel Money 🔴", countries: "Niger, Gabon, Tchad" },
+  { id: "moov", name: "Moov Money (Flooz) 🟢", countries: "Niger, Gabon, Tchad" },
+  { id: "orange", name: "Orange Money 🟠", countries: "Niger" },
+  { id: "amana", name: "Amana Transfert 🟣", countries: "Niger" },
+  { id: "nita", name: "Nita Transfert 🟤", countries: "Niger" },
 ];
 
 export default function DashboardView({ 

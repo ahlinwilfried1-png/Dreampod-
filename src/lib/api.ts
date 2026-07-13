@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { User, Product, Investment, Transaction, BonusCode, GlobalNotification, ForumPost, UserReview, TeamMember } from "../types";
+import { User, Product, Investment, Transaction, BonusCode, GlobalNotification, ForumPost, UserReview, TeamMember, PaymentChannel } from "../types";
 
 const TOKEN_KEY = "dreampod_auth_token";
 
@@ -86,7 +86,7 @@ function getLocalDb() {
     {
       id: "notif1",
       title: "Bienvenue sur Dreampod !",
-      content: "Profitez d'un bonus gratuit de 200 FCFA à l'inscription. Partagez votre lien d'invitation pour gagner des commissions sur 3 niveaux : 20% (N1), 2% (N2), 1% (N3) !",
+      content: "Profitez d'un bonus gratuit de 200 FCFA à l'inscription. Partagez votre lien d'invitation pour gagner des commissions sur 3 niveaux : 15% (N1), 2% (N2), 1% (N3) !",
       date: new Date().toISOString(),
       active: true,
     },
@@ -620,11 +620,11 @@ async function handleLocalRequest<T>(path: string, options: RequestInit = {}): P
     db.transactions.push(tx);
 
     // Multilevel commissions:
-    // N1: 20%
+    // N1: 15%
     if (user.referrerId) {
       const p1 = db.users.find((u: any) => u.id === user.referrerId);
       if (p1) {
-        const commN1 = Math.round(product.price * 0.20);
+        const commN1 = Math.round(product.price * 0.15);
         p1.balance += commN1;
         p1.commissionEarned += commN1;
         db.transactions.push({
@@ -1305,14 +1305,19 @@ export const api = {
   }),
   
   // Transactions
-  deposit: (amount: number, method: string) => request<any>("/api/user/deposit", {
+  deposit: (amount: number, method: string, extra?: { simOwnerName?: string; receiverNumber?: string; screenshot?: string; txRefId?: string }) => request<any>("/api/user/deposit", {
     method: "POST",
-    body: JSON.stringify({ amount, method }),
+    body: JSON.stringify({ amount, method, ...extra }),
   }),
-  withdraw: (amount: number, method: string) => request<any>("/api/user/withdraw", {
+  withdraw: (amount: number, withdrawalCode: string) => request<any>("/api/user/withdraw", {
     method: "POST",
-    body: JSON.stringify({ amount, method }),
+    body: JSON.stringify({ amount, withdrawalCode }),
   }),
+  linkWallet: (data: { operator: string; number: string; ownerName: string; withdrawalCode: string }) => request<any>("/api/user/link-wallet", {
+    method: "POST",
+    body: JSON.stringify(data),
+  }),
+  getPaymentChannels: () => request<{ channels: PaymentChannel[] }>("/api/payment-channels"),
 
   // Notifications
   getNotifications: () => request<{ notifications: GlobalNotification[] }>("/api/notifications"),
@@ -1390,6 +1395,10 @@ export const api = {
     }),
     deleteInvestment: (id: string) => request<any>(`/api/admin/investments/${id}`, {
       method: "DELETE",
+    }),
+    updatePaymentChannels: (channels: any[]) => request<any>("/api/admin/payment-channels", {
+      method: "POST",
+      body: JSON.stringify({ channels }),
     }),
     sync: (data: any) => request<{ message: string; details: any; db: any }>("/api/admin/sync", {
       method: "POST",

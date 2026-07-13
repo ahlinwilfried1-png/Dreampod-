@@ -13,13 +13,13 @@ interface LoginPageProps {
 }
 
 const AFRICAN_COUNTRIES = [
-  { code: "+229", name: "Bénin 🇧🇯" },
-  { code: "+237", name: "Cameroun 🇨🇲" },
-  { code: "+226", name: "Burkina Faso 🇧🇫" },
+  { code: "+227", name: "Niger 🇳🇪" },
+  { code: "+241", name: "Gabon 🇬🇦" },
+  { code: "+235", name: "Tchad 🇹🇩" },
 ];
 
 export default function LoginPage({ onSuccess, onNavigateToRegister }: LoginPageProps) {
-  const [countryCode, setCountryCode] = useState("+229");
+  const [countryCode, setCountryCode] = useState("+227");
   const [phoneBody, setPhoneBody] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);

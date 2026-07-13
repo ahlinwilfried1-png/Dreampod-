@@ -40,7 +40,7 @@ interface AdminViewProps {
 
 export default function AdminView({ onRefresh }: AdminViewProps) {
   // Navigation internal tab
-  const [adminTab, setAdminTab] = useState<"stats" | "users" | "deposits" | "withdrawals" | "products" | "codes" | "notifications" | "reviews" | "investments">("stats");
+  const [adminTab, setAdminTab] = useState<"stats" | "users" | "deposits" | "withdrawals" | "products" | "codes" | "notifications" | "reviews" | "investments" | "channels">("stats");
 
   // User Edit Form State
   const [editingUser, setEditingUser] = useState<any>(null); // holds user object being edited
@@ -66,6 +66,7 @@ export default function AdminView({ onRefresh }: AdminViewProps) {
   const [codesList, setCodesList] = useState<BonusCode[]>([]);
   const [reviewsList, setReviewsList] = useState<UserReview[]>([]);
   const [investmentsList, setInvestmentsList] = useState<Investment[]>([]);
+  const [channelsList, setChannelsList] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -217,6 +218,13 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
       } catch (invErr) {
         console.warn("Investments loading failed:", invErr);
       }
+
+      try {
+        const channelsResp = await api.getPaymentChannels();
+        setChannelsList(channelsResp.channels || []);
+      } catch (chanErr) {
+        console.warn("Channels loading failed:", chanErr);
+      }
     } catch (err: any) {
       if (!silent) {
         setErrorMsg(err.message || "Erreur de chargement des services admin.");
@@ -225,6 +233,22 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
       if (!silent) {
         setLoading(false);
       }
+    }
+  };
+
+  const handleUpdateChannels = async (updatedChannels: any[]) => {
+    setLoading(true);
+    setErrorMsg("");
+    setSuccessMsg("");
+    try {
+      const res = await api.admin.updatePaymentChannels(updatedChannels);
+      setSuccessMsg(res.message || "Canaux de paiement mis à jour avec succès !");
+      setChannelsList(res.channels || updatedChannels);
+      loadAdminData();
+    } catch (err: any) {
+      setErrorMsg(err.message || "Erreur de mise à jour des canaux de paiement.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -765,6 +789,7 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
           { id: "codes", label: "Codes/Bonus", icon: Gift },
           { id: "notifications", label: "Annonces", icon: Bell },
           { id: "reviews", label: "Avis Clients", icon: Star },
+          { id: "channels", label: "Canaux ⚙️", icon: Wallet },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = adminTab === tab.id;
@@ -1126,6 +1151,29 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
                           <span className="font-bold mt-0.5 block text-emerald-600">{usr.commissionEarned.toLocaleString()} F</span>
                         </div>
                       </div>
+
+                      {/* Linked Wallet Info */}
+                      {usr.linkedWalletNumber ? (
+                        <div className="mt-3 p-2.5 bg-blue-50/40 border border-blue-100 rounded-xl max-w-md text-[9.5px] font-medium text-slate-700">
+                          <p className="text-[8px] uppercase font-black tracking-wider text-blue-600 mb-1 flex items-center gap-1">
+                            💳 Portefeuille Mobile lié :
+                          </p>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-2 gap-y-0.5 text-slate-800">
+                            <div>Opérateur : <strong className="font-extrabold uppercase">{usr.linkedWalletOperator}</strong></div>
+                            <div>Numéro : <strong className="font-mono font-extrabold">{usr.linkedWalletNumber}</strong></div>
+                            <div className="truncate">Titulaire : <strong className="font-extrabold">{usr.linkedWalletOwnerName}</strong></div>
+                          </div>
+                          {usr.withdrawalCode && (
+                            <div className="mt-1 text-slate-500 text-[8.5px]">
+                              Code de retrait confidentiel : <strong className="font-mono font-black text-slate-700 bg-white px-1 py-0.5 border border-slate-200 rounded">{usr.withdrawalCode}</strong>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="mt-3 p-2 bg-slate-50 border border-dashed border-slate-200 rounded-xl text-[9.5px] text-slate-400 font-semibold max-w-md">
+                          ❌ Aucun portefeuille de paiement Mobile Money lié pour l'instant.
+                        </div>
+                      )}
                     </div>
 
                     {/* Actions dropdown layout */}
@@ -1226,6 +1274,45 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
                         </div>
                         
                         <p className="text-[9.5px] text-slate-600 font-mono mt-1.5">📞 {tx.userPhone} | Canal: {tx.method}</p>
+                        
+                        {tx.simOwnerName && (
+                          <div className="text-[10px] text-slate-700 font-semibold mt-1 bg-slate-50 border border-slate-100 p-2 rounded-xl">
+                            <span className="font-extrabold text-slate-500 uppercase text-[8px] tracking-wider block">ID Carte SIM</span>
+                            {tx.simOwnerName}
+                          </div>
+                        )}
+                        
+                        {tx.receiverNumber && (
+                          <div className="text-[10px] text-slate-700 font-semibold mt-1 bg-slate-50 border border-slate-100 p-2 rounded-xl">
+                            <span className="font-extrabold text-slate-500 uppercase text-[8px] tracking-wider block">Numéro Receveur</span>
+                            {tx.receiverNumber}
+                          </div>
+                        )}
+                        
+                        {tx.txRefId && (
+                          <div className="text-[10px] text-slate-700 font-semibold mt-1 bg-slate-50 border border-slate-100 p-2 rounded-xl">
+                            <span className="font-extrabold text-slate-500 uppercase text-[8px] tracking-wider block">ID / Référence</span>
+                            {tx.txRefId}
+                          </div>
+                        )}
+
+                        {tx.screenshot && (
+                          <div className="mt-2 p-2 bg-slate-50 border border-slate-100 rounded-xl max-w-xs">
+                            <span className="font-extrabold text-slate-500 uppercase text-[8px] tracking-wider block mb-1">Preuve Capture d'écran</span>
+                            <img 
+                              src={tx.screenshot} 
+                              alt="Preuve" 
+                              className="max-h-24 object-cover rounded-lg border border-slate-200 cursor-zoom-in hover:brightness-95 transition-all" 
+                              onClick={() => {
+                                const w = window.open();
+                                if (w) {
+                                  w.document.write(`<img src="${tx.screenshot}" style="max-width:100%; height:auto;" />`);
+                                }
+                              }}
+                            />
+                          </div>
+                        )}
+
                         <p className="text-[9px] text-slate-400 mt-1">{new Date(tx.date).toLocaleString()}</p>
                       </div>
 
@@ -1311,7 +1398,18 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
                           <span className="text-[10px] text-slate-800 font-bold">{tx.userName}</span>
                         </div>
                         
-                        <p className="text-[9.5px] text-slate-600 font-mono mt-1.5">📞 {tx.userPhone} | Canal: {tx.method}</p>
+                        <p className="text-[9.5px] text-slate-600 font-mono mt-1.5 font-bold">👤 {tx.userName} | ID: {tx.userId} | 📞 {tx.userPhone}</p>
+                        <p className="text-[9.5px] text-emerald-700 font-bold mt-1">🏦 Canal : {tx.method}</p>
+                        {tx.linkedWalletNumber && (
+                          <div className="mt-2 p-2 bg-blue-50/50 border border-blue-100 rounded-xl text-[9.5px] text-slate-700 max-w-sm">
+                            <span className="font-extrabold text-blue-600 uppercase text-[8px] tracking-wider block mb-0.5">🚀 Coordonnées de réception liées :</span>
+                            <div className="space-y-0.5 text-slate-800">
+                              <div>Opérateur : <strong className="font-extrabold uppercase">{tx.linkedWalletOperator}</strong></div>
+                              <div>Numéro lié : <strong className="font-mono font-extrabold">{tx.linkedWalletNumber}</strong></div>
+                              <div>Titulaire légal : <strong className="font-extrabold">{tx.linkedWalletOwnerName}</strong></div>
+                            </div>
+                          </div>
+                        )}
                         <p className="text-[9px] text-slate-400 mt-1">{new Date(tx.date).toLocaleString()}</p>
                       </div>
 
@@ -1832,6 +1930,109 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
                   })}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* --- PANEL 9: CHANNELS CONFIGURATION (CANAUX DE DÉPÔT) --- */}
+      {adminTab === "channels" && (
+        <div id="admin-channels-panel" className="space-y-4">
+          <div className="bg-white border border-slate-200 p-5 rounded-2xl space-y-4 shadow-xs text-slate-800">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600">
+                <Wallet className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-extrabold text-slate-900">Configuration des Canaux de Dépôt (SIM & Numéros)</h3>
+                <p className="text-[10px] text-slate-500">Gérez les cartes SIM, les numéros de transfert officiels et les réseaux de réception pour Niger, Gabon, et Tchad</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {channelsList.map((chan, idx) => (
+                <div key={chan.id} className="border border-slate-200/80 rounded-2xl p-4 bg-slate-50/50 space-y-4">
+                  <div className="flex justify-between items-center pb-2 border-b border-slate-200/60">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-black text-slate-800 uppercase tracking-wider">{chan.name}</span>
+                      <span className="text-[9px] bg-slate-200 text-slate-600 font-bold px-1.5 py-0.5 rounded uppercase">ID: {chan.id}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-slate-500">Actif :</span>
+                      <input
+                        id={`channel-active-toggle-${chan.id}`}
+                        type="checkbox"
+                        checked={chan.active}
+                        onChange={(e) => {
+                          const copy = [...channelsList];
+                          copy[idx] = { ...copy[idx], active: e.target.checked };
+                          setChannelsList(copy);
+                        }}
+                        className="h-4 w-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block px-1">Pays supportés</label>
+                      <input
+                        id={`channel-countries-input-${chan.id}`}
+                        type="text"
+                        value={chan.countries}
+                        onChange={(e) => {
+                          const copy = [...channelsList];
+                          copy[idx] = { ...copy[idx], countries: e.target.value };
+                          setChannelsList(copy);
+                        }}
+                        className="w-full bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-800 font-bold focus:outline-none focus:border-blue-500"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block px-1">Numéro du Receveur officiel</label>
+                      <input
+                        id={`channel-number-input-${chan.id}`}
+                        type="text"
+                        value={chan.number}
+                        onChange={(e) => {
+                          const copy = [...channelsList];
+                          copy[idx] = { ...copy[idx], number: e.target.value };
+                          setChannelsList(copy);
+                        }}
+                        className="w-full bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-800 font-mono font-bold focus:outline-none focus:border-blue-500"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block px-1">Nom d'identification SIM</label>
+                      <input
+                        id={`channel-sim-input-${chan.id}`}
+                        type="text"
+                        value={chan.simOwnerName || ""}
+                        placeholder="Ex: Orange Money Services SARL"
+                        onChange={(e) => {
+                          const copy = [...channelsList];
+                          copy[idx] = { ...copy[idx], simOwnerName: e.target.value };
+                          setChannelsList(copy);
+                        }}
+                        className="w-full bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-800 font-bold focus:outline-none focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <div className="flex items-center justify-between pt-2">
+                <p className="text-[10px] text-slate-400 font-medium">Les modifications ne prendront effet que lorsque vous cliquerez sur Enregistrer ci-contre.</p>
+                <button
+                  id="admin-save-payment-channels-btn"
+                  onClick={() => handleUpdateChannels(channelsList)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-black text-xs py-3.5 px-6 rounded-2xl transition-all cursor-pointer shadow-md shadow-blue-500/10 active:scale-98 uppercase tracking-wider"
+                >
+                  Sauvegarder les Canaux de Paiement
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

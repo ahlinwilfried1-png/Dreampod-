@@ -18,7 +18,8 @@ import {
   GlobalNotification,
   ForumPost,
   UserReview,
-  TeamMember
+  TeamMember,
+  PaymentChannel
 } from "./src/types";
 
 declare global {
@@ -70,7 +71,7 @@ const initialNotifications: GlobalNotification[] = [
   {
     id: "notif1",
     title: "Bienvenue sur Dreampod !",
-    content: "Profitez d'un bonus gratuit de 200 FCFA à l'inscription. Partagez votre lien d'invitation pour gagner des commissions sur 3 niveaux : 20% (N1), 2% (N2), 1% (N3) !",
+    content: "Profitez d'un bonus gratuit de 200 FCFA à l'inscription. Partagez votre lien d'invitation pour gagner des commissions sur 3 niveaux : 15% (N1), 2% (N2), 1% (N3) !",
     date: new Date().toISOString(),
     active: true,
   },
@@ -92,6 +93,7 @@ interface DatabaseSchema {
   notifications: GlobalNotification[];
   forumPosts: ForumPost[];
   userReviews: UserReview[];
+  paymentChannels: PaymentChannel[];
 }
 
 // Ensure database file exists
@@ -258,6 +260,16 @@ function migrateDatabase(parsed: any): DatabaseSchema {
         parsed.products.push(defProd);
       }
     });
+  }
+
+  if (!parsed.paymentChannels || !Array.isArray(parsed.paymentChannels) || parsed.paymentChannels.length === 0) {
+    parsed.paymentChannels = [
+      { id: "airtel", name: "Airtel Money 🔴", countries: "Niger, Gabon, Tchad", number: "+227 99 88 77 66", simOwnerName: "DREAM SERVICES AIRTEL", active: true },
+      { id: "moov", name: "Moov Money (Flooz) 🟢", countries: "Niger, Gabon, Tchad", number: "+227 90 44 55 66", simOwnerName: "DREAM SERVICES MOOV", active: true },
+      { id: "orange", name: "Orange Money 🟠", countries: "Niger", number: "+227 96 11 22 33", simOwnerName: "DREAM SERVICES ORANGE", active: true },
+      { id: "amana", name: "Amana Transfert 🟣", countries: "Niger", number: "+227 92 11 22 33", simOwnerName: "DREAM SERVICES AMANA", active: true },
+      { id: "nita", name: "Nita Transfert 🟤", countries: "Niger", number: "+227 93 11 22 33", simOwnerName: "DREAM SERVICES NITA", active: true }
+    ];
   }
 
   return parsed as DatabaseSchema;
@@ -484,6 +496,49 @@ async function loadDatabase(force = false): Promise<DatabaseSchema> {
       }
     ];
 
+    const initialPaymentChannels: PaymentChannel[] = [
+      {
+        id: "airtel",
+        name: "Airtel Money",
+        countries: "Niger, Gabon, Tchad",
+        number: "+227 99 88 77 66",
+        simOwnerName: "DREAM SERVICES AIRTEL",
+        active: true
+      },
+      {
+        id: "orange",
+        name: "Orange Money",
+        countries: "Niger",
+        number: "+227 96 11 22 33",
+        simOwnerName: "DREAM SERVICES ORANGE",
+        active: true
+      },
+      {
+        id: "moov",
+        name: "Moov Flooz",
+        countries: "Niger, Gabon, Tchad",
+        number: "+227 90 44 55 66",
+        simOwnerName: "DREAM SERVICES MOOV",
+        active: true
+      },
+      {
+        id: "amana",
+        name: "Amana Transfert",
+        countries: "Niger",
+        number: "+227 92 11 22 33",
+        simOwnerName: "DREAM SERVICES AMANA",
+        active: true
+      },
+      {
+        id: "nita",
+        name: "Nita Transfert",
+        countries: "Niger",
+        number: "+227 93 11 22 33",
+        simOwnerName: "DREAM SERVICES NITA",
+        active: true
+      }
+    ];
+
     const dbData: DatabaseSchema = {
       users: [adminUser, adminUser2, promoUser],
       products: initialProducts,
@@ -493,6 +548,7 @@ async function loadDatabase(force = false): Promise<DatabaseSchema> {
       notifications: initialNotifications,
       forumPosts: initialForumPosts,
       userReviews: initialUserReviews,
+      paymentChannels: initialPaymentChannels,
     };
     fs.writeFileSync(DB_FILE, JSON.stringify(dbData, null, 2), "utf8");
     saveToSupabase(dbData);
@@ -1071,11 +1127,11 @@ async function startServer() {
     db.transactions.push(tx);
 
     // --- REVENUE MULTILEVEL DISTRIBUTION (PARRAINAGE COMMISSIONS) ---
-    // Level 1: 20%
+    // Level 1: 15%
     if (user.referrerId) {
       const l1Idx = db.users.findIndex(u => u.id === user.referrerId);
       if (l1Idx !== -1) {
-        const commN1 = Math.round(product.price * 0.20);
+        const commN1 = Math.round(product.price * 0.15);
         db.users[l1Idx].balance += commN1;
         db.users[l1Idx].commissionEarned += commN1;
 
@@ -1153,7 +1209,7 @@ async function startServer() {
 
   // Manual Deposit request
   app.post("/api/user/deposit", authenticateUser, async (req, res) => {
-    const { amount, method } = req.body;
+    const { amount, method, simOwnerName, receiverNumber, screenshot, txRefId } = req.body;
     const userId = req.user!.id;
 
     if (!amount || amount < 1000) {
@@ -1161,7 +1217,7 @@ async function startServer() {
     }
 
     if (!method) {
-      return res.status(400).json({ error: "Veuillez choisir un moyen de rechargement (MTN, Orange Money, Moov)." });
+      return res.status(400).json({ error: "Veuillez choisir un moyen de rechargement (Airtel, Moov, Orange, Amana, Nita)." });
     }
 
     const tx: Transaction = {
@@ -1174,6 +1230,10 @@ async function startServer() {
       status: "pending", // Depôt en attente de validation admin locale
       date: new Date().toISOString(),
       method: method,
+      simOwnerName: simOwnerName || undefined,
+      receiverNumber: receiverNumber || undefined,
+      screenshot: screenshot || undefined,
+      txRefId: txRefId || undefined,
     };
 
     db.transactions.push(tx);
@@ -1187,8 +1247,22 @@ async function startServer() {
 
   // Manual Withdrawal Request
   app.post("/api/user/withdraw", authenticateUser, async (req, res) => {
-    const { amount, method } = req.body;
+    const { amount, withdrawalCode } = req.body;
     const userId = req.user!.id;
+
+    const uIdx = db.users.findIndex(u => u.id === userId);
+    if (uIdx === -1) return res.status(404).json({ error: "Utilisateur non trouvé" });
+    const user = db.users[uIdx];
+
+    // Check if user has linked a wallet
+    if (!user.linkedWalletNumber || !user.linkedWalletOperator) {
+      return res.status(400).json({ error: "Avant d'effectuer un retrait, vous devez lier votre portefeuille mobile money à votre compte." });
+    }
+
+    // Check withdrawalCode
+    if (!withdrawalCode || String(withdrawalCode).trim() !== String(user.withdrawalCode).trim()) {
+      return res.status(400).json({ error: "Le code de retrait fourni est incorrect." });
+    }
 
     // Check if user has at least one active product (daysPassed < durationDays)
     const hasActiveProduct = db.investments.some(inv => inv.userId === userId && inv.daysPassed < inv.durationDays);
@@ -1200,10 +1274,6 @@ async function startServer() {
       return res.status(400).json({ error: "Le montant minimum de retrait est de 500 FCFA." });
     }
 
-    const uIdx = db.users.findIndex(u => u.id === userId);
-    if (uIdx === -1) return res.status(404).json({ error: "Utilisateur non trouvé" });
-
-    const user = db.users[uIdx];
     if (user.balance < amount) {
       return res.status(400).json({ error: `Solde insuffisant pour retirer ${amount} FCFA. Solde actuel: ${user.balance} FCFA.` });
     }
@@ -1220,7 +1290,10 @@ async function startServer() {
       amount: Number(amount),
       status: "pending", // Withdrawal pending admin evaluation
       date: new Date().toISOString(),
-      method: method || "Mobile Money",
+      method: `${user.linkedWalletOperator.toUpperCase()} (${user.linkedWalletNumber})`,
+      linkedWalletOperator: user.linkedWalletOperator,
+      linkedWalletNumber: user.linkedWalletNumber,
+      linkedWalletOwnerName: user.linkedWalletOwnerName,
     };
 
     db.transactions.push(tx);
@@ -1230,6 +1303,55 @@ async function startServer() {
       message: "Votre demande de retrait a été soumise avec succès et est en cours d'évaluation.",
       balance: user.balance,
       transaction: tx
+    });
+  });
+
+  // Link payment wallet
+  app.post("/api/user/link-wallet", authenticateUser, async (req, res) => {
+    const { operator, number, ownerName, withdrawalCode } = req.body;
+    if (!operator || !number || !ownerName || !withdrawalCode) {
+      return res.status(400).json({ error: "Veuillez remplir tous les champs (Opérateur, Numéro, Nom du titulaire et Code de retrait)." });
+    }
+
+    const uIdx = db.users.findIndex(u => u.id === req.user!.id);
+    if (uIdx === -1) return res.status(404).json({ error: "Utilisateur non trouvé" });
+
+    db.users[uIdx].linkedWalletOperator = operator;
+    db.users[uIdx].linkedWalletNumber = number;
+    db.users[uIdx].linkedWalletOwnerName = ownerName;
+    db.users[uIdx].withdrawalCode = withdrawalCode;
+
+    await saveDatabase(db);
+
+    const safeUser = getSafeUser(db, db.users[uIdx]);
+    res.json({
+      message: "Votre portefeuille de paiement a été lié avec succès !",
+      user: safeUser
+    });
+  });
+
+  // Get active payment channels
+  app.get("/api/payment-channels", async (req, res) => {
+    res.json({ channels: db.paymentChannels || [] });
+  });
+
+  // Admin: Update payment channels
+  app.post("/api/admin/payment-channels", authenticateUser, async (req, res) => {
+    if (!req.user || req.user.role !== "admin") {
+      return res.status(403).json({ error: "Accès refusé" });
+    }
+
+    const { channels } = req.body;
+    if (!channels || !Array.isArray(channels)) {
+      return res.status(400).json({ error: "Format des canaux de paiement invalide." });
+    }
+
+    db.paymentChannels = channels;
+    await saveDatabase(db);
+
+    res.json({
+      message: "Configuration des canaux de paiement mise à jour avec succès !",
+      channels: db.paymentChannels,
     });
   });
 

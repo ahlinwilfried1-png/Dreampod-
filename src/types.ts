@@ -24,6 +24,10 @@ export interface User {
   spinsUsed?: number;
   spinsAvailable?: number;
   investedReferralsCount?: number;
+  linkedWalletOperator?: string;
+  linkedWalletNumber?: string;
+  linkedWalletOwnerName?: string;
+  withdrawalCode?: string;
 }
 
 export interface Product {
@@ -61,6 +65,13 @@ export interface Transaction {
   status: 'pending' | 'completed' | 'rejected';
   date: string;
   method?: string; // MTN Mobile Money, Orange Money, etc.
+  simOwnerName?: string;
+  receiverNumber?: string;
+  screenshot?: string;
+  txRefId?: string;
+  linkedWalletOperator?: string;
+  linkedWalletNumber?: string;
+  linkedWalletOwnerName?: string;
 }
 
 export interface BonusCode {
@@ -111,6 +122,15 @@ export interface TeamMember {
   level: number; // 1, 2, or 3
   registeredAt: string;
   totalInvested: number;
+}
+
+export interface PaymentChannel {
+  id: string;
+  name: string;
+  countries: string;
+  number: string;
+  simOwnerName: string;
+  active: boolean;
 }
 
 

@@ -22,7 +22,7 @@ const FAQS: FaqItem[] = [
   },
   {
     q: "Comment effectuer un dépôt ?",
-    a: "Rendez-vous dans la rubrique 'Dépôt', saisissez le montant de votre choix (minimum 1 000 FCFA), sélectionnez votre opérateur mobile (MTN, Orange, Moov ou Wave), puis effectuez le transfert. Enfin, collez la référence de transaction SMS reçue et soumettez la demande.",
+    a: "Rendez-vous dans la rubrique 'Dépôt', saisissez le montant de votre choix (minimum 1 000 FCFA), sélectionnez votre opérateur mobile (Airtel, Moov, Orange, Amana ou Nita), puis effectuez le transfert. Enfin, collez la référence de transaction SMS reçue et soumettez la demande.",
   },
   {
     q: "Quel est le délai de traitement des retraits ?",
@@ -30,7 +30,7 @@ const FAQS: FaqItem[] = [
   },
   {
     q: "Comment fonctionne le programme de parrainage ?",
-    a: "Vous bénéficiez d'une commission directe de 10% sur tous les dépôts directs effectués par vos filleuls directs (Niveau 1) lorsqu'ils investissent dans un plan VIP.",
+    a: "Vous bénéficiez d'une commission de parrainage sur 3 niveaux : 15% sur les plans achetés par vos filleuls directs (N1), 2% au Niveau 2 (N2), et 1% au Niveau 3 (N3).",
   },
   {
     q: "Qu'est-ce que les gains passifs journaliers ?",
