@@ -963,6 +963,8 @@ async function startServer() {
       normalizedPhone = "+22800000000";
     } else if (normalizedPhone.toLowerCase() === "admin2") {
       normalizedPhone = "+22900000002";
+    } else if (normalizedPhone.toLowerCase() === "admin3") {
+      normalizedPhone = "+22780000000";
     }
     const user = db.users.find(u => u.phone === normalizedPhone);
 

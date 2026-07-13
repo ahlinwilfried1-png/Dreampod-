@@ -55,7 +55,8 @@ export default function LoginPage({ onSuccess, onNavigateToRegister }: LoginPage
 
     // Support plain Admin bypass or format phone fully
     let fullPhone = phoneBody.trim();
-    if (fullPhone.toLowerCase() !== "admin") {
+    const isShortcut = ["admin", "admin2", "admin3"].includes(fullPhone.toLowerCase());
+    if (!isShortcut) {
       // If it doesn't already have an African prefix, append it
       if (!fullPhone.startsWith("+")) {
         fullPhone = `${countryCode}${fullPhone}`;
