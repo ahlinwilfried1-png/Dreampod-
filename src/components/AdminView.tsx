@@ -252,6 +252,19 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
     }
   };
 
+  const handleAddChannel = () => {
+    const newChan = {
+      id: "channel_" + Date.now(),
+      name: "Nouveau Canal Mobile Money",
+      countries: "Niger",
+      number: "+227 00 00 00 00",
+      simOwnerName: "DREAM SERVICES SIM",
+      active: true
+    };
+    setChannelsList([...channelsList, newChan]);
+    setSuccessMsg("Nouveau canal ajouté en bas de liste ! N'oubliez pas de le configurer puis d'enregistrer.");
+  };
+
   useEffect(() => {
     loadAdminData();
     
@@ -1974,98 +1987,168 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
       {adminTab === "channels" && (
         <div id="admin-channels-panel" className="space-y-4">
           <div className="bg-white border border-slate-200 p-5 rounded-2xl space-y-4 shadow-xs text-slate-800">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600">
-                <Wallet className="h-4 w-4" />
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600">
+                  <Wallet className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-extrabold text-slate-900">Configuration des Canaux de Dépôt (SIM & Numéros)</h3>
+                  <p className="text-[10px] text-slate-500">Ajoutez, modifiez ou supprimez les cartes SIM et réseaux officiels en temps réel.</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-sm font-extrabold text-slate-900">Configuration des Canaux de Dépôt (SIM & Numéros)</h3>
-                <p className="text-[10px] text-slate-500">Gérez les cartes SIM, les numéros de transfert officiels et les réseaux de réception pour Niger, Gabon, Tchad, et Togo</p>
-              </div>
+              <button
+                id="admin-add-new-channel-btn"
+                type="button"
+                onClick={handleAddChannel}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] uppercase tracking-wider py-2.5 px-4 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-sm"
+              >
+                <PlusCircle className="h-4 w-4" />
+                <span>Ajouter un canal</span>
+              </button>
             </div>
 
             <div className="space-y-4">
-              {channelsList.map((chan, idx) => (
-                <div key={chan.id} className="border border-slate-200/80 rounded-2xl p-4 bg-slate-50/50 space-y-4">
-                  <div className="flex justify-between items-center pb-2 border-b border-slate-200/60">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-black text-slate-800 uppercase tracking-wider">{chan.name}</span>
-                      <span className="text-[9px] bg-slate-200 text-slate-600 font-bold px-1.5 py-0.5 rounded uppercase">ID: {chan.id}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold text-slate-500">Actif :</span>
-                      <input
-                        id={`channel-active-toggle-${chan.id}`}
-                        type="checkbox"
-                        checked={chan.active}
-                        onChange={(e) => {
-                          const copy = [...channelsList];
-                          copy[idx] = { ...copy[idx], active: e.target.checked };
-                          setChannelsList(copy);
-                        }}
-                        className="h-4 w-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block px-1">Pays supportés</label>
-                      <input
-                        id={`channel-countries-input-${chan.id}`}
-                        type="text"
-                        value={chan.countries}
-                        onChange={(e) => {
-                          const copy = [...channelsList];
-                          copy[idx] = { ...copy[idx], countries: e.target.value };
-                          setChannelsList(copy);
-                        }}
-                        className="w-full bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-800 font-bold focus:outline-none focus:border-blue-500"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block px-1">Numéro du Receveur officiel</label>
-                      <input
-                        id={`channel-number-input-${chan.id}`}
-                        type="text"
-                        value={chan.number}
-                        onChange={(e) => {
-                          const copy = [...channelsList];
-                          copy[idx] = { ...copy[idx], number: e.target.value };
-                          setChannelsList(copy);
-                        }}
-                        className="w-full bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-800 font-mono font-bold focus:outline-none focus:border-blue-500"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block px-1">Nom d'identification SIM</label>
-                      <input
-                        id={`channel-sim-input-${chan.id}`}
-                        type="text"
-                        value={chan.simOwnerName || ""}
-                        placeholder="Ex: Orange Money Services SARL"
-                        onChange={(e) => {
-                          const copy = [...channelsList];
-                          copy[idx] = { ...copy[idx], simOwnerName: e.target.value };
-                          setChannelsList(copy);
-                        }}
-                        className="w-full bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-800 font-bold focus:outline-none focus:border-blue-500"
-                      />
-                    </div>
-                  </div>
+              {channelsList.length === 0 ? (
+                <div className="text-center py-8 text-slate-400 text-xs">
+                  Aucun canal de paiement configuré. Cliquez sur le bouton "Ajouter un canal" pour commencer.
                 </div>
-              ))}
+              ) : (
+                channelsList.map((chan, idx) => (
+                  <div key={chan.id || idx} className="border border-slate-200/80 rounded-2xl p-4 bg-slate-50/50 space-y-4 relative">
+                    <div className="flex justify-between items-center pb-2 border-b border-slate-200/60">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                          {chan.name || "Nouveau Canal"}
+                        </span>
+                        <span className="text-[9px] bg-slate-200 text-slate-600 font-bold px-1.5 py-0.5 rounded uppercase">
+                          ID: {chan.id}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-bold text-slate-500">Actif :</span>
+                          <input
+                            id={`channel-active-toggle-${chan.id || idx}`}
+                            type="checkbox"
+                            checked={!!chan.active}
+                            onChange={(e) => {
+                              const copy = [...channelsList];
+                              copy[idx] = { ...copy[idx], active: e.target.checked };
+                              setChannelsList(copy);
+                            }}
+                            className="h-4 w-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const copy = [...channelsList];
+                            copy.splice(idx, 1);
+                            setChannelsList(copy);
+                            setSuccessMsg("Canal retiré temporairement. Pensez à cliquer sur Sauvegarder ci-dessous pour confirmer !");
+                          }}
+                          className="p-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-lg transition-colors cursor-pointer"
+                          title="Supprimer ce canal"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
 
-              <div className="flex items-center justify-between pt-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block px-1">ID (Clé unique)</label>
+                        <input
+                          id={`channel-id-input-${chan.id || idx}`}
+                          type="text"
+                          value={chan.id || ""}
+                          onChange={(e) => {
+                            const copy = [...channelsList];
+                            copy[idx] = { ...copy[idx], id: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') };
+                            setChannelsList(copy);
+                          }}
+                          className="w-full bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-800 font-mono font-bold focus:outline-none focus:border-blue-500"
+                          placeholder="Ex: airtel"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block px-1">Nom d'affichage</label>
+                        <input
+                          id={`channel-name-input-${chan.id || idx}`}
+                          type="text"
+                          value={chan.name || ""}
+                          onChange={(e) => {
+                            const copy = [...channelsList];
+                            copy[idx] = { ...copy[idx], name: e.target.value };
+                            setChannelsList(copy);
+                          }}
+                          className="w-full bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-800 font-bold focus:outline-none focus:border-blue-500"
+                          placeholder="Ex: Orange Money 🟠"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block px-1">Pays supportés</label>
+                        <input
+                          id={`channel-countries-input-${chan.id || idx}`}
+                          type="text"
+                          value={chan.countries || ""}
+                          onChange={(e) => {
+                            const copy = [...channelsList];
+                            copy[idx] = { ...copy[idx], countries: e.target.value };
+                            setChannelsList(copy);
+                          }}
+                          className="w-full bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-800 font-bold focus:outline-none focus:border-blue-500"
+                          placeholder="Ex: Niger, Togo"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block px-1">Numéro du Receveur</label>
+                        <input
+                          id={`channel-number-input-${chan.id || idx}`}
+                          type="text"
+                          value={chan.number || ""}
+                          onChange={(e) => {
+                            const copy = [...channelsList];
+                            copy[idx] = { ...copy[idx], number: e.target.value };
+                            setChannelsList(copy);
+                          }}
+                          className="w-full bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-800 font-mono font-bold focus:outline-none focus:border-blue-500"
+                          placeholder="Ex: +227 96 11 22 33"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block px-1">Nom Propriétaire SIM</label>
+                        <input
+                          id={`channel-sim-input-${chan.id || idx}`}
+                          type="text"
+                          value={chan.simOwnerName || ""}
+                          placeholder="Ex: Orange Money Services SARL"
+                          onChange={(e) => {
+                            const copy = [...channelsList];
+                            copy[idx] = { ...copy[idx], simOwnerName: e.target.value };
+                            setChannelsList(copy);
+                          }}
+                          className="w-full bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-800 font-bold focus:outline-none focus:border-blue-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
                 <p className="text-[10px] text-slate-400 font-medium">Les modifications ne prendront effet que lorsque vous cliquerez sur Enregistrer ci-contre.</p>
                 <button
                   id="admin-save-payment-channels-btn"
                   onClick={() => handleUpdateChannels(channelsList)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-black text-xs py-3.5 px-6 rounded-2xl transition-all cursor-pointer shadow-md shadow-blue-500/10 active:scale-98 uppercase tracking-wider"
+                  className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-black text-xs py-3.5 px-6 rounded-2xl transition-all cursor-pointer shadow-md shadow-blue-500/10 active:scale-98 uppercase tracking-wider"
                 >
-                  Sauvegarder les Canaux de Paiement
+                  Enregistrer les Canaux
                 </button>
               </div>
             </div>
