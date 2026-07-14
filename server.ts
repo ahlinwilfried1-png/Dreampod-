@@ -2316,6 +2316,15 @@ async function startServer() {
     res.json({ message: "Avis supprimé définitivement." });
   });
 
+  // Global Express Error Handler Middleware to format all unhandled backend crashes/exceptions as JSON
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error("Unhandled API Error:", err);
+    res.status(500).json({
+      error: "Une erreur interne du serveur est survenue.",
+      message: err.message || String(err),
+    });
+  });
+
   // Vite + Production config as required
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

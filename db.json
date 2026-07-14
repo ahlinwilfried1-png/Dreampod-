@@ -1,334 +1,166 @@
 {
   "users": [
     {
-      "id": "usr_admin",
-      "name": "Dreampod Admin",
-      "phone": "+22800000000",
-      "passwordHash": "admin123",
-      "balance": 1000000,
-      "dailyRevenue": 0,
-      "totalRevenue": 250000,
-      "referralCode": "ADMIN7",
-      "referralsCount": 4,
-      "referralsN1": 2,
-      "referralsN2": 1,
-      "referralsN3": 1,
-      "commissionEarned": 15000,
-      "registeredAt": "2026-07-13T08:33:51.523Z",
-      "isBlocked": false,
-      "role": "admin"
-    },
-    {
       "id": "usr_admin2",
       "name": "Super Administrateur Bénin",
+      "role": "admin",
       "phone": "+22900000002",
-      "passwordHash": "admin123",
       "balance": 1000000,
-      "dailyRevenue": 0,
-      "totalRevenue": 500000,
-      "referralCode": "CHEF10",
-      "referralsCount": 10,
-      "referralsN1": 5,
+      "isBlocked": false,
+      "referralsN1": 6,
       "referralsN2": 3,
       "referralsN3": 2,
-      "commissionEarned": 50000,
-      "registeredAt": "2026-07-13T08:33:51.523Z",
-      "isBlocked": false,
-      "role": "admin"
+      "dailyRevenue": 0,
+      "passwordHash": "admin123",
+      "referralCode": "CHEF10",
+      "registeredAt": "2026-07-14T08:56:10.976Z",
+      "totalRevenue": 500000,
+      "referralsCount": 11,
+      "commissionEarned": 50000
     },
     {
       "id": "usr_admin_niger",
       "name": "Administrateur Niger",
+      "role": "admin",
       "phone": "+22780000000",
-      "passwordHash": "dreampod227",
       "balance": 1000000,
-      "dailyRevenue": 0,
-      "totalRevenue": 500000,
-      "referralCode": "NIGER7",
-      "referralsCount": 10,
+      "isBlocked": false,
       "referralsN1": 5,
       "referralsN2": 3,
       "referralsN3": 2,
-      "commissionEarned": 50000,
-      "registeredAt": "2026-07-13T08:33:51.523Z",
-      "isBlocked": false,
-      "role": "admin"
+      "dailyRevenue": 0,
+      "passwordHash": "dreampod227",
+      "referralCode": "NIGER7",
+      "registeredAt": "2026-07-14T08:56:10.976Z",
+      "totalRevenue": 500000,
+      "referralsCount": 10,
+      "commissionEarned": 50000
     },
     {
-      "id": "usr_demo",
-      "name": "Jean Kouassi",
-      "phone": "+22890123456",
-      "passwordHash": "user123",
-      "balance": 18500,
-      "dailyRevenue": 3500,
-      "totalRevenue": 15500,
-      "referralCode": "JEAN90",
-      "referrerId": "usr_admin",
-      "referralsCount": 2,
-      "referralsN1": 2,
+      "id": "usr_j0otrp1xj",
+      "name": "Test User",
+      "role": "user",
+      "phone": "+22899999999",
+      "balance": 200,
+      "isBlocked": false,
+      "referrerId": "usr_admin2",
+      "referralsN1": 0,
       "referralsN2": 0,
       "referralsN3": 0,
-      "commissionEarned": 2500,
-      "registeredAt": "2026-07-08T08:33:51.523Z",
-      "isBlocked": false,
-      "role": "user"
+      "dailyRevenue": 0,
+      "passwordHash": "testpassword",
+      "referralCode": "XQU05",
+      "registeredAt": "2026-07-14T08:56:10.977Z",
+      "totalRevenue": 200,
+      "referralsCount": 0,
+      "commissionEarned": 0
     }
   ],
   "products": [
     {
       "id": "vip1",
       "name": "VIP 1 - Plan Élite",
-      "price": 5000,
-      "dailyIncome": 1000,
-      "durationDays": 30,
-      "totalIncome": 30000,
       "level": 1,
-      "category": "stability"
+      "price": 5000,
+      "category": "stability",
+      "dailyIncome": 1000,
+      "totalIncome": 30000,
+      "durationDays": 30
     },
     {
       "id": "vip2",
       "name": "VIP 2 - Plan Premium",
-      "price": 10000,
-      "dailyIncome": 2500,
-      "durationDays": 30,
-      "totalIncome": 75000,
       "level": 2,
-      "category": "stability"
+      "price": 10000,
+      "category": "stability",
+      "dailyIncome": 2500,
+      "totalIncome": 75000,
+      "durationDays": 30
     },
     {
       "id": "vip3",
       "name": "VIP 3 - Plan Gold",
-      "price": 25000,
-      "dailyIncome": 7000,
-      "durationDays": 30,
-      "totalIncome": 210000,
       "level": 3,
-      "category": "wellbeing"
+      "price": 25000,
+      "category": "wellbeing",
+      "dailyIncome": 7000,
+      "totalIncome": 210000,
+      "durationDays": 30
     },
     {
       "id": "vip4",
       "name": "VIP 4 - Plan Platinum",
-      "price": 50000,
-      "dailyIncome": 16000,
-      "durationDays": 30,
-      "totalIncome": 480000,
       "level": 4,
-      "category": "wellbeing"
+      "price": 50000,
+      "category": "wellbeing",
+      "dailyIncome": 16000,
+      "totalIncome": 480000,
+      "durationDays": 30
     },
     {
       "id": "vip5",
       "name": "VIP 5 - Plan Infini",
-      "price": 100000,
-      "dailyIncome": 35000,
-      "durationDays": 30,
-      "totalIncome": 1050000,
       "level": 5,
-      "category": "activity"
+      "price": 100000,
+      "category": "activity",
+      "dailyIncome": 35000,
+      "totalIncome": 1050000,
+      "durationDays": 30
     },
     {
       "id": "vip6",
       "name": "VIP 6 - Plan Saphir",
-      "price": 250000,
-      "dailyIncome": 95000,
-      "durationDays": 30,
-      "totalIncome": 2850000,
       "level": 6,
-      "category": "activity"
+      "price": 250000,
+      "category": "activity",
+      "dailyIncome": 95000,
+      "totalIncome": 2850000,
+      "durationDays": 30
     }
   ],
-  "investments": [
+  "bonusCodes": [],
+  "forumPosts": [
     {
-      "id": "inv_1",
+      "id": "post_1",
+      "likes": 5,
       "userId": "usr_demo",
-      "productId": "vip1",
-      "productName": "VIP 1 - Plan Élite",
-      "price": 5000,
-      "dailyIncome": 1000,
-      "durationDays": 30,
-      "daysPassed": 4,
-      "activatedAt": "2026-07-09T08:33:51.523Z",
-      "lastClaimAt": "2026-07-13T08:33:51.523Z"
-    },
+      "content": "Retrait reçu en moins de 10 minutes ! Dreampod est très fiable. Merci à l'administrateur !",
+      "likedBy": [],
+      "userName": "Jean Kouassi",
+      "createdAt": "2026-07-13T08:56:10.976Z",
+      "userPhone": "+22890123456",
+      "screenshots": [
+        "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=500&q=80",
+        "https://images.unsplash.com/photo-1563013544-824ae1d704d3?auto=format&fit=crop&w=500&q=80"
+      ]
+    }
+  ],
+  "investments": [],
+  "userReviews": [
     {
-      "id": "inv_2",
+      "id": "rev_1",
+      "rating": 5,
+      "status": "approved",
       "userId": "usr_demo",
-      "productId": "vip2",
-      "productName": "VIP 2 - Plan Premium",
-      "price": 10000,
-      "dailyIncome": 2500,
-      "durationDays": 30,
-      "daysPassed": 2,
-      "activatedAt": "2026-07-11T08:33:51.523Z",
-      "lastClaimAt": "2026-07-13T08:33:51.523Z"
+      "comment": "Superbe plateforme d'investissement. Les gains journaliers sont payés à l'heure.",
+      "userName": "Jean Kouassi",
+      "createdAt": "2026-07-12T08:56:10.976Z",
+      "userPhone": "+22890123456"
     }
   ],
   "transactions": [
     {
-      "id": "tx_1",
-      "userId": "usr_demo",
-      "userName": "Jean Kouassi",
-      "userPhone": "+22890123456",
+      "id": "tx_r9z790qwp",
+      "date": "2026-07-14T08:56:10.977Z",
       "type": "bonus",
       "amount": 200,
+      "method": "Bonus d'inscription",
       "status": "completed",
-      "date": "2026-07-08T08:33:51.523Z"
-    },
-    {
-      "id": "tx_2",
-      "userId": "usr_demo",
-      "userName": "Jean Kouassi",
-      "userPhone": "+22890123456",
-      "type": "deposit",
-      "amount": 15000,
-      "status": "completed",
-      "date": "2026-07-08T08:33:51.523Z",
-      "method": "T-Money (+228)"
-    },
-    {
-      "id": "tx_3",
-      "userId": "usr_demo",
-      "userName": "Jean Kouassi",
-      "userPhone": "+22890123456",
-      "type": "investment",
-      "amount": 5000,
-      "status": "completed",
-      "date": "2026-07-09T08:33:51.523Z"
-    },
-    {
-      "id": "tx_4",
-      "userId": "usr_demo",
-      "userName": "Jean Kouassi",
-      "userPhone": "+22890123456",
-      "type": "investment",
-      "amount": 10000,
-      "status": "completed",
-      "date": "2026-07-11T08:33:51.523Z"
-    },
-    {
-      "id": "tx_5",
-      "userId": "usr_demo",
-      "userName": "Jean Kouassi",
-      "userPhone": "+22890123456",
-      "type": "withdrawal",
-      "amount": 3000,
-      "status": "pending",
-      "date": "2026-07-13T08:33:51.523Z",
-      "method": "Orange Money (+225)"
+      "userId": "usr_j0otrp1xj",
+      "userName": "Test User",
+      "userPhone": "+22899999999"
     }
   ],
-  "bonusCodes": [
-    {
-      "id": "code1",
-      "code": "WELCOME200",
-      "amount": 200,
-      "maxUses": 1000,
-      "usedCount": 0,
-      "usedByUsers": [],
-      "createdAt": "2026-07-13T08:25:33.008Z"
-    },
-    {
-      "id": "code2",
-      "code": "GLOBAL2026",
-      "amount": 1500,
-      "maxUses": 100,
-      "usedCount": 0,
-      "usedByUsers": [],
-      "createdAt": "2026-07-13T08:25:33.009Z"
-    },
-    {
-      "id": "code3",
-      "code": "VIPPLUS",
-      "amount": 5000,
-      "maxUses": 10,
-      "usedCount": 0,
-      "usedByUsers": [],
-      "createdAt": "2026-07-13T08:25:33.009Z"
-    }
-  ],
-  "notifications": [
-    {
-      "id": "notif1",
-      "title": "Bienvenue sur Dreampod !",
-      "content": "Profitez d'un bonus gratuit de 200 FCFA à l'inscription. Partagez votre lien d'invitation pour gagner des commissions sur 3 niveaux : 15% (N1), 2% (N2), 1% (N3) !",
-      "date": "2026-07-13T08:25:33.009Z",
-      "active": true
-    },
-    {
-      "id": "notif2",
-      "title": "Nouveau Plan Saphir VIP 6 !",
-      "content": "Nous avons le plaisir de vous annoncer le lancement officiel du VIP 6. Gagnez 95 000 FCFA par jour avec un dépôt de 250 000 FCFA !",
-      "date": "2026-07-13T08:25:33.009Z",
-      "active": true
-    }
-  ],
-  "forumPosts": [
-    {
-      "id": "post_1",
-      "userId": "usr_demo",
-      "userName": "Jean Kouassi",
-      "userPhone": "+22890123456",
-      "content": "Retrait reçu en moins de 10 minutes ! Dreampod est très fiable. Merci à l'administrateur !",
-      "screenshots": [
-        "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=500&q=80",
-        "https://images.unsplash.com/photo-1563013544-824ae1d704d3?auto=format&fit=crop&w=500&q=80"
-      ],
-      "likes": 5,
-      "likedBy": [],
-      "createdAt": "2026-07-12T08:33:51.523Z"
-    }
-  ],
-  "userReviews": [
-    {
-      "id": "rev_1",
-      "userId": "usr_demo",
-      "userName": "Jean Kouassi",
-      "userPhone": "+22890123456",
-      "rating": 5,
-      "comment": "Superbe plateforme d'investissement. Les gains journaliers sont payés à l'heure.",
-      "createdAt": "2026-07-11T08:33:51.523Z",
-      "status": "approved"
-    }
-  ],
-  "paymentChannels": [
-    {
-      "id": "airtel",
-      "name": "Airtel Money",
-      "countries": "Niger, Gabon, Tchad",
-      "number": "+227 99 88 77 66",
-      "simOwnerName": "DREAM SERVICES AIRTEL",
-      "active": true
-    },
-    {
-      "id": "orange",
-      "name": "Orange Money",
-      "countries": "Niger",
-      "number": "+227 96 11 22 33",
-      "simOwnerName": "DREAM SERVICES ORANGE",
-      "active": true
-    },
-    {
-      "id": "moov",
-      "name": "Moov Flooz",
-      "countries": "Niger, Gabon, Tchad",
-      "number": "+227 90 44 55 66",
-      "simOwnerName": "DREAM SERVICES MOOV",
-      "active": true
-    },
-    {
-      "id": "amana",
-      "name": "Amana Transfert",
-      "countries": "Niger",
-      "number": "+227 92 11 22 33",
-      "simOwnerName": "DREAM SERVICES AMANA",
-      "active": true
-    },
-    {
-      "id": "nita",
-      "name": "Nita Transfert",
-      "countries": "Niger",
-      "number": "+227 93 11 22 33",
-      "simOwnerName": "DREAM SERVICES NITA",
-      "active": true
-    }
-  ]
+  "notifications": [],
+  "paymentChannels": []
 }

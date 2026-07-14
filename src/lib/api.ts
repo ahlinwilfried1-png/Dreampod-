@@ -1265,6 +1265,14 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
       console.warn("Falling back to local simulation for this request");
       return handleLocalRequest<T>(path, options);
     }
+    
+    // Check if the response was not OK, in which case we throw an error with the HTTP status
+    if (!response.ok) {
+      const errMsg = `Erreur de communication avec le serveur (HTTP ${response.status}).`;
+      const err = new Error(errMsg) as any;
+      err.status = response.status;
+      throw err;
+    }
     throw new Error("Erreur de communication avec le serveur.");
   }
 
