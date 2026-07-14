@@ -23,7 +23,20 @@ const BACKEND_URL = "https://ais-pre-wpq5a34ir5qewcez66evtj-473372860465.europe-
 
 // Determine if we are running in a real full-stack environment where Express serves frontend + backend
 const isLocalOrCloudRun = (): boolean => {
-  return true;
+  if (typeof window === "undefined") return true;
+  const hostname = window.location.hostname;
+  
+  // If running on Vercel or other static hosting providers, we must use the remote BACKEND_URL
+  if (hostname.includes("vercel.app") || hostname.includes("netlify.app") || hostname.includes("github.io")) {
+    return false;
+  }
+  
+  // If we are on local or cloud run, we use relative paths since Express serves everything on the same domain/origin
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname.endsWith(".run.app")
+  );
 };
 
 // Determine if we need to call the remote Cloud Run URL (such as when running on Vercel)
