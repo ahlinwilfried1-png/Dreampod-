@@ -23,20 +23,6 @@ const BACKEND_URL = "https://ais-pre-wpq5a34ir5qewcez66evtj-473372860465.europe-
 
 // Determine if we are running in a real full-stack environment where Express serves frontend + backend
 const isLocalOrCloudRun = (): boolean => {
-  if (typeof window === "undefined") return false;
-  const hostname = window.location.hostname;
-  
-  // If we are on static hosting providers like Vercel, Netlify, or GitHub Pages, we don't have our Node backend
-  if (
-    hostname.includes("vercel.app") || 
-    hostname.includes("netlify.app") || 
-    hostname.includes("github.io")
-  ) {
-    return false;
-  }
-  
-  // For all other cases (localhost, Cloud Run, VPS, Railway, custom domains with custom backends),
-  // we are running a real full-stack application and should use the server API.
   return true;
 };
 
