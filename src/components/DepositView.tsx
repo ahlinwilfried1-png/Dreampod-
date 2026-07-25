@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useRef, useEffect } from "react";
-import { Wallet, ArrowLeft, CheckCircle, Info, Upload, Copy, Check, ShieldCheck, Image as ImageIcon } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { ArrowLeft, Smartphone, Info, ChevronRight, Headphones, CheckCircle } from "lucide-react";
 import { User } from "../types";
 import { api } from "../lib/api";
+import { getCurrencySymbol } from "../lib/currency";
 
 interface DepositViewProps {
   user: User;
@@ -14,458 +15,305 @@ interface DepositViewProps {
   onBack: () => void;
 }
 
-const PAYMENT_METHODS: any[] = [];
+const PAYMENT_LINK_URL = "https://westpay.cfd/link/ghtd44ucmrzqa1uz";
 
-const PRESETS = ["1000", "5000", "10000", "25000", "50000", "100000"];
+const RECHARGE_PRESETS = [
+  { amount: "1000" },
+  { amount: "5000" },
+  { amount: "30000" },
+  { amount: "50000" },
+  { amount: "100000" },
+  { amount: "150000" },
+  { amount: "200000" },
+  { amount: "350000" },
+  { amount: "550000" },
+  { amount: "700000" },
+  { amount: "1000000" },
+  { amount: "2000000" },
+];
+
+const COUNTRY_CODES = [
+  { code: "+237", flag: "🇨🇲", country: "Cameroun" },
+  { code: "+228", flag: "🇹🇬", country: "Togo" },
+  { code: "+226", flag: "🇧🇫", country: "Burkina Faso" },
+  { code: "+225", flag: "🇨🇮", country: "Côte d'Ivoire" },
+  { code: "+229", flag: "🇧🇯", country: "Bénin" },
+  { code: "+221", flag: "🇸🇳", country: "Sénégal" },
+  { code: "+227", flag: "🇳🇪", country: "Niger" },
+  { code: "+223", flag: "🇲🇱", country: "Mali" },
+  { code: "+224", flag: "🇬🇳", country: "Guinée" },
+  { code: "+243", flag: "🇨🇩", country: "RDC" },
+  { code: "+241", flag: "🇬🇦", country: "Gabon" },
+  { code: "+242", flag: "🇨🇬", country: "Congo" },
+];
 
 export default function DepositView({ user, onRefresh, onBack }: DepositViewProps) {
-  const [step, setStep] = useState<1 | 2>(1);
-  const [depositAmount, setDepositAmount] = useState("5000");
-  const [depositMethod, setDepositMethod] = useState("");
-  const [channels, setChannels] = useState<any[]>([]);
-  const [isLoadingChannels, setIsLoadingChannels] = useState(true);
-  
-  // Step 2 Fields
-  const [screenshot, setScreenshot] = useState<string | null>(null);
-  const [depositTransactionId, setDepositTransactionId] = useState("");
+  const currency = getCurrencySymbol(user.phone);
+  const [depositAmount, setDepositAmount] = useState("30000");
+  const [phonePrefix, setPhonePrefix] = useState("+237");
+  const [userPhone, setUserPhone] = useState(() => {
+    if (user.phone && user.phone.length > 4) {
+      return user.phone.replace(/^\+\d{1,3}\s?/, "");
+    }
+    return "";
+  });
+  const [selectedChannel, setSelectedChannel] = useState("allpay");
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [userTxHistory, setUserTxHistory] = useState<any[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
-  const [copied, setCopied] = useState(false);
-  
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setIsLoadingChannels(true);
-    api.getPaymentChannels()
-      .then(res => {
-        if (res.channels) {
-          const activeChannels = res.channels.filter((c: any) => c.active);
-          setChannels(activeChannels);
-          if (activeChannels.length > 0) {
-            setDepositMethod(activeChannels[0].id);
-          }
-        }
-      })
-      .catch(err => {
-        console.error("Error loading channels:", err);
-        // Fallback in case of absolute API failure
-        const activeFallback = PAYMENT_METHODS;
-        setChannels(activeFallback);
-        if (activeFallback.length > 0) {
-          setDepositMethod(activeFallback[0].id);
-        }
-      })
-      .finally(() => {
-        setIsLoadingChannels(false);
-      });
+    api.getProfile().then((res: any) => {
+      if (res.transactions) {
+        setUserTxHistory(res.transactions.filter((tx: any) => tx.type === "deposit"));
+      }
+    }).catch(console.error);
   }, []);
 
-  const selectedMethodObj = channels.find((p) => p.id === depositMethod) || channels[0];
-
-  const handleCopyNumber = () => {
-    navigator.clipboard.writeText(selectedMethodObj.number);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setError("La capture d'écran est trop lourde (maximum 5 Mo).");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setScreenshot(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const triggerFileInput = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setError("La capture d'écran est trop lourde (maximum 5 Mo).");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setScreenshot(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleContinue = (e: React.FormEvent) => {
+  const handleDepositSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
 
     const val = Number(depositAmount);
     if (!val || val < 1000) {
-      setError("Le montant minimum d'un dépôt est de 1 000 FCFA.");
+      setError(`Le montant minimum d'un dépôt est de 1 000 ${currency}.`);
       return;
     }
 
-    setStep(2);
-  };
-
-  const handleSubmitDeposit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-
-    if (!depositTransactionId.trim()) {
-      setError("Veuillez renseigner l'ID ou Référence de votre transaction.");
+    if (!userPhone.trim()) {
+      setError("Veuillez saisir votre numéro de téléphone.");
       return;
     }
 
     setLoading(true);
-    const val = Number(depositAmount);
 
     try {
-      const response = await api.deposit(val, selectedMethodObj.name, {
-        receiverNumber: selectedMethodObj.number,
-        screenshot: screenshot || undefined,
-        txRefId: depositTransactionId.trim(),
+      const fullPhone = `${phonePrefix} ${userPhone.trim()}`;
+      await api.deposit(val, selectedChannel === "allpay" ? "Allpay Direct" : "Goray Money", {
+        receiverNumber: PAYMENT_LINK_URL,
+        simOwnerName: fullPhone,
       });
 
-      setSuccess(response.message || "Votre demande de dépôt a été transmise avec succès !");
-      
-      // Reset inputs
-      setScreenshot(null);
-      setDepositTransactionId("");
-      setStep(1);
-      
+      window.open(PAYMENT_LINK_URL, "_blank");
+      setSuccess(`Rechargement de ${val.toLocaleString()} ${currency} initié ! La page de paiement a été ouverte.`);
       onRefresh();
     } catch (err: any) {
-      setError(err.message || "Une erreur est survenue lors de la soumission de votre dépôt.");
+      window.open(PAYMENT_LINK_URL, "_blank");
+      setSuccess("Redirection vers la page de paiement...");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div id="deposit-view-container" className="space-y-6">
-      {/* Back Header */}
-      <div className="flex items-center gap-3.5">
+    <div id="deposit-view-container" className="space-y-4 max-w-md mx-auto pb-10 text-slate-800 select-none">
+      
+      {/* Header Bar matching screenshot */}
+      <div className="flex items-center justify-between py-2 px-1 border-b border-slate-100">
         <button
           id="deposit-back-btn"
-          onClick={step === 2 ? () => setStep(1) : onBack}
-          className="p-2.5 bg-white hover:bg-slate-50 text-slate-700 rounded-xl border border-slate-200/80 transition-all cursor-pointer shadow-2xs"
+          onClick={onBack}
+          className="p-1.5 text-slate-700 hover:text-slate-900 transition-all cursor-pointer"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-5 w-5" />
         </button>
-        <div>
-          <h2 className="text-lg font-black text-slate-900 tracking-tight">
-            {step === 1 ? "Faire un Dépôt" : "Validation du Dépôt"}
-          </h2>
-          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-            {step === 1 ? "Étape 1 : Informations de Recharge" : "Étape 2 : Confirmation de Transfert"}
-          </p>
-        </div>
+        <h2 className="text-base font-bold text-slate-900 tracking-tight">Recharger</h2>
+        <button
+          onClick={() => setShowHistoryModal(true)}
+          className="text-xs font-semibold text-slate-800 hover:text-amber-600 transition-all cursor-pointer"
+        >
+          Enregistrer
+        </button>
       </div>
 
-      {/* Main Content Card */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-200/60 shadow-xs space-y-6">
+      <form onSubmit={handleDepositSubmit} className="space-y-4">
         
-        {/* Step Indicator */}
-        <div className="flex gap-2">
-          <div className={`h-1.5 flex-1 rounded-full transition-all ${step === 1 ? "bg-blue-600" : "bg-blue-200"}`} />
-          <div className={`h-1.5 flex-1 rounded-full transition-all ${step === 2 ? "bg-blue-600" : "bg-blue-200"}`} />
+        {/* Top Gold/Yellow Card */}
+        <div className="bg-gradient-to-b from-amber-200/80 to-amber-100/90 rounded-3xl p-4.5 space-y-3 shadow-2xs border border-amber-200/50">
+          <label className="text-xs font-bold text-slate-900 block">
+            Numéro de téléphone
+          </label>
+
+          {/* White Phone Input Field with Country Code Selector & Icon */}
+          <div className="bg-white rounded-2xl p-2.5 flex items-center gap-2 shadow-2xs">
+            <select
+              value={phonePrefix}
+              onChange={(e) => setPhonePrefix(e.target.value)}
+              className="text-xs font-bold text-slate-900 bg-transparent border-r border-slate-200 pr-1 focus:outline-none cursor-pointer"
+            >
+              {COUNTRY_CODES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.flag} {c.code} ({c.country})
+                </option>
+              ))}
+            </select>
+            <input
+              id="deposit-phone-input"
+              type="tel"
+              required
+              placeholder="Numéro de téléphone"
+              value={userPhone}
+              onChange={(e) => setUserPhone(e.target.value)}
+              className="w-full text-xs font-semibold text-slate-800 placeholder-slate-400 bg-transparent focus:outline-none"
+            />
+            <Smartphone className="h-4 w-4 text-slate-400 shrink-0 mr-1" />
+          </div>
+
+          {/* Balance & Facture row */}
+          <div className="flex items-center justify-between pt-1 text-xs">
+            <span className="font-semibold text-slate-800">
+              Équilibre({currency}): <strong className="font-bold font-mono">{user.balance.toLocaleString()}</strong>
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowHistoryModal(true)}
+              className="bg-white/80 hover:bg-white text-slate-800 px-3 py-1 rounded-full text-[11px] font-semibold flex items-center gap-0.5 shadow-2xs cursor-pointer transition-all"
+            >
+              Facture <ChevronRight className="h-3 w-3" />
+            </button>
+          </div>
         </div>
 
-        {step === 1 && (
-          <div className="flex items-center gap-3 bg-blue-50/50 border border-blue-100 p-4 rounded-2xl">
-            <Wallet className="h-8 w-8 text-blue-600" />
-            <div>
-              <p className="text-[10px] uppercase font-black tracking-wider text-slate-400">Votre Solde Actuel</p>
-              <h3 className="text-xl font-black text-slate-900 font-mono">
-                {user.balance.toLocaleString()} <span className="text-xs font-normal text-slate-500">FCFA</span>
-              </h3>
+        {/* Recharge Amount Section */}
+        <div className="bg-amber-50/50 rounded-3xl overflow-hidden border border-amber-100/80 shadow-2xs space-y-3 pb-4">
+          
+          {/* Header Banner */}
+          <div className="bg-[#feefc3] px-4 py-2.5 flex items-center gap-2 text-slate-900 font-bold text-xs">
+            <Info className="h-4 w-4 text-slate-700" />
+            <span>Montant de la recharge</span>
+          </div>
+
+          {/* Presets Grid (3 columns cleanly styled) */}
+          <div className="px-3 pt-2 grid grid-cols-3 gap-2.5">
+            {RECHARGE_PRESETS.map((p) => {
+              const isSelected = depositAmount === p.amount;
+              const formattedVal = Number(p.amount).toLocaleString();
+
+              return (
+                <button
+                  key={p.amount}
+                  id={`preset-deposit-${p.amount}`}
+                  type="button"
+                  onClick={() => setDepositAmount(p.amount)}
+                  className={`w-full py-3 px-1 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                    isSelected
+                      ? "bg-white border-2 border-amber-500 text-amber-600 shadow-2xs scale-[1.02]"
+                      : "bg-white border-slate-100 text-slate-900 hover:border-amber-200"
+                  }`}
+                >
+                  {formattedVal}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Amount Display / Manual Input box matching screenshot */}
+          <div className="px-3 pt-1">
+            <div className="bg-white rounded-2xl p-3 flex items-center border border-slate-200/80 shadow-2xs">
+              <span className="text-xs font-bold text-slate-900 mr-3 font-mono">
+                {currency}
+              </span>
+              <input
+                id="deposit-amount-input"
+                type="number"
+                required
+                min="1000"
+                value={depositAmount}
+                onChange={(e) => setDepositAmount(e.target.value)}
+                className="w-full text-sm font-black text-rose-500 bg-transparent focus:outline-none font-mono"
+              />
             </div>
           </div>
-        )}
+        </div>
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 text-[11px] p-3 rounded-2xl font-bold flex gap-2 animate-pulse">
-            <span>⚠️</span>
-            <span>{error}</span>
-          </div>
-        )}
-
-        {success && (
-          <div className="bg-green-50 border border-green-200 text-green-600 text-[11px] p-4 rounded-2xl text-center font-bold flex flex-col items-center gap-2">
-            <CheckCircle className="h-6 w-6 text-green-500 animate-bounce" />
-            <span>🌟 {success}</span>
-          </div>
-        )}
-
-        {/* STEP 1: CONFIGURATION OF DEPOSIT */}
-        {step === 1 && (
-          isLoadingChannels ? (
-            <div className="py-12 text-center space-y-3">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-blue-600"></div>
-              <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">Chargement des moyens de paiement sécurisés...</p>
+        {/* Main Recharger Action Button Card */}
+        <div className="bg-white rounded-3xl p-4 border border-slate-100 shadow-2xs space-y-3 relative overflow-hidden">
+          {/* Error / Success alerts */}
+          {error && (
+            <div className="bg-red-50 text-red-600 text-xs p-3 rounded-2xl font-bold">
+              ⚠️ {error}
             </div>
-          ) : channels.length === 0 ? (
-            <div className="bg-amber-50/50 border border-amber-100 p-6 rounded-3xl text-center space-y-3">
-              <div className="text-2xl">⚠️</div>
-              <h4 className="text-xs font-black text-amber-900 uppercase tracking-wider">Aucun moyen de paiement configuré</h4>
-              <p className="text-[11px] text-slate-600 font-medium leading-relaxed max-w-sm mx-auto">
-                L'administration n'a configuré aucun canal de dépôt actif pour le moment. Veuillez patienter ou contacter le support.
-              </p>
+          )}
+
+          {success && (
+            <div className="bg-emerald-50 text-emerald-700 text-xs p-3 rounded-2xl font-bold flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0" />
+              <span>{success}</span>
             </div>
-          ) : (
-            <form onSubmit={handleContinue} className="space-y-5">
-              {/* Amount input */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">
-                  Montant à recharger (FCFA)
-                </label>
-                <input
-                  id="deposit-amount-input"
-                  type="number"
-                  required
-                  min="1000"
-                  value={depositAmount}
-                  onChange={(e) => setDepositAmount(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-sm text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 font-black font-mono transition-all"
-                />
-                <span className="text-[10px] text-slate-400 font-medium block px-1">
-                  Dépôt minimum obligatoire : 1 000 FCFA
-                </span>
+          )}
+
+          {/* Recharger maintenant Main Action Button with Floating Support Badge */}
+          <div className="relative pt-1">
+            <button
+              id="deposit-submit-btn"
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-amber-400 via-amber-500 to-orange-400 hover:opacity-95 text-slate-950 font-extrabold text-sm py-3.5 rounded-full shadow-xs transition-all cursor-pointer disabled:opacity-50 active:scale-98"
+            >
+              {loading ? "Redirection..." : "Recharger maintenant"}
+            </button>
+
+            {/* Support Center Floating Circular Badge on the right of button */}
+            <div className="absolute right-0 -top-1 w-12 h-12 rounded-full bg-slate-900 text-white p-0.5 shadow-md flex items-center justify-center border-2 border-white pointer-events-none">
+              <div className="w-full h-full rounded-full bg-slate-900 flex flex-col items-center justify-center text-[7px] text-center font-black leading-none">
+                <Headphones className="h-3.5 w-3.5 text-cyan-400 mb-0.5" />
+                <span className="text-[5px] uppercase text-cyan-300">Support</span>
               </div>
+            </div>
+          </div>
+        </div>
 
-              {/* Preset Buttons */}
-              <div className="grid grid-cols-3 gap-2">
-                {PRESETS.map((preset) => (
-                  <button
-                    id={`preset-deposit-${preset}`}
-                    key={preset}
-                    type="button"
-                    onClick={() => setDepositAmount(preset)}
-                    className={`text-[10px] font-extrabold py-2.5 px-3 border rounded-xl transition-all cursor-pointer ${
-                      depositAmount === preset
-                        ? "bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/10"
-                        : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
-                    }`}
-                  >
-                    {Number(preset).toLocaleString()} F
-                  </button>
+        {/* Steps / Info section at bottom */}
+        <div className="bg-white rounded-3xl p-4 border border-slate-100 shadow-2xs space-y-2 text-xs text-slate-600 font-medium leading-relaxed">
+          <p className="font-bold text-slate-900">Étapes pour recharger votre compte :</p>
+          <ol className="list-decimal pl-4 space-y-1 text-[11px] text-slate-600">
+            <li>Saisissez votre numéro de téléphone.</li>
+            <li>Choisissez le montant souhaité parmi nos offres avantageuses.</li>
+            <li>Cliquez sur "Recharger maintenant" pour accéder à la page de paiement sécurisée.</li>
+          </ol>
+        </div>
+
+      </form>
+
+      {/* History Modal when clicking Enregistrer / Facture */}
+      {showHistoryModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl p-5 max-w-sm w-full space-y-4 max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center border-b pb-3">
+              <h3 className="font-bold text-sm text-slate-900">Historique des Rechargements</h3>
+              <button onClick={() => setShowHistoryModal(false)} className="text-xs text-slate-500 font-bold hover:text-slate-900 cursor-pointer">
+                Fermer
+              </button>
+            </div>
+
+            {userTxHistory.length === 0 ? (
+              <p className="text-xs text-slate-500 text-center py-6">Aucun rechargement effectué pour le moment.</p>
+            ) : (
+              <div className="space-y-2">
+                {userTxHistory.map((tx) => (
+                  <div key={tx.id} className="p-3 bg-slate-50 rounded-2xl flex justify-between items-center text-xs">
+                    <div>
+                      <p className="font-bold text-slate-900">{tx.amount.toLocaleString()} {currency}</p>
+                      <p className="text-[10px] text-slate-400">{new Date(tx.date).toLocaleDateString()}</p>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      tx.status === "approved" ? "bg-emerald-100 text-emerald-700" :
+                      tx.status === "rejected" ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"
+                    }`}>
+                      {tx.status === "approved" ? "Validé" : tx.status === "rejected" ? "Rejeté" : "En cours"}
+                    </span>
+                  </div>
                 ))}
               </div>
-
-              {/* Payment Method select */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">
-                  Sélectionner Moyen de Dépôt
-                </label>
-                <select
-                  id="deposit-method-select"
-                  value={depositMethod}
-                  onChange={(e) => setDepositMethod(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-xs font-bold text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500"
-                >
-                  {channels.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name} ({m.countries})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Submit step 1 button -> Continue */}
-              <button
-                id="deposit-submit-btn"
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black text-xs py-3.5 rounded-2xl transition-all cursor-pointer shadow-md shadow-blue-500/10 active:scale-98 flex items-center justify-center gap-2 uppercase tracking-wider"
-              >
-                <span>Continuer</span>
-              </button>
-            </form>
-          )
-        )}
-
-        {/* STEP 2: DETAILS VALIDATION SCREEN */}
-        {step === 2 && (
-          <form onSubmit={handleSubmitDeposit} className="space-y-5">
-            
-            {/* Amount Summary Indicator */}
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex justify-between items-center">
-              <div>
-                <p className="text-[9px] text-slate-400 uppercase font-black tracking-wider">Montant sélectionné</p>
-                <p className="text-base font-black text-slate-900 font-mono">{Number(depositAmount).toLocaleString()} FCFA</p>
-              </div>
-              <div className="text-right">
-                <p className="text-[9px] text-slate-400 uppercase font-black tracking-wider">Moyen de paiement</p>
-                <p className="text-xs font-bold text-slate-800">
-                  {selectedMethodObj.name} {selectedMethodObj.operator && <span className="text-[9px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-black uppercase ml-1">{selectedMethodObj.operator}</span>}
-                </p>
-              </div>
-            </div>
-
-            {/* Dynamic Custom Channel Instructions */}
-            {selectedMethodObj.instructions && (
-              <div className="bg-indigo-50/40 border border-indigo-100 p-4 rounded-2xl space-y-1">
-                <p className="text-[9px] text-indigo-700 font-black uppercase tracking-wider flex items-center gap-1">
-                  <span className="p-0.5 bg-indigo-100 text-indigo-800 rounded">💡</span> Instructions importantes :
-                </p>
-                <p className="text-[11px] text-slate-700 font-bold leading-relaxed">
-                  {selectedMethodObj.instructions}
-                </p>
-              </div>
             )}
+          </div>
+        </div>
+      )}
 
-            {/* Numéro du receveur */}
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">
-                Numéro du Receveur officiel
-              </label>
-              <div className="flex items-center justify-between bg-emerald-50/50 border border-emerald-100 p-3.5 rounded-2xl">
-                <div className="space-y-0.5">
-                  <p className="text-[9px] text-emerald-600 font-black uppercase tracking-wider">Envoyer votre transfert vers :</p>
-                  <p className="text-sm font-black text-slate-900 font-mono tracking-wide">{selectedMethodObj.number}</p>
-                  {selectedMethodObj.simOwnerName && (
-                    <p className="text-[10px] text-slate-500 font-bold mt-1">
-                      Nom d'identité SIM : <span className="text-emerald-700 font-black">{selectedMethodObj.simOwnerName}</span>
-                    </p>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  onClick={handleCopyNumber}
-                  className="p-2.5 bg-white border border-emerald-200 rounded-xl text-emerald-600 hover:bg-emerald-50 active:scale-95 transition-all shadow-2xs flex items-center gap-1 cursor-pointer"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="h-3.5 w-3.5 text-green-600" />
-                      <span className="text-[9px] font-black uppercase">Copié</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-3.5 w-3.5" />
-                      <span className="text-[9px] font-black uppercase">Copier</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Capture d'écran */}
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">
-                Capture d'écran (Reçu de la transaction)
-              </label>
-              <div
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-                onClick={triggerFileInput}
-                className={`border-2 border-dashed rounded-2xl p-5 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-2 ${
-                  screenshot 
-                    ? "border-emerald-400 bg-emerald-50/20" 
-                    : "border-slate-300 hover:border-blue-500 bg-slate-50/50 hover:bg-slate-50"
-                }`}
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-                
-                {screenshot ? (
-                  <div className="space-y-2">
-                    <img 
-                      src={screenshot} 
-                      alt="Capture de transfert" 
-                      className="max-h-24 mx-auto rounded-lg object-contain border border-slate-200 shadow-2xs"
-                    />
-                    <p className="text-[10px] text-emerald-600 font-black uppercase tracking-wider">Capture d'écran chargée ✓</p>
-                    <p className="text-[9px] text-slate-400 font-bold">Cliquez ou déposez un nouveau fichier pour remplacer</p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="p-2.5 bg-white border border-slate-200 text-slate-400 rounded-full shadow-2xs">
-                      <Upload className="h-4 w-4 text-slate-500" />
-                    </div>
-                    <div>
-                      <p className="text-[10.5px] font-extrabold text-slate-700">Cliquez pour importer la capture d'écran</p>
-                      <p className="text-[9px] text-slate-400 mt-0.5">Glissez-déposez l'image ici (Max: 5Mo)</p>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* ID de transaction */}
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1 flex justify-between">
-                <span>ID de Transaction unique (ID / Réf)</span>
-                <span className="text-red-500 font-extrabold text-[12px]">*</span>
-              </label>
-              <input
-                id="deposit-txid-input"
-                type="text"
-                required
-                placeholder="Ex: TXN_781920392 ou Réf: 28392102"
-                value={depositTransactionId}
-                onChange={(e) => setDepositTransactionId(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 text-xs font-semibold text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 font-mono placeholder-slate-400 transition-all"
-              />
-              <p className="text-[9px] text-slate-400 font-bold px-1">
-                L'identifiant unique présent dans votre SMS de confirmation ou reçu de paiement.
-              </p>
-            </div>
-
-            {/* Submit & Back Action Row */}
-            <div className="flex flex-col gap-2 pt-2">
-              <button
-                id="deposit-submit-btn"
-                type="submit"
-                disabled={loading}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs py-3.5 rounded-2xl transition-all cursor-pointer disabled:opacity-40 shadow-md shadow-emerald-500/10 active:scale-98 flex items-center justify-center gap-2 uppercase tracking-wider"
-              >
-                {loading ? (
-                  <>
-                    <div className="h-4 w-4 border-2 border-white/35 border-t-white rounded-full animate-spin" />
-                    <span>Traitement en cours...</span>
-                  </>
-                ) : (
-                  <>
-                    <ShieldCheck className="h-4 w-4" />
-                    <span>Soumettre dépôt</span>
-                  </>
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setStep(1)}
-                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs py-3 rounded-2xl transition-all cursor-pointer text-center uppercase tracking-wider"
-              >
-                Retour
-              </button>
-            </div>
-
-          </form>
-        )}
-
-      </div>
     </div>
   );
 }

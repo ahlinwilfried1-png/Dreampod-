@@ -70,21 +70,21 @@ export default function BankCardView({ user, onRefresh, onBack }: BankCardViewPr
       </div>
 
       {/* Simulated Card design */}
-      <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white p-6 rounded-3xl shadow-lg relative overflow-hidden font-mono max-w-sm mx-auto">
+      <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white p-4.5 rounded-2xl shadow-lg relative overflow-hidden font-mono max-w-sm mx-auto">
         <div className="absolute right-0 top-0 translate-x-2 -translate-y-2 w-24 h-24 bg-white/10 rounded-full blur-xl" />
         <div className="flex justify-between items-start">
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-indigo-100/80">Dreampod Secure Pay</p>
-            <p className="text-sm font-black tracking-wider uppercase mt-1">PORTEFEUILLE ACTIF</p>
+            <p className="text-[9px] uppercase tracking-widest text-indigo-100/80">Nutrien Secure Pay</p>
+            <p className="text-xs font-black tracking-wider uppercase mt-0.5">PORTEFEUILLE ACTIF</p>
           </div>
-          <QrCode className="h-7 w-7 opacity-80" />
+          <QrCode className="h-6 w-6 opacity-80" />
         </div>
-        <div className="my-6">
-          <p className="text-lg font-black text-white tracking-wider">
+        <div className="my-4">
+          <p className="text-base font-black text-white tracking-wider">
             {cardPhone ? cardPhone : "Aucun numéro lié"}
           </p>
         </div>
-        <div className="flex justify-between items-end text-[10px] uppercase text-indigo-100/70">
+        <div className="flex justify-between items-end text-[9px] uppercase text-indigo-100/70">
           <div className="max-w-[65%]">
             <p className="text-[8px]">Titulaire légal</p>
             <p className="font-bold text-white mt-0.5 truncate">{cardOwner}</p>
@@ -97,7 +97,7 @@ export default function BankCardView({ user, onRefresh, onBack }: BankCardViewPr
       </div>
 
       {/* Info Warning */}
-      <div className="bg-amber-50 border border-amber-100 text-amber-800 p-4 rounded-2xl max-w-sm mx-auto space-y-1">
+      <div className="bg-amber-50 border border-amber-100 text-amber-800 p-3.5 rounded-2xl max-w-sm mx-auto space-y-1">
         <div className="flex items-center gap-1.5 font-bold text-xs">
           <Shield className="h-4 w-4 text-amber-600 shrink-0" />
           <span>Sécurité Obligatoire</span>
@@ -108,7 +108,7 @@ export default function BankCardView({ user, onRefresh, onBack }: BankCardViewPr
       </div>
 
       {/* Main Form */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-200/60 shadow-xs max-w-sm mx-auto">
+      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/60 shadow-2xs max-w-sm mx-auto">
         <form onSubmit={saveBankCard} className="space-y-4">
           {bankSuccess && (
             <div className="bg-green-50 border border-green-200 text-green-600 text-xs p-3 rounded-xl font-bold flex items-center gap-2">

@@ -7,7 +7,7 @@ export interface User {
   id: string;
   name: string;
   phone: string;
-  balance: number; // in FCFA
+  balance: number; // in XAF / XOF
   dailyRevenue: number;
   totalRevenue: number;
   referralCode: string;
@@ -111,6 +111,7 @@ export interface UserReview {
   userPhone: string;
   rating: number; // 1-5
   comment: string;
+  image?: string; // Optional proof image screenshot
   createdAt: string;
   status: 'pending' | 'approved' | 'rejected';
 }

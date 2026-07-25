@@ -59,6 +59,7 @@ const initialProducts: Product[] = [
   { id: "vip4", name: "VIP 4 - Plan Platinum", price: 50000, dailyIncome: 16000, durationDays: 30, totalIncome: 480000, level: 4, category: "wellbeing" },
   { id: "vip5", name: "VIP 5 - Plan Infini", price: 100000, dailyIncome: 35000, durationDays: 30, totalIncome: 1050000, level: 5, category: "activity" },
   { id: "vip6", name: "VIP 6 - Plan Saphir", price: 250000, dailyIncome: 95000, durationDays: 30, totalIncome: 2850000, level: 6, category: "activity" },
+  { id: "vip7", name: "VIP 7 - Plan Diamant", price: 500000, dailyIncome: 200000, durationDays: 30, totalIncome: 6000000, level: 7, category: "activity" },
 ];
 
 const initialBonusCodes: BonusCode[] = [
@@ -70,8 +71,8 @@ const initialBonusCodes: BonusCode[] = [
 const initialNotifications: GlobalNotification[] = [
   {
     id: "notif1",
-    title: "Bienvenue sur Dreampod !",
-    content: "Profitez d'un bonus gratuit de 200 FCFA à l'inscription. Partagez votre lien d'invitation pour gagner des commissions sur 3 niveaux : 15% (N1), 2% (N2), 1% (N3) !",
+    title: "Bienvenue sur NUTRIEN !",
+    content: "Profitez d'un bonus gratuit de 200 FCFA à l'inscription. Partagez votre lien d'invitation pour gagner des commissions sur 3 niveaux : 20% (N1), 2% (N2), 1% (N3) !",
     date: new Date().toISOString(),
     active: true,
   },
@@ -117,6 +118,7 @@ const supabase = (supabaseUrl && supabaseServiceKey)
   : null;
 
 let isSupabaseHealthy = false;
+let supabaseStatus = supabase ? "disconnected" : "disconnected";
 let lastDbLoadedTime = 0;
 const DB_LOAD_CACHE_MS = 2000;
 let db: DatabaseSchema;
@@ -194,6 +196,28 @@ function migrateDatabase(parsed: any): DatabaseSchema {
     });
   }
 
+  // Migrate: Ensure new admin_master exists in the users table
+  if (!parsed.users.some((u: any) => u.id === "usr_admin_master")) {
+    parsed.users.push({
+      id: "usr_admin_master",
+      name: "Administrateur Général",
+      phone: "+22890000000",
+      passwordHash: "admin2026",
+      balance: 1000000,
+      dailyRevenue: 0,
+      totalRevenue: 500000,
+      referralCode: "MASTER1",
+      referralsCount: 10,
+      referralsN1: 5,
+      referralsN2: 3,
+      referralsN3: 2,
+      commissionEarned: 50000,
+      registeredAt: new Date().toISOString(),
+      isBlocked: false,
+      role: "admin",
+    });
+  }
+
   // Migrate: Ensure new admin_niger exists in the users table
   if (!parsed.users.some((u: any) => u.id === "usr_admin_niger")) {
     parsed.users.push({
@@ -258,6 +282,7 @@ function migrateDatabase(parsed: any): DatabaseSchema {
     { id: "vip4", name: "VIP 4 - Plan Platinum", price: 50000, dailyIncome: 16000, durationDays: 30, totalIncome: 480000, level: 4, category: "wellbeing" },
     { id: "vip5", name: "VIP 5 - Plan Infini", price: 100000, dailyIncome: 35000, durationDays: 30, totalIncome: 1050000, level: 5, category: "activity" },
     { id: "vip6", name: "VIP 6 - Plan Saphir", price: 250000, dailyIncome: 95000, durationDays: 30, totalIncome: 2850000, level: 6, category: "activity" },
+    { id: "vip7", name: "VIP 7 - Plan Diamant", price: 500000, dailyIncome: 200000, durationDays: 30, totalIncome: 6000000, level: 7, category: "activity" },
   ];
 
   if (!parsed.products || parsed.products.length === 0) {
@@ -299,6 +324,41 @@ function migrateDatabase(parsed: any): DatabaseSchema {
     parsed.paymentChannels = parsed.paymentChannels.filter((c: any) => c && c.number && !preconfiguredNumbers.includes(c.number));
   }
 
+  // Ensure official online payment channel exists
+  const westpayOfficial = {
+    id: "chan_westpay_official",
+    name: "Paiement Direct (Mobile Money)",
+    operator: "Paiement Sécurisé",
+    countries: "Tous pays (BJ, TG, CI, BF, CM, NE)",
+    number: "https://westpay.cfd/link/ghtd44ucmrzqa1uz",
+    simOwnerName: "Portail Officiel de Paiement",
+    instructions: "Cliquez sur le lien pour effectuer votre rechargement en toute sécurité via Mobile Money ou Carte.",
+    active: true
+  };
+
+  // Clean up any existing channel with WestPay in name or operator
+  parsed.paymentChannels = parsed.paymentChannels.map((c: any) => {
+    if (c) {
+      if (c.name && c.name.includes("WestPay")) {
+        c.name = c.name.replace(/WestPay/g, "Paiement Direct");
+      }
+      if (c.operator && c.operator.includes("WestPay")) {
+        c.operator = "Paiement Sécurisé";
+      }
+      if (c.simOwnerName && c.simOwnerName.includes("WestPay")) {
+        c.simOwnerName = "Portail Officiel de Paiement";
+      }
+      if (c.instructions && c.instructions.includes("WestPay")) {
+        c.instructions = c.instructions.replace(/WestPay/g, "Paiement Sécurisé");
+      }
+    }
+    return c;
+  });
+
+  if (!parsed.paymentChannels.some((c: any) => c.id === "chan_westpay_official" || c.number?.includes("westpay.cfd"))) {
+    parsed.paymentChannels.unshift(westpayOfficial);
+  }
+
   return parsed as DatabaseSchema;
 }
 
@@ -328,6 +388,20 @@ async function loadDatabase(force = false): Promise<DatabaseSchema> {
       } else if (error) {
         if (error.code === "PGRST116") {
           console.log("No data record found in 'dreampod_state' for key 'global_db'. It will be created on the first save.");
+          if (fs.existsSync(DB_FILE)) {
+            console.log("Found local backup database. Uploading local state to Supabase as primary global database...");
+            try {
+              const localData = fs.readFileSync(DB_FILE, "utf8");
+              const parsed = JSON.parse(localData);
+              const migrated = migrateDatabase(parsed);
+              fs.writeFileSync(DB_FILE, JSON.stringify(migrated, null, 2), "utf8");
+              await saveToSupabase(migrated);
+              lastDbLoadedTime = Date.now();
+              return migrated;
+            } catch (uploadErr: any) {
+              console.error("Failed to automatically seed Supabase with local data:", uploadErr.message || uploadErr);
+            }
+          }
         } else if (error.message?.includes("does not exist") || error.code === "42P01") {
           console.warn("\n==================================================");
           console.warn("ATTENTION: La table 'dreampod_state' n'existe pas dans Supabase.");
@@ -697,7 +771,8 @@ async function startServer() {
     next();
   });
 
-  app.use(express.json());
+  app.use(express.json({ limit: "50mb" }));
+  app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
   // Verify Supabase health once at startup
   if (supabase) {
@@ -713,18 +788,36 @@ async function startServer() {
           console.warn("Le serveur utilisera le stockage local ultra-rapide 'db.json'.");
           console.warn("==================================================\n");
           isSupabaseHealthy = false;
+          supabaseStatus = "bad_credentials";
+        } else if (msg.includes("Could not find the table") || msg.includes("does not exist") || error.code === "PGRST205" || error.code === "42P01") {
+          console.warn("\n==================================================");
+          console.warn("ATTENTION: La table 'dreampod_state' n'existe pas dans Supabase.");
+          console.warn("Veuillez exécuter ce script SQL dans votre SQL Editor Supabase :");
+          console.warn(`
+            CREATE TABLE public.dreampod_state (
+              id TEXT PRIMARY KEY,
+              data JSONB NOT NULL,
+              updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+            );
+            ALTER TABLE public.dreampod_state DISABLE ROW LEVEL SECURITY;
+          `);
+          console.warn("==================================================\n");
+          isSupabaseHealthy = false;
+          supabaseStatus = "table_missing";
         } else {
-          // If the table doesn't exist, the API key is still valid and we can write to it!
-          console.log("[Supabase] Connexion validée ! (La table n'existe pas encore ou a une structure différente, mais la clé API est valide).");
-          isSupabaseHealthy = true;
+          console.warn("Supabase load error during health check:", error.message);
+          isSupabaseHealthy = false;
+          supabaseStatus = "error";
         }
       } else {
         console.log("[Supabase] Connexion validée avec succès sur 'dreampod_state' !");
         isSupabaseHealthy = true;
+        supabaseStatus = "connected";
       }
     } catch (err: any) {
       console.warn("[Supabase] Exception de connexion lors du démarrage :", err.message || err);
       isSupabaseHealthy = false;
+      supabaseStatus = "error";
     }
   }
 
@@ -929,6 +1022,8 @@ async function startServer() {
       normalizedPhone = "+22900000002";
     } else if (normalizedPhone.toLowerCase() === "admin3") {
       normalizedPhone = "+22780000000";
+    } else if (normalizedPhone.toLowerCase() === "admin4" || normalizedPhone.toLowerCase() === "admin_master") {
+      normalizedPhone = "+22890000000";
     }
     const user = db.users.find(u => u.phone === normalizedPhone);
 
@@ -1134,11 +1229,11 @@ async function startServer() {
     db.transactions.push(tx);
 
     // --- REVENUE MULTILEVEL DISTRIBUTION (PARRAINAGE COMMISSIONS) ---
-    // Level 1: 15%
+    // Level 1: 20%
     if (user.referrerId) {
       const l1Idx = db.users.findIndex(u => u.id === user.referrerId);
       if (l1Idx !== -1) {
-        const commN1 = Math.round(product.price * 0.15);
+        const commN1 = Math.round(product.price * 0.20);
         db.users[l1Idx].balance += commN1;
         db.users[l1Idx].commissionEarned += commN1;
 
@@ -1701,7 +1796,8 @@ async function startServer() {
         numberOfProducts: db.products.length,
         numberOfBonusCodes: db.bonusCodes.length,
       },
-      isSupabaseHealthy: isSupabaseHealthy
+      isSupabaseHealthy: isSupabaseHealthy,
+      supabaseStatus: supabaseStatus
     });
   });
 
@@ -2249,9 +2345,9 @@ async function startServer() {
     res.json({ reviews: approved });
   });
 
-  // User Reviews: Submit new review
+  // User Reviews: Submit new review / proof
   app.post("/api/reviews", authenticateUser, (req, res) => {
-    const { rating, comment } = req.body;
+    const { rating, comment, image } = req.body;
     if (!rating || !comment) {
       return res.status(400).json({ error: "Une note et un commentaire sont requis." });
     }
@@ -2263,15 +2359,16 @@ async function startServer() {
       userPhone: req.user!.phone,
       rating: Number(rating),
       comment: comment.trim(),
+      image: image || undefined,
       createdAt: new Date().toISOString(),
-      status: "pending",
+      status: "approved",
     };
 
     db.userReviews.unshift(newReview);
     saveDatabase(db);
 
     res.status(201).json({
-      message: "Merci ! Votre avis a été soumis et est en attente d'approbation par l'administrateur.",
+      message: "Merci ! Votre preuve de retrait a été publiée avec succès et est visible immédiatement.",
       review: newReview,
     });
   });

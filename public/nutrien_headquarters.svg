@@ -1,0 +1,192 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="100%" height="100%">
+  <defs>
+    <!-- Sky Gradient -->
+    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e0f2fe"/>
+      <stop offset="60%" stop-color="#f0f9ff"/>
+      <stop offset="100%" stop-color="#ffffff"/>
+    </linearGradient>
+
+    <!-- Glass Gradient -->
+    <linearGradient id="glassGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="50%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+
+    <!-- Glass Reflection -->
+    <linearGradient id="glassReflect" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.3"/>
+      <stop offset="30%" stop-color="#38bdf8" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0"/>
+    </linearGradient>
+
+    <!-- Nutrien Green Gradient -->
+    <linearGradient id="nutrienGreen" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22c55e"/>
+      <stop offset="50%" stop-color="#16a34a"/>
+      <stop offset="100%" stop-color="#15803d"/>
+    </linearGradient>
+
+    <!-- Light Perforated Facade Pattern -->
+    <pattern id="dotGrid" x="0" y="0" width="12" height="12" patternUnits="userSpaceOnUse">
+      <circle cx="6" cy="6" r="1.8" fill="#94a3b8" opacity="0.35"/>
+    </pattern>
+
+    <!-- Grass Lawn Gradient -->
+    <linearGradient id="lawnGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4ade80"/>
+      <stop offset="40%" stop-color="#16a34a"/>
+      <stop offset="100%" stop-color="#14532d"/>
+    </linearGradient>
+
+    <!-- Concrete Foundation Gradient -->
+    <linearGradient id="concreteGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#cbd5e1"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+
+    <!-- Modern Canopy Shadow -->
+    <filter id="dropShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#0f172a" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Sky -->
+  <rect x="0" y="0" width="1200" height="675" fill="url(#skyGrad)"/>
+
+  <!-- Soft Clouds in Sky -->
+  <path d="M150 120 Q 200 90 260 110 Q 320 80 380 110 Q 420 130 400 160 Z" fill="#ffffff" opacity="0.7"/>
+  <path d="M750 90 Q 800 60 870 80 Q 930 50 990 80 Q 1030 100 1010 130 Z" fill="#ffffff" opacity="0.6"/>
+
+  <!-- Main Building Structure -->
+  <!-- Back Glass Structure (2nd Floor Glass Facade) -->
+  <polygon points="180,140 1060,260 1060,510 180,510" fill="url(#glassGrad)"/>
+  
+  <!-- Glass Window Panels Grid & Reflections -->
+  <g opacity="0.85">
+    <!-- Horizontal Mullions -->
+    <line x1="180" y1="230" x2="1060" y2="330" stroke="#475569" stroke-width="3"/>
+    <line x1="180" y1="320" x2="1060" y2="400" stroke="#475569" stroke-width="4"/>
+    <line x1="180" y1="410" x2="1060" y2="470" stroke="#475569" stroke-width="4"/>
+
+    <!-- Vertical Mullions -->
+    <line x1="300" y1="157" x2="300" y2="510" stroke="#334155" stroke-width="2.5"/>
+    <line x1="420" y1="173" x2="420" y2="510" stroke="#334155" stroke-width="2.5"/>
+    <line x1="540" y1="189" x2="540" y2="510" stroke="#334155" stroke-width="2.5"/>
+    <line x1="660" y1="205" x2="660" y2="510" stroke="#334155" stroke-width="2.5"/>
+    <line x1="780" y1="221" x2="780" y2="510" stroke="#334155" stroke-width="2.5"/>
+    <line x1="900" y1="237" x2="900" y2="510" stroke="#334155" stroke-width="2.5"/>
+    <line x1="1020" y1="254" x2="1020" y2="510" stroke="#334155" stroke-width="2.5"/>
+
+    <!-- Glass Sky Light Reflections -->
+    <polygon points="220,145 380,167 290,510 180,510" fill="url(#glassReflect)"/>
+    <polygon points="500,183 680,208 580,510 440,510" fill="url(#glassReflect)"/>
+    <polygon points="800,224 980,249 900,510 740,510" fill="url(#glassReflect)"/>
+  </g>
+
+  <!-- Left Main White Architectural Facade Tower (Signature Perforated Shell) -->
+  <g filter="url(#dropShadow)">
+    <!-- Main White Block -->
+    <polygon points="140,110 520,195 520,510 140,510" fill="#f8fafc"/>
+    <polygon points="140,110 520,195 520,510 140,510" fill="url(#dotGrid)"/>
+    
+    <!-- Outer Rim Accent -->
+    <polyline points="140,110 520,195 520,510" fill="none" stroke="#e2e8f0" stroke-width="6"/>
+
+    <!-- Spotlight Fixtures on Top Roof -->
+    <line x1="200" y1="123" x2="195" y2="105" stroke="#475569" stroke-width="4"/>
+    <circle cx="193" cy="103" r="5" fill="#f59e0b"/>
+    <line x1="320" y1="150" x2="315" y2="132" stroke="#475569" stroke-width="4"/>
+    <circle cx="313" cy="130" r="5" fill="#f59e0b"/>
+    <line x1="440" y1="177" x2="435" y2="159" stroke="#475569" stroke-width="4"/>
+    <circle cx="433" cy="157" r="5" fill="#f59e0b"/>
+  </g>
+
+  <!-- Signature Nutrien Green Leaf Curved Architectural Swoosh -->
+  <path d="M 420 220 
+           C 510 240, 620 400, 620 440 
+           C 620 450, 580 440, 480 340 
+           C 430 290, 410 240, 420 220 Z" 
+        fill="url(#nutrienGreen)" 
+        filter="url(#dropShadow)"/>
+
+  <!-- Top Leaf Accent Line -->
+  <path d="M 410 150 
+           C 460 170, 520 230, 520 260 
+           C 500 240, 450 190, 410 150 Z" 
+        fill="url(#nutrienGreen)"/>
+
+  <!-- Nutrien Brand Logo Signage on Facade -->
+  <g transform="translate(190, 185) scale(1.15)">
+    <!-- Leaf Icon in Logo -->
+    <path d="M 12 18 C 12 8, 28 2, 34 2 C 34 12, 18 22, 12 18 Z" fill="#22c55e"/>
+    <path d="M 12 18 C 18 12, 32 10, 34 2" fill="none" stroke="#15803d" stroke-width="2"/>
+    <path d="M 16 28 C 16 20, 2 24, 2 30 C 8 32, 14 30, 16 28 Z" fill="#15803d"/>
+
+    <!-- Nutrien Text -->
+    <text x="42" y="26" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="34" fill="#0f172a" letter-spacing="-1.5">
+      Nutrien
+    </text>
+
+    <!-- Subtitle: Soluções Agrícolas -->
+    <text x="43" y="44" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="12" fill="#16a34a" letter-spacing="1">
+      Soluções Agrícolas
+    </text>
+  </g>
+
+  <!-- Modern White Architectural Sculptural Canopy Wing (Right side extension) -->
+  <path d="M 500 280 Q 720 340 910 300 Q 820 410 630 420 Z" fill="#ffffff" opacity="0.95" filter="url(#dropShadow)"/>
+  <path d="M 500 280 Q 720 340 910 300" fill="none" stroke="#22c55e" stroke-width="5"/>
+
+  <!-- Entrance Base & Ground Barrier Fence -->
+  <polygon points="60,490 1140,510 1140,535 60,515" fill="url(#concreteGrad)"/>
+  
+  <!-- Fence Posts & Railing -->
+  <g stroke="#334155" stroke-width="2" opacity="0.7">
+    <line x1="80" y1="465" x2="1120" y2="485"/>
+    <line x1="80" y1="480" x2="1120" y2="500"/>
+    
+    <!-- Vertical Posts -->
+    <line x1="100" y1="465" x2="100" y2="500"/>
+    <line x1="200" y1="467" x2="200" y2="502"/>
+    <line x1="300" y1="469" x2="300" y2="504"/>
+    <line x1="400" y1="471" x2="400" y2="506"/>
+    <line x1="500" y1="473" x2="500" y2="508"/>
+    <line x1="600" y1="475" x2="600" y2="510"/>
+    <line x1="700" y1="477" x2="700" y2="512"/>
+    <line x1="800" y1="479" x2="800" y2="514"/>
+    <line x1="900" y1="481" x2="900" y2="516"/>
+    <line x1="1000" y1="483" x2="1000" y2="518"/>
+  </g>
+
+  <!-- Front Lawn & Landscaping -->
+  <polygon points="0,510 1200,530 1200,675 0,675" fill="url(#lawnGrad)"/>
+
+  <!-- Decorative Tropical Plants & Trees (Left & Right Lawn) -->
+  <!-- Left Palm Trees -->
+  <g transform="translate(40, 420)">
+    <!-- Tree Trunk -->
+    <path d="M 30 110 Q 25 60 20 0" fill="none" stroke="#78350f" stroke-width="8"/>
+    <!-- Palm Leaves -->
+    <path d="M 20 0 Q -20 -30 -40 0" fill="none" stroke="#15803d" stroke-width="6"/>
+    <path d="M 20 0 Q 0 -40 30 -50" fill="none" stroke="#22c55e" stroke-width="6"/>
+    <path d="M 20 0 Q 50 -30 70 10" fill="none" stroke="#16a34a" stroke-width="6"/>
+    <path d="M 20 0 Q 10 20 -20 30" fill="none" stroke="#15803d" stroke-width="5"/>
+  </g>
+
+  <!-- Right Decorative Lawn Trees -->
+  <g transform="translate(920, 480)">
+    <path d="M 20 50 Q 20 20 20 0" stroke="#78350f" stroke-width="5"/>
+    <circle cx="20" cy="-15" r="22" fill="#22c55e"/>
+    <circle cx="10" cy="-25" r="16" fill="#16a34a"/>
+  </g>
+  <g transform="translate(980, 485)">
+    <path d="M 20 50 Q 20 20 20 0" stroke="#78350f" stroke-width="5"/>
+    <circle cx="20" cy="-15" r="22" fill="#16a34a"/>
+    <circle cx="28" cy="-25" r="16" fill="#22c55e"/>
+  </g>
+
+  <!-- Pathway on Ground -->
+  <polygon points="680,522 1200,610 1200,675 750,675" fill="#d1d5db" opacity="0.6"/>
+</svg>

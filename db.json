@@ -1,6 +1,24 @@
 {
   "users": [
     {
+      "id": "usr_admin_master",
+      "name": "Administrateur Général",
+      "role": "admin",
+      "phone": "+22890000000",
+      "balance": 1000000,
+      "isBlocked": false,
+      "referralsN1": 10,
+      "referralsN2": 5,
+      "referralsN3": 2,
+      "dailyRevenue": 0,
+      "passwordHash": "admin2026",
+      "referralCode": "MASTER1",
+      "registeredAt": "2026-07-23T23:00:00.000Z",
+      "totalRevenue": 1000000,
+      "referralsCount": 17,
+      "commissionEarned": 100000
+    },
+    {
       "id": "usr_admin2",
       "name": "Super Administrateur Bénin",
       "role": "admin",
@@ -115,6 +133,16 @@
       "category": "activity",
       "dailyIncome": 95000,
       "totalIncome": 2850000,
+      "durationDays": 30
+    },
+    {
+      "id": "vip7",
+      "name": "VIP 7 - Plan Diamant",
+      "level": 7,
+      "price": 500000,
+      "category": "activity",
+      "dailyIncome": 200000,
+      "totalIncome": 6000000,
       "durationDays": 30
     }
   ],

@@ -4,6 +4,7 @@
  */
 
 import { User, Product, Investment, Transaction, BonusCode, GlobalNotification, ForumPost, UserReview, TeamMember, PaymentChannel } from "../types";
+import { getCurrencySymbol } from "./currency";
 
 const TOKEN_KEY = "dreampod_auth_token";
 
@@ -27,16 +28,17 @@ const isLocalOrCloudRun = (): boolean => {
   const hostname = window.location.hostname;
   
   // If running on Vercel or other static hosting providers, we must use the remote BACKEND_URL
-  if (hostname.includes("vercel.app") || hostname.includes("netlify.app") || hostname.includes("github.io")) {
+  if (
+    hostname.includes("vercel.app") ||
+    hostname.includes("netlify.app") ||
+    hostname.includes("github.io")
+  ) {
     return false;
   }
   
-  // If we are on local or cloud run, we use relative paths since Express serves everything on the same domain/origin
-  return (
-    hostname === "localhost" ||
-    hostname === "127.0.0.1" ||
-    hostname.endsWith(".run.app")
-  );
+  // Otherwise, we are in a full-stack environment (localhost, Cloud Run, custom domain, etc.)
+  // and Express serves the frontend and backend on the same origin, so we use relative paths
+  return true;
 };
 
 // Determine if we need to call the remote Cloud Run URL (such as when running on Vercel)
@@ -73,6 +75,7 @@ function getLocalDb() {
     { id: "vip4", name: "VIP 4 - Plan Platinum", price: 50000, dailyIncome: 16000, durationDays: 30, totalIncome: 480000, level: 4, category: "wellbeing" },
     { id: "vip5", name: "VIP 5 - Plan Infini", price: 100000, dailyIncome: 35000, durationDays: 30, totalIncome: 1050000, level: 5, category: "activity" },
     { id: "vip6", name: "VIP 6 - Plan Saphir", price: 250000, dailyIncome: 95000, durationDays: 30, totalIncome: 2850000, level: 6, category: "activity" },
+    { id: "vip7", name: "VIP 7 - Plan Diamant", price: 500000, dailyIncome: 200000, durationDays: 30, totalIncome: 6000000, level: 7, category: "activity" },
   ];
 
   const defaultBonusCodes: BonusCode[] = [
@@ -84,21 +87,39 @@ function getLocalDb() {
   const defaultNotifications: GlobalNotification[] = [
     {
       id: "notif1",
-      title: "Bienvenue sur Dreampod !",
-      content: "Profitez d'un bonus gratuit de 200 FCFA à l'inscription. Partagez votre lien d'invitation pour gagner des commissions sur 3 niveaux : 15% (N1), 2% (N2), 1% (N3) !",
+      title: "Bienvenue sur NUTRIEN !",
+      content: "Profitez d'un bonus gratuit à l'inscription. Partagez votre lien d'invitation pour gagner des commissions sur 3 niveaux : 15% (N1), 2% (N2), 1% (N3) !",
       date: new Date().toISOString(),
       active: true,
     },
     {
       id: "notif2",
       title: "Nouveau Plan Saphir VIP 6 !",
-      content: "Nous avons le plaisir de vous annoncer le lancement officiel du VIP 6. Gagnez 95 000 FCFA par jour avec un dépôt de 250 000 FCFA !",
+      content: "Nous avons le plaisir de vous annoncer le lancement officiel du VIP 6. Découvrez des rendements exceptionnels dès aujourd'hui !",
       date: new Date().toISOString(),
       active: true,
     }
   ];
 
   const defaultUsers = [
+    {
+      id: "usr_admin_master",
+      name: "Direction Nutrien",
+      phone: "+22890000000",
+      passwordHash: "admin2026",
+      balance: 1000000,
+      dailyRevenue: 0,
+      totalRevenue: 1000000,
+      referralCode: "MASTER1",
+      referralsCount: 17,
+      referralsN1: 10,
+      referralsN2: 5,
+      referralsN3: 2,
+      commissionEarned: 100000,
+      registeredAt: new Date().toISOString(),
+      isBlocked: false,
+      role: "admin",
+    },
     {
       id: "usr_admin",
       name: "Dreampod Admin",
@@ -731,7 +752,8 @@ async function handleLocalRequest<T>(path: string, options: RequestInit = {}): P
     });
 
     saveLocalDb(db);
-    return { message: `Félicitations ! Vous avez reçu un bonus de ${bonus.amount} FCFA !`, balance: user.balance } as any;
+    const userCurrency = getCurrencySymbol(user.phone);
+    return { message: `Félicitations ! Vous avez reçu un bonus de ${bonus.amount} ${userCurrency} !`, balance: user.balance } as any;
   }
 
   // User: Spin Lucky Wheel
@@ -742,13 +764,14 @@ async function handleLocalRequest<T>(path: string, options: RequestInit = {}): P
       throw new Error("Aucun tour disponible. Invitez des filleuls à investir pour obtenir des tours gratuits !");
     }
 
+    const userCurr = getCurrencySymbol(user.phone);
     const prizes = [
-      { amount: 100, label: "100 FCFA", color: "#F59E0B" },
-      { amount: 500, label: "500 FCFA", color: "#10B981" },
-      { amount: 1000, label: "1 000 FCFA", color: "#3B82F6" },
-      { amount: 2000, label: "2 000 FCFA", color: "#8B5CF6" },
-      { amount: 5000, label: "5 000 FCFA", color: "#EC4899" },
-      { amount: 10000, label: "10 000 FCFA", color: "#EF4444" },
+      { amount: 100, label: `100 ${userCurr}`, color: "#F59E0B" },
+      { amount: 500, label: `500 ${userCurr}`, color: "#10B981" },
+      { amount: 1000, label: `1 000 ${userCurr}`, color: "#3B82F6" },
+      { amount: 2000, label: `2 000 ${userCurr}`, color: "#8B5CF6" },
+      { amount: 5000, label: `5 000 ${userCurr}`, color: "#EC4899" },
+      { amount: 10000, label: `10 000 ${userCurr}`, color: "#EF4444" },
     ];
 
     const chosenIdx = Math.floor(Math.random() * prizes.length);
@@ -811,9 +834,30 @@ async function handleLocalRequest<T>(path: string, options: RequestInit = {}): P
     if (!wtdAmount || wtdAmount <= 0) {
       throw new Error("Montant de retrait invalide.");
     }
+
+    // Rule 1: Must have active investment
+    const activeInvestments = db.investments.filter(
+      (inv: any) => inv.userId === user.id && inv.daysPassed < inv.durationDays
+    );
+    if (activeInvestments.length === 0 && user.role !== "admin") {
+      throw new Error("Action impossible : Vous devez posséder au moins un produit d'investissement actif pour pouvoir effectuer un retrait.");
+    }
+
+    // Rule 2: Max 2 withdrawals per day
+    const todayStr = new Date().toISOString().split("T")[0];
+    const todayWithdrawals = db.transactions.filter(
+      (tx: any) => tx.userId === user.id && tx.type === "withdrawal" && tx.date && tx.date.startsWith(todayStr)
+    );
+    if (todayWithdrawals.length >= 2 && user.role !== "admin") {
+      throw new Error("Limite atteinte : Vous avez déjà effectué 2 retraits aujourd'hui. La limite maximale est de 2 retraits par jour.");
+    }
+
     if (user.balance < wtdAmount) {
       throw new Error("Solde insuffisant pour effectuer ce retrait.");
     }
+
+    const feeAmount = Math.round(wtdAmount * 0.14);
+    const netAmount = wtdAmount - feeAmount;
 
     user.balance -= wtdAmount;
     const tx = {
@@ -825,11 +869,16 @@ async function handleLocalRequest<T>(path: string, options: RequestInit = {}): P
       amount: wtdAmount,
       status: "pending",
       date: new Date().toISOString(),
-      method: wtdMethod || "Mobile Money",
+      method: `${wtdMethod || "Mobile Money"} (Frais 14%: -${feeAmount} | Net: ${netAmount})`,
     };
     db.transactions.push(tx);
     saveLocalDb(db);
-    return { message: "Demande de retrait soumise avec succès ! Elle sera traitée sous peu.", transaction: tx, balance: user.balance } as any;
+    const userCurrency = getCurrencySymbol(user.phone);
+    return { 
+      message: `Demande de retrait de ${wtdAmount.toLocaleString()} ${userCurrency} soumise avec succès ! Montant net à recevoir (après 14% de frais) : ${netAmount.toLocaleString()} ${userCurrency}.`, 
+      transaction: tx, 
+      balance: user.balance 
+    } as any;
   }
 
   // Global: Notifications
@@ -894,7 +943,7 @@ async function handleLocalRequest<T>(path: string, options: RequestInit = {}): P
   // Reviews: Submit Review
   if (path === "/api/reviews" && method === "POST") {
     const user = getLocalCurrentUser(db);
-    const { rating, comment } = body;
+    const { rating, comment, image, attachment } = body;
     if (!rating || !comment) {
       throw new Error("Une note et un commentaire sont requis.");
     }
@@ -905,12 +954,13 @@ async function handleLocalRequest<T>(path: string, options: RequestInit = {}): P
       userPhone: user.phone,
       rating: Number(rating),
       comment: comment.trim(),
+      image: image || attachment || null,
       createdAt: new Date().toISOString(),
-      status: "pending",
+      status: "approved",
     };
     db.userReviews.unshift(newReview);
     saveLocalDb(db);
-    return { message: "Merci ! Votre avis a été soumis et est en attente d'approbation.", review: newReview } as any;
+    return { message: "Merci ! Votre preuve a été publiée et est disponible immédiatement sur le site.", review: newReview } as any;
   }
 
   // Admin: Stats Dashboard
@@ -987,7 +1037,7 @@ async function handleLocalRequest<T>(path: string, options: RequestInit = {}): P
     });
 
     saveLocalDb(db);
-    return { message: `Bonus de ${bonusAmt} FCFA accordé avec succès !` } as any;
+    return { message: `Bonus de ${bonusAmt} ${getCurrencySymbol(user.phone)} accordé avec succès !` } as any;
   }
 
   // Admin: Transactions history
@@ -1367,14 +1417,17 @@ export const api = {
 
   // User Reviews API
   getReviews: () => request<{ reviews: UserReview[] }>("/api/reviews"),
-  submitReview: (rating: number, comment: string) => request<any>("/api/reviews", {
-    method: "POST",
-    body: JSON.stringify({ rating, comment }),
-  }),
+  submitReview: (ratingOrObj: number | { rating: number; comment: string; image?: string }, commentStr?: string, imageStr?: string) => {
+    const bodyObj = typeof ratingOrObj === "object" ? ratingOrObj : { rating: ratingOrObj, comment: commentStr, image: imageStr };
+    return request<any>("/api/reviews", {
+      method: "POST",
+      body: JSON.stringify(bodyObj),
+    });
+  },
 
   // --- ADMIN API ---
   admin: {
-    getStats: () => request<{ stats: any; isSupabaseHealthy?: boolean }>("/api/admin/stats"),
+    getStats: () => request<{ stats: any; isSupabaseHealthy?: boolean; supabaseStatus?: string }>("/api/admin/stats"),
     getUsers: (search?: string) => {
       const q = search ? `?search=${encodeURIComponent(search)}` : "";
       return request<{ users: any[] }>(`/api/admin/users${q}`);

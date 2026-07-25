@@ -28,7 +28,12 @@ import SettingsView from "./components/SettingsView";
 import InvestmentsView from "./components/InvestmentsView";
 import BankCardView from "./components/BankCardView";
 import VipView from "./components/VipView";
-import { Cpu, ShieldCheck, X, Gift } from "lucide-react";
+import { getCurrencySymbol } from "./lib/currency";
+import SpinWheelView from "./components/SpinWheelView";
+import ProofsView from "./components/ProofsView";
+import AnnouncementsView from "./components/AnnouncementsView";
+import FloatingCustomerService from "./components/FloatingCustomerService";
+import { Cpu, ShieldCheck, X, Gift, Send } from "lucide-react";
 
 export default function App() {
   // Session States
@@ -40,11 +45,46 @@ export default function App() {
     }
     return getToken();
   });
-  const [user, setUser] = useState<User | null>(null);
-  const [investments, setInvestments] = useState<Investment[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [team, setTeam] = useState<TeamMember[]>([]);
+  const [user, setUser] = useState<User | null>(() => {
+    try {
+      const saved = localStorage.getItem("nutrien_user_cache");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [investments, setInvestments] = useState<Investment[]>(() => {
+    try {
+      const saved = localStorage.getItem("nutrien_investments_cache");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [transactions, setTransactions] = useState<Transaction[]>(() => {
+    try {
+      const saved = localStorage.getItem("nutrien_transactions_cache");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [products, setProducts] = useState<Product[]>(() => {
+    try {
+      const saved = localStorage.getItem("nutrien_products_cache");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [team, setTeam] = useState<TeamMember[]>(() => {
+    try {
+      const saved = localStorage.getItem("nutrien_team_cache");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   
   // UI states
   const [authView, setAuthView] = useState<"login" | "register">(() => {
@@ -85,6 +125,17 @@ export default function App() {
       setTransactions(stats.transactions || []);
       setProducts(stats.products || []);
       setTeam(stats.team || []);
+
+      // Persist in local storage cache for instant subsequent renders
+      try {
+        localStorage.setItem("nutrien_user_cache", JSON.stringify(stats.user));
+        if (stats.investments) localStorage.setItem("nutrien_investments_cache", JSON.stringify(stats.investments));
+        if (stats.transactions) localStorage.setItem("nutrien_transactions_cache", JSON.stringify(stats.transactions));
+        if (stats.products) localStorage.setItem("nutrien_products_cache", JSON.stringify(stats.products));
+        if (stats.team) localStorage.setItem("nutrien_team_cache", JSON.stringify(stats.team));
+      } catch (e) {
+        // Ignore cache write errors
+      }
     } catch (error: any) {
       console.error("Session stats retrieval failure indeed:", error);
       // Auto logout ONLY if the session is explicitly unauthorized or user is missing/blocked
@@ -117,7 +168,7 @@ export default function App() {
     const params = new URLSearchParams(window.location.search);
     const ref = params.get("ref");
     if (ref) {
-      sessionStorage.setItem("dreampod_referral_code", ref);
+      sessionStorage.setItem("nutrien_referral_code", ref);
     }
     if (params.has("ref") || window.location.pathname.toLowerCase().includes("register")) {
       removeToken();
@@ -164,6 +215,13 @@ export default function App() {
     setTransactions([]);
     setProducts([]);
     setTeam([]);
+    try {
+      localStorage.removeItem("nutrien_user_cache");
+      localStorage.removeItem("nutrien_investments_cache");
+      localStorage.removeItem("nutrien_transactions_cache");
+      localStorage.removeItem("nutrien_products_cache");
+      localStorage.removeItem("nutrien_team_cache");
+    } catch (e) {}
     setShowWelcomeModal(false);
     setAuthView("register");
     setActiveTab("dashboard");
@@ -183,7 +241,7 @@ export default function App() {
           <Cpu className="h-10 w-10 text-blue-500 stroke-[1.8] animate-spin duration-3000" />
           <div className="absolute inset-0 border border-t-blue-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin duration-1000" />
         </div>
-        <h3 className="text-sm font-extrabold text-blue-400 uppercase tracking-widest mt-6 animate-pulse">Dreampod</h3>
+        <h3 className="text-sm font-extrabold text-emerald-500 uppercase tracking-widest mt-6 animate-pulse">NUTRIEN</h3>
         <p className="text-[10px] text-slate-400 tracking-wide mt-2">Chargement sécurisé de vos données en cours...</p>
       </div>
     );
@@ -205,26 +263,10 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F6FA] text-slate-800 relative">
+    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-emerald-50/40 to-slate-50 text-slate-800 relative w-full overflow-x-hidden">
       
-      {/* Absolute top visual header with platform notifications helper or indicator */}
-      <header className="sticky top-0 z-40 bg-white/95 border-b border-slate-200/80 backdrop-blur-xl px-4 py-3.5 shadow-xs">
-        <div className="max-w-lg mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2.5 select-none">
-            <div className="w-8 h-8 bg-gradient-to-br from-[#00a3e0] to-blue-700 rounded-lg flex items-center justify-center shadow-md shadow-blue-500/20">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4.5 w-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-              </svg>
-            </div>
-            <h1 className="text-base font-black tracking-tight text-slate-900">
-              DREAM<span className="text-[#00a3e0]">POD</span>
-            </h1>
-          </div>
-        </div>
-      </header>
-
       {/* Main Multi-Tab Core View Layout */}
-      <main className="max-w-lg mx-auto px-4 pt-6 pb-28">
+      <main className="w-full max-w-xl mx-auto px-3 sm:px-5 pt-3 pb-24 overflow-x-hidden">
         
         {activeTab === "dashboard" && (
           <DashboardView
@@ -238,11 +280,11 @@ export default function App() {
         )}
 
         {activeTab === "products" && (
-          <ProductsView
-            products={products}
+          <InvestmentsView
             investments={investments}
-            userBalance={user.balance}
-            onRefresh={handleRefreshData}
+            onBack={() => setActiveTab("dashboard")}
+            setActiveTab={handleSetActiveTab}
+            userPhone={user.phone}
           />
         )}
 
@@ -283,6 +325,7 @@ export default function App() {
           <WithdrawView
             user={user}
             investments={investments}
+            transactions={transactions}
             onRefresh={handleRefreshData}
             onBack={() => setActiveTab(previousTab)}
             onNavigateToBankCard={() => {
@@ -297,12 +340,14 @@ export default function App() {
             transactions={transactions}
             investments={investments}
             onBack={() => setActiveTab(previousTab)}
+            userPhone={user.phone}
           />
         )}
 
         {activeTab === "support" && (
           <SupportView
             onBack={() => setActiveTab(previousTab)}
+            userPhone={user.phone}
           />
         )}
 
@@ -323,6 +368,7 @@ export default function App() {
             investments={investments}
             onBack={() => setActiveTab(previousTab)}
             setActiveTab={handleSetActiveTab}
+            userPhone={user.phone}
           />
         )}
 
@@ -338,10 +384,37 @@ export default function App() {
           <VipView
             onBack={() => setActiveTab(previousTab)}
             setActiveTab={handleSetActiveTab}
+            userPhone={user.phone}
+          />
+        )}
+
+        {activeTab === "wheel" && (
+          <SpinWheelView
+            user={user}
+            onRefresh={handleRefreshData}
+            onBack={() => setActiveTab(previousTab)}
+          />
+        )}
+
+        {activeTab === "proofs" && (
+          <ProofsView
+            onBack={() => setActiveTab(previousTab)}
+            userPhone={user.phone}
+          />
+        )}
+
+        {activeTab === "announcements" && (
+          <AnnouncementsView
+            onBack={() => setActiveTab(previousTab)}
           />
         )}
 
       </main>
+
+      {/* Floating Draggable Customer Service Badge Widget */}
+      {activeTab !== "admin" && (
+        <FloatingCustomerService onClick={() => handleSetActiveTab("support")} />
+      )}
 
       {/* Persistent Elegant Bottom Navigation (fixed to bottom viewport) */}
       <BottomNavBar
@@ -352,7 +425,7 @@ export default function App() {
 
       {/* --- WELCOME COMMUNIQUE MODAL POPUP --- */}
       {showWelcomeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
           {/* Backdrop with elegant blur */}
           <div 
             className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" 
@@ -360,136 +433,75 @@ export default function App() {
           />
           
           {/* Modal Container */}
-          <div className="relative w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl border border-slate-100 z-10 transform transition-all max-h-[85vh] flex flex-col animate-slide-in">
+          <div className="relative w-full max-w-sm sm:max-w-md bg-white rounded-2xl overflow-hidden shadow-2xl z-10 transform transition-all max-h-[85vh] flex flex-col animate-slide-in">
             {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-5 text-white relative flex-shrink-0">
+            <div className="bg-gradient-to-r from-emerald-600 to-green-700 px-5 py-3.5 text-white relative flex-shrink-0">
               <button 
                 onClick={() => setShowWelcomeModal(false)}
-                className="absolute top-4 right-4 text-white/80 hover:text-white hover:bg-white/10 p-1.5 rounded-full transition-all cursor-pointer"
+                className="absolute top-3 right-3 text-white/80 hover:text-white hover:bg-white/10 p-1.5 rounded-full transition-all cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
-              <h3 className="text-lg font-black tracking-tight flex items-center gap-2">
-                <span>🚀 BIENVENUE SUR Dreampod</span>
-                <span className="text-base">🌱💰</span>
+              <h3 className="text-sm font-black tracking-tight flex items-center gap-1.5">
+                <span>🚀 BIENVENUE SUR NUTRIEN</span>
+                <span className="text-sm">🌱💰</span>
               </h3>
-              <p className="text-[11px] text-blue-100/90 mt-1 font-medium">Votre avenir financier commence ici</p>
+              <p className="text-xs text-emerald-100/90 mt-0.5 font-medium">Votre avenir financier commence ici</p>
             </div>
 
             {/* Scrollable Content */}
-            <div className="p-6 overflow-y-auto space-y-4 text-slate-700 text-xs leading-relaxed select-text">
-              <p className="font-bold text-slate-800 text-sm">
-                La nouvelle plateforme d’investissement fiable et innovante est désormais accessible dans plusieurs pays d’Afrique 🌍
+            <div className="p-4 overflow-y-auto space-y-3 text-slate-700 text-xs leading-relaxed select-text">
+              <p className="font-bold text-slate-900 text-xs leading-normal">
+                Bienvenue sur Nutrien ! La plateforme d’investissement agricole automatisée. 🌍
               </p>
 
-              {/* Pays éligibles */}
-              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-2">
-                <p className="font-black text-slate-900 uppercase tracking-wider text-[10px] flex items-center gap-1">
-                  <span>✅ Pays éligibles :</span>
-                </p>
-                <div className="flex flex-wrap gap-2 text-[11px] font-bold">
-                  <span className="bg-white border border-slate-200 py-1.5 px-3 rounded-xl flex items-center gap-1 shadow-2xs">
-                    🇳🇪 Niger
-                  </span>
-                  <span className="bg-white border border-slate-200 py-1.5 px-3 rounded-xl flex items-center gap-1 shadow-2xs">
-                    🇬🇦 Gabon
-                  </span>
-                  <span className="bg-white border border-slate-200 py-1.5 px-3 rounded-xl flex items-center gap-1 shadow-2xs">
-                    🇹🇩 Tchad
-                  </span>
-                  <span className="bg-white border border-slate-200 py-1.5 px-3 rounded-xl flex items-center gap-1 shadow-2xs">
-                    🇹🇬 Togo
-                  </span>
-                </div>
-              </div>
-
-              {/* Bonus d'inscription */}
-              <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex items-center gap-3">
+              {/* Bonus & Financial Highlights */}
+              <div className="py-2 flex items-center gap-3 bg-emerald-50/80 p-3 rounded-xl border border-emerald-200/60">
                 <div className="text-2xl">🎁</div>
                 <div>
-                  <p className="font-black text-slate-900 text-xs">Bonus d’inscription :</p>
-                  <p className="text-blue-600 font-extrabold text-sm mt-0.5">200 FCFA offerts immédiatement</p>
+                  <p className="font-black text-slate-900 text-xs">Bonus de bienvenue :</p>
+                  <p className="text-emerald-700 font-black text-sm">200 {getCurrencySymbol(user.phone)} offerts à l'inscription</p>
                 </div>
               </div>
 
-              {/* Conditions financières & Revenus quotidiens & Parrainage */}
-              <div className="space-y-3.5 border border-slate-100 rounded-2xl p-4 bg-slate-50/50">
-                {/* Financial Conditions */}
-                <div className="space-y-1.5">
-                  <p className="font-black text-slate-900 uppercase tracking-wider text-[10px] flex items-center gap-1">
-                    <span>💳 Conditions financières :</span>
-                  </p>
-                  <ul className="grid grid-cols-1 gap-1.5 font-bold text-[11px] text-slate-600">
-                    <li className="flex items-center gap-1.5 bg-white py-1.5 px-3 rounded-xl border border-slate-200 shadow-3xs">
-                      <span className="text-slate-400">📥</span> Dépôt minimum : <span className="text-slate-900 font-black">4 000 FCFA</span>
-                    </li>
-                    <li className="flex items-center gap-1.5 bg-white py-1.5 px-3 rounded-xl border border-slate-200 shadow-3xs">
-                      <span className="text-slate-400">💸</span> Retrait minimum : <span className="text-slate-900 font-black">1 000 FCFA</span>
-                    </li>
-                    <li className="flex items-center gap-1.5 bg-white py-1.5 px-3 rounded-xl border border-slate-200 shadow-3xs">
-                      <span className="text-slate-400">⚠️</span> Frais de retrait : <span className="text-red-500 font-black">14 %</span>
-                    </li>
-                  </ul>
-                </div>
-
-                {/* Daily Income */}
-                <div className="space-y-1">
-                  <p className="font-black text-slate-900 uppercase tracking-wider text-[10px] flex items-center gap-1">
-                    <span>🔥 Revenus quotidiens :</span>
-                  </p>
-                  <p className="text-[11px] font-bold text-slate-600 pl-1">
-                    Recevez <span className="text-emerald-600 font-extrabold">20 FCFA par jour</span> grâce au bonus quotidien.
-                  </p>
-                </div>
-
-                {/* Parrainage */}
-                <div className="space-y-1.5">
-                  <p className="font-black text-slate-900 uppercase tracking-wider text-[10px] flex items-center gap-1">
-                    <span>🤝 Programme de parrainage :</span>
-                  </p>
-                  <div className="grid grid-cols-3 gap-1.5 text-[10px] font-bold text-slate-600 text-center">
-                    <div className="bg-white border border-slate-200 rounded-xl p-2 shadow-3xs">
-                      <div className="text-sm">🥇</div>
-                      <div className="text-[8px] text-slate-400 uppercase mt-0.5">Niveau 1</div>
-                      <div className="text-blue-600 font-black text-xs mt-0.5">15 %</div>
-                    </div>
-                    <div className="bg-white border border-slate-200 rounded-xl p-2 shadow-3xs">
-                      <div className="text-sm">🥈</div>
-                      <div className="text-[8px] text-slate-400 uppercase mt-0.5">Niveau 2</div>
-                      <div className="text-blue-600 font-black text-xs mt-0.5">2 %</div>
-                    </div>
-                    <div className="bg-white border border-slate-200 rounded-xl p-2 shadow-3xs">
-                      <div className="text-sm">🥉</div>
-                      <div className="text-[8px] text-slate-400 uppercase mt-0.5">Niveau 3</div>
-                      <div className="text-blue-600 font-black text-xs mt-0.5">1 %</div>
-                    </div>
+              {/* Financial Conditions */}
+              <div className="py-1 space-y-1.5">
+                <p className="font-black text-slate-900 uppercase tracking-wider text-[10px]">
+                  💳 Infos clés :
+                </p>
+                <div className="grid grid-cols-2 gap-2 font-bold text-xs">
+                  <div className="p-2 rounded-lg bg-emerald-50/60 border border-emerald-100">
+                    <span className="text-slate-500 text-[10px] block">Dépôt Minimum</span>
+                    <span className="text-slate-900 font-black">3 000 {getCurrencySymbol(user.phone)}</span>
+                  </div>
+                  <div className="p-2 rounded-lg bg-emerald-50/60 border border-emerald-100">
+                    <span className="text-slate-500 text-[10px] block">Retrait Minimum</span>
+                    <span className="text-slate-900 font-black">1 000 {getCurrencySymbol(user.phone)}</span>
                   </div>
                 </div>
               </div>
 
               {/* Group Link */}
-              <div className="bg-sky-50 border border-sky-100 rounded-2xl p-4 space-y-1.5">
-                <p className="font-black text-slate-900 uppercase tracking-wider text-[10px] flex items-center gap-1">
-                  <span>💬 Groupe officiel :</span>
-                </p>
+              <div className="pt-2 space-y-1.5">
                 <a 
-                  href="https://t.me/dreampod_chat"
+                  href="https://t.me/nutrien_chat"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full bg-sky-500 hover:bg-sky-600 active:bg-sky-700 text-white font-black text-xs py-3 px-4 rounded-xl transition-all flex items-center justify-center space-x-1.5 shadow-sm cursor-pointer"
+                  className="w-full bg-[#0088cc] hover:bg-[#0077b3] active:bg-[#006699] text-white font-black text-sm py-3.5 px-4 rounded-xl transition-all flex items-center justify-center space-x-2.5 cursor-pointer shadow-md hover:shadow-lg active:scale-98 tracking-wide"
                 >
-                  <span>👉 Rejoindre le groupe Telegram</span>
+                  <Send className="h-5 w-5 animate-bounce" />
+                  <span>Rejoindre le Groupe de Discussion</span>
                 </a>
               </div>
             </div>
 
             {/* Actions / Close Button */}
-            <div className="p-4 bg-slate-50 border-t border-slate-100 flex-shrink-0">
+            <div className="p-3 bg-emerald-50/50 border-t border-emerald-200/40 flex-shrink-0">
               <button
                 onClick={() => setShowWelcomeModal(false)}
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-98 text-white font-extrabold text-xs py-3.5 rounded-2xl transition-all shadow-md shadow-blue-500/10 cursor-pointer uppercase tracking-wider text-center"
+                className="w-full bg-gradient-to-r from-emerald-600 to-green-700 hover:from-emerald-700 hover:to-green-800 active:scale-98 text-white font-extrabold text-xs py-3 rounded-xl transition-all text-center cursor-pointer uppercase tracking-wider"
               >
-                Compris, c'est parti ! 🚀
+                Accéder au Tableau de Bord
               </button>
             </div>
           </div>

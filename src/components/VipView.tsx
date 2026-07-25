@@ -5,13 +5,16 @@
 
 import React from "react";
 import { ArrowLeft, Gem, Star, ShieldCheck, Zap } from "lucide-react";
+import { getCurrencySymbol } from "../lib/currency";
 
 interface VipViewProps {
   onBack: () => void;
   setActiveTab: (tab: string) => void;
+  userPhone?: string;
 }
 
-export default function VipView({ onBack, setActiveTab }: VipViewProps) {
+export default function VipView({ onBack, setActiveTab, userPhone }: VipViewProps) {
+  const currency = getCurrencySymbol(userPhone);
   return (
     <div id="vip-view-container" className="space-y-6">
       {/* Back Header */}
@@ -30,13 +33,13 @@ export default function VipView({ onBack, setActiveTab }: VipViewProps) {
       </div>
 
       {/* Main VIP card */}
-      <div className="bg-gradient-to-br from-indigo-900 via-slate-900 to-blue-950 text-white p-6 rounded-3xl shadow-xl relative overflow-hidden border border-slate-800">
+      <div className="bg-gradient-to-br from-indigo-900 via-slate-900 to-blue-950 text-white p-4.5 rounded-2xl shadow-xl relative overflow-hidden border border-slate-800">
         <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl" />
         <div className="flex justify-between items-start">
           <div className="space-y-1">
             <span className="text-[9px] uppercase tracking-widest font-black text-indigo-400">Statut Privilège</span>
-            <h3 className="text-xl font-black flex items-center gap-1.5 uppercase">
-              <Gem className="text-amber-500 h-5 w-5 animate-pulse" />
+            <h3 className="text-lg font-black flex items-center gap-1.5 uppercase">
+              <Gem className="text-amber-500 h-4 w-4 animate-pulse" />
               GLOBAL VIP CLUB
             </h3>
           </div>
@@ -44,13 +47,13 @@ export default function VipView({ onBack, setActiveTab }: VipViewProps) {
             Membres Actifs ⭐
           </span>
         </div>
-        <p className="text-xs text-slate-300 font-bold leading-relaxed mt-4 max-w-xs">
-          Les grades VIP dépendent de la valeur de vos investissements actifs sur Dreampod. Plus votre grade VIP est élevé, plus vos gains quotidiens et privilèges de parrainage augmentent.
+        <p className="text-[11px] text-slate-300 font-bold leading-relaxed mt-3 max-w-xs">
+          Les grades VIP dépendent de la valeur de vos investissements actifs sur Nutrien. Plus votre grade VIP est élevé, plus vos gains quotidiens et privilèges de parrainage augmentent.
         </p>
       </div>
 
       {/* VIP Rankings List */}
-      <div className="bg-white rounded-3xl p-5 border border-slate-200/60 shadow-xs space-y-4">
+      <div className="bg-white rounded-2xl p-4 border border-slate-200/60 shadow-2xs space-y-3">
         <h3 className="text-xs font-black text-slate-800 tracking-tight uppercase border-b border-slate-50 pb-2.5 flex items-center gap-1.5">
           <Star className="h-4 w-4 text-amber-500" />
           Niveaux de Grades VIP
@@ -61,21 +64,21 @@ export default function VipView({ onBack, setActiveTab }: VipViewProps) {
             {
               level: "VIP 0",
               sub: "Stabilité 1",
-              desc: "Machine de base - FCFA 2000",
+              desc: `Machine de base - ${currency} 2000`,
               perks: "+90 jours d'actifs",
               color: "bg-slate-50 border-slate-100 text-slate-700",
             },
             {
               level: "VIP 1",
               sub: "Stabilité 2",
-              desc: "Machine intermédiaire - FCFA 5000",
+              desc: `Machine intermédiaire - ${currency} 5000`,
               perks: "+90 jours d'actifs",
               color: "bg-blue-50/40 border-blue-100/60 text-blue-700",
             },
             {
               level: "VIP 2",
               sub: "Stabilité 3",
-              desc: "Machine avancée - FCFA 10000",
+              desc: `Machine avancée - ${currency} 10000`,
               perks: "+90 jours d'actifs",
               color: "bg-emerald-50/40 border-emerald-100/60 text-emerald-700",
             },

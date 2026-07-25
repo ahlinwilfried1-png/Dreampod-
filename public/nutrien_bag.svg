@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 750" width="100%" height="100%">
+  <defs>
+    <!-- Bag Shadows and Gradients -->
+    <filter id="bagDropShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="15" stdDeviation="15" flood-color="#000000" flood-opacity="0.25"/>
+    </filter>
+    
+    <linearGradient id="bag3DGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#e2e8f0"/>
+      <stop offset="10%" stop-color="#ffffff"/>
+      <stop offset="50%" stop-color="#f8fafc"/>
+      <stop offset="90%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#cbd5e1"/>
+    </linearGradient>
+
+    <linearGradient id="greenHeaderGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#15803d"/>
+      <stop offset="70%" stop-color="#16a34a"/>
+      <stop offset="100%" stop-color="#22c55e"/>
+    </linearGradient>
+
+    <linearGradient id="limeSwooshGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#84cc16"/>
+      <stop offset="100%" stop-color="#65a30d"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Main Bag Shape -->
+  <g filter="url(#bagDropShadow)">
+    <!-- Crinkled Plastic Outer Bag Contour -->
+    <path d="M 60 50 
+             C 120 42, 380 42, 440 50 
+             C 455 180, 460 550, 445 680 
+             C 380 700, 120 700, 55 680 
+             C 40 550, 45 180, 60 50 Z" 
+          fill="url(#bag3DGradient)" 
+          stroke="#cbd5e1" 
+          stroke-width="3"/>
+
+    <!-- Plastic Crinkle Highlights -->
+    <path d="M 60 50 Q 80 350 55 680" fill="none" stroke="#ffffff" stroke-width="8" opacity="0.6"/>
+    <path d="M 440 50 Q 420 350 445 680" fill="none" stroke="#94a3b8" stroke-width="4" opacity="0.4"/>
+    
+    <!-- Top Sealed Border ("EASY OPEN - PULL THIS SIDE") -->
+    <path d="M 60 50 C 180 44, 320 44, 440 50 L 438 75 C 320 68, 180 68, 62 75 Z" fill="#0f5126" />
+    <text x="350" y="63" font-family="sans-serif" font-size="11" font-weight="bold" fill="#ffffff" opacity="0.9">EASY OPEN - PULL THIS SIDE ➔</text>
+
+    <!-- Top Green Header Section -->
+    <path d="M 62 75 C 180 68, 320 68, 438 75 L 432 230 C 310 245, 190 245, 68 230 Z" fill="url(#greenHeaderGrad)"/>
+    
+    <!-- Curved Lime Green Accent Stripe -->
+    <path d="M 68 200 C 180 235, 320 235, 432 200 L 430 225 C 320 250, 180 250, 70 225 Z" fill="url(#limeSwooshGrad)"/>
+
+    <!-- Nutrien Brand Title -->
+    <g transform="translate(90, 135)">
+      <!-- Leaf Icon inside Nutrien -->
+      <path d="M -10 -25 C 10 -40, 35 -10, 20 15 C 5 30, -20 10, -10 -25 Z" fill="#84cc16"/>
+      <text x="25" y="0" font-family="'Arial Black', sans-serif" font-size="44" font-weight="900" font-style="italic" fill="#ffffff" letter-spacing="-1">Nutrien</text>
+      <text x="25" y="32" font-family="'Arial', sans-serif" font-size="28" font-weight="bold" font-style="italic" fill="#ffffff" letter-spacing="1">Ag Solutions</text>
+    </g>
+
+    <!-- Slogan "Better Growing" -->
+    <text x="390" y="220" font-family="'Georgia', serif" font-size="22" font-style="italic" font-weight="bold" fill="#15803d" text-anchor="end">Better Growing</text>
+
+    <!-- Center Product Title "TURF" -->
+    <text x="250" y="315" font-family="'Impact', 'Arial Black', sans-serif" font-size="68" font-weight="900" fill="#0f391b" text-anchor="middle" letter-spacing="6">TURF</text>
+
+    <!-- Chemical Formula Row NPKS -->
+    <g transform="translate(250, 365)" font-family="'Arial', sans-serif" font-anchor="middle" text-anchor="middle">
+      <text x="-90" y="0" font-size="20" font-weight="bold" fill="#0f391b">N</text>
+      <text x="-30" y="0" font-size="20" font-weight="bold" fill="#0f391b">P</text>
+      <text x="30" y="0" font-size="20" font-weight="bold" fill="#0f391b">K</text>
+      <text x="90" y="0" font-size="20" font-weight="bold" fill="#0f391b">S</text>
+
+      <text x="0" y="32" font-size="24" font-weight="900" fill="#15803d" letter-spacing="2">15 - 1 - 6 - 19</text>
+    </g>
+
+    <!-- Main Green Leaf Swoosh Artwork on Bag -->
+    <g transform="translate(250, 510)">
+      <!-- Outer Green Arc -->
+      <path d="M -80 60 C -60 -70, 20 -110, 70 -60 C 20 -20, -20 20, -80 60 Z" fill="#16a34a"/>
+      <!-- Inner Lime Arc -->
+      <path d="M -70 50 C -50 -50, 10 -80, 50 -40 C 10 -10, -20 20, -70 50 Z" fill="#84cc16"/>
+    </g>
+
+    <!-- Vertical Side Labels "TURF" -->
+    <text x="95" y="470" font-family="'Impact', sans-serif" font-size="42" font-weight="900" fill="#15803d" transform="rotate(-90 95 470)" letter-spacing="4" opacity="0.85">TURF</text>
+    <text x="405" y="470" font-family="'Impact', sans-serif" font-size="42" font-weight="900" fill="#15803d" transform="rotate(90 405 470)" letter-spacing="4" opacity="0.85">TURF</text>
+
+    <!-- Bottom Weight Label "25KG NET" -->
+    <text x="250" y="625" font-family="'Arial Black', sans-serif" font-size="22" font-weight="900" fill="#334155" text-anchor="middle" letter-spacing="3">25KG NET</text>
+
+    <!-- Bottom Sealed Fold Line -->
+    <path d="M 55 680 C 180 700, 320 700, 445 680" fill="none" stroke="#e2e8f0" stroke-width="4"/>
+  </g>
+</svg>

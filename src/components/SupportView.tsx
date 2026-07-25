@@ -3,131 +3,504 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from "react";
-import { Headphones, ArrowLeft, Clock, Phone, ChevronDown, ChevronUp, ShieldCheck } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import {
+  ArrowLeft,
+  Headphones,
+  Send,
+  PhoneCall,
+  MessageSquare,
+  ShieldCheck,
+  CheckCheck,
+  Paperclip,
+  Trash2,
+  ImageIcon
+} from "lucide-react";
+import {
+  getConversationForUser,
+  addSupportMessage,
+  markAsRead,
+  subscribeChatUpdates
+} from "../lib/chatStore";
+import { getCurrencySymbol } from "../lib/currency";
 
 interface SupportViewProps {
   onBack: () => void;
+  userPhone?: string;
 }
 
-interface FaqItem {
-  q: string;
-  a: string;
-}
-
-const FAQS: FaqItem[] = [
+const AUTO_REPLIES: { keywords: string[]; response: string }[] = [
   {
-    q: "Qu'est-ce que Dreampod ?",
-    a: "Dreampod est une plateforme d'investissement de premier plan, fonctionnant en partenariat stratégique avec des entités de courtage de réputation mondiale comme Charles Schwab. Nous facilitons l'accès aux placements à revenus passifs quotidiens stables en devises locales via Mobile Money.",
+    keywords: ["dépôt", "depot", "recharge", "payer", "crédit", "argent"],
+    response: "Pour vérifier votre dépôt, veuillez nous transmettre la référence de transaction SMS (ex: Mobile Money / T-Money / Airtel / Moov) ainsi que le montant. L'administrateur va valider votre compte !"
   },
   {
-    q: "Comment effectuer un dépôt ?",
-    a: "Rendez-vous dans la rubrique 'Dépôt', saisissez le montant de votre choix (minimum 1 000 FCFA), sélectionnez votre opérateur mobile (Airtel, Moov, Orange, Amana ou Nita), puis effectuez le transfert. Enfin, collez la référence de transaction SMS reçue et soumettez la demande.",
+    keywords: ["retrait", "retirer", "virement", "moyen de retrait", "délai"],
+    response: "Les retraits sont traités par nos agents financiers dans un délai garanti de 1 à 2 heures d'horloge. Assurez-vous d'avoir bien renseigné votre numéro Mobile Money dans votre profil."
   },
   {
-    q: "Quel est le délai de traitement des retraits ?",
-    a: "Pour garantir une sécurité maximale et des audits précis, l'ensemble des retraits de fonds est traité par nos agents financiers agréés dans un délai moyen garanti d'une à deux heures d'horloge à compter de la demande.",
+    keywords: ["vip", "plan", "investir", "produit", "rendement", "gain"],
+    response: "Chaque plan VIP vous rapporte un gain quotidien fixe cumulé automatiquement toutes les 24h. Vous pouvez cumuler vos bénéfices et demander un retrait dès que votre solde atteint le seuil minimum."
   },
   {
-    q: "Comment fonctionne le programme de parrainage ?",
-    a: "Vous bénéficiez d'une commission de parrainage sur 3 niveaux : 15% sur les plans achetés par vos filleuls directs (N1), 2% au Niveau 2 (N2), et 1% au Niveau 3 (N3).",
+    keywords: ["parrainage", "inviter", "filleul", "niveau", "commission", "code"],
+    response: "Notre programme de parrainage vous accorde 15% sur les achats de vos filleuls directs (N1), 2% au Niveau 2, et 1% au Niveau 3. Partagez votre lien depuis l'onglet Équipe !"
   },
   {
-    q: "Qu'est-ce que les gains passifs journaliers ?",
-    a: "Chaque plan VIP activé vous rapporte un montant fixe quotidien. Les revenus se cumulent automatiquement de manière continue. Vous pouvez les récolter quotidiennement et faire une demande de retrait immédiatement.",
-  },
+    keywords: ["bonjour", "salut", "hello", "bonsoir", "coucou"],
+    response: "Bonjour ! Ravi de vous lire. Quel est l'objet de votre demande auprès de l'administration ?"
+  }
 ];
 
-export default function SupportView({ onBack }: SupportViewProps) {
-  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+export default function SupportView({ onBack, userPhone }: SupportViewProps) {
+  const currency = getCurrencySymbol(userPhone);
+  const [activeTab, setActiveTab] = useState<"chat" | "channels">("chat");
+  const [conversation, setConversation] = useState(() => getConversationForUser());
+  const [input, setInput] = useState("");
+  const [isAdminTyping, setIsAdminTyping] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const toggleFaq = (index: number) => {
-    setOpenFaqIndex(openFaqIndex === index ? null : index);
+  // Load and subscribe to live chat updates
+  useEffect(() => {
+    const refresh = () => {
+      const updated = getConversationForUser();
+      setConversation(updated);
+      markAsRead(updated.id, "user");
+    };
+
+    refresh();
+    const unsubscribe = subscribeChatUpdates(refresh);
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [conversation.messages, isAdminTyping]);
+
+  const handleSend = (textToSend?: string) => {
+    const text = (textToSend || input).trim();
+    if (!text && !selectedImage) return;
+
+    // Check if user has already sent any messages in this conversation
+    const userMessageCount = conversation.messages.filter((m) => m.sender === "user").length;
+
+    // Send user message
+    addSupportMessage({
+      conversationId: conversation.id,
+      sender: "user",
+      text,
+      attachment: selectedImage || undefined
+    });
+
+    if (!textToSend) setInput("");
+    setSelectedImage(null);
+
+    // Simulated Auto-Reply from Admin system
+    setIsAdminTyping(true);
+
+    setTimeout(() => {
+      setIsAdminTyping(false);
+      let replyText = "";
+
+      if (userMessageCount === 0) {
+        // Official welcome message on first user message
+        replyText = `🚀 LANCEMENT OFFICIEL 🌱💰\n\n🌍 Pays concerné\n🇨🇲 Cameroun \n🇹🇬 Togo\n🇧🇫 Burkina Faso \n🇨🇮 Côte d'Ivoire \n🇧🇯 Bénin \n🇸🇳 Sénégal \n━━━━━━━━━━━━━━━\n🎁 Avantages offerts\n\n🎉 Bonus d’inscription : 200 FCFA\n🎯 Bonus de pointage quotidien : 20 XAF \n\n━━━━━━━━━━━━━━━\n💰 Conditions financières\n\n📥 Dépôt minimum : 3 000 XAF\n💸 Retrait minimum : 1 000 XAF\n📊 Frais de retrait : 14%\n🕘 Heures de retrait : De 09h à 17h00\n━━━━━━━━━━━━━━━\n👥 Programme de parrainage\n🥇 Niveau 1 : 20 %\n🥈 Niveau 2 : 3 %\n🥉 Niveau 3 : 2 %\n\n🚀 Rejoignez`;
+      } else {
+        replyText = "Merci pour votre message. L'Administrateur a bien reçu votre demande et vous répondra très rapidement.";
+
+        const lowerText = text.toLowerCase();
+        for (const rule of AUTO_REPLIES) {
+          if (rule.keywords.some((kw) => lowerText.includes(kw))) {
+            replyText = rule.response;
+            break;
+          }
+        }
+      }
+
+      addSupportMessage({
+        conversationId: conversation.id,
+        sender: "admin",
+        senderName: "Administrateur Nutrien",
+        text: replyText
+      });
+    }, 1200);
+  };
+
+  const clearChat = () => {
+    const updated = getConversationForUser();
+    updated.messages = [
+      {
+        id: `init-${Date.now()}`,
+        conversationId: updated.id,
+        sender: "admin",
+        senderName: "Administrateur Nutrien",
+        text: "Bonjour ! Chat réinitialisé. Comment pouvons-nous vous aider ?",
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        timestamp: Date.now(),
+        readByAdmin: true,
+        readByUser: true
+      }
+    ];
+    setConversation(updated);
+  };
+
+  const handleQuickTopic = (topic: string) => {
+    handleSend(topic);
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        if (evt.target?.result) {
+          setSelectedImage(evt.target.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
-    <div id="support-view-container" className="space-y-6">
-      {/* Back Header */}
-      <div className="flex items-center gap-3.5">
-        <button
-          id="support-back-btn"
-          onClick={onBack}
-          className="p-2.5 bg-white hover:bg-slate-50 text-slate-700 rounded-xl border border-slate-200/80 transition-all cursor-pointer shadow-2xs"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </button>
-        <div>
-          <h2 className="text-lg font-black text-slate-900 tracking-tight">Centre d'Aide</h2>
-          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Assistance technique et financière 24h/7</p>
-        </div>
-      </div>
-
-      {/* WhatsApp Support Hero Card */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-200/60 shadow-xs space-y-6">
-        <div className="p-6 bg-blue-50/40 border border-blue-100 rounded-2xl flex flex-col items-center text-center">
-          <div className="relative flex items-center justify-center p-4 bg-blue-500 rounded-full text-white mb-3">
-            <Headphones className="h-8 w-8 animate-pulse" />
-          </div>
-          <h3 className="text-sm font-black text-slate-900 uppercase tracking-wide">Support WhatsApp Officiel</h3>
-          <p className="text-[11px] text-slate-500 mt-2 leading-relaxed font-bold">
-            Notre équipe d'assistance financière d'Afrique francophone est disponible en continu pour répondre à vos préoccupations, guider vos dépôts, ou accélérer vos retraits.
-          </p>
-        </div>
-
-        <div className="text-xs text-slate-700 space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200/60 font-bold">
+    <div id="support-view-container" className="space-y-3 text-slate-800 pb-8 select-none max-w-md mx-auto">
+      {/* Header Bar - Completely smooth without frame borders */}
+      <div className="py-2 px-1 flex items-center justify-between border-b border-slate-100">
+        <div className="flex items-center gap-3">
+          <button
+            id="support-back-btn"
+            onClick={onBack}
+            className="p-1.5 text-slate-700 hover:text-slate-900 transition-all cursor-pointer"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
           <div className="flex items-center gap-2.5">
-            <Clock className="h-4.5 w-4.5 text-[#00a3e0]" />
-            <span>Temps de réponse moyen : moins de 5 minutes</span>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <Phone className="h-4.5 w-4.5 text-[#00a3e0]" />
-            <span>Support personnalisé gratuit et sécurisé</span>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <ShieldCheck className="h-4.5 w-4.5 text-[#00a3e0]" />
-            <span>Serveur crypté de bout en bout</span>
-          </div>
-        </div>
-
-        <a
-          id="whatsapp-direct-link"
-          href="https://wa.me/22890000000?text=Bonjour%20Dreampod%20Charles%20Schwab!"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-full bg-green-500 hover:bg-green-600 text-white font-black text-xs py-4 rounded-2xl transition-all block text-center cursor-pointer shadow-md shadow-green-500/10 active:scale-98"
-        >
-          Discuter en direct sur WhatsApp 💬
-        </a>
-      </div>
-
-      {/* Interactive FAQs Section */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-200/60 shadow-xs space-y-4">
-        <h3 className="text-xs font-black text-slate-800 tracking-tight uppercase border-b border-slate-50 pb-2.5">
-          Foire Aux Questions (FAQ)
-        </h3>
-
-        <div className="space-y-3.5 divide-y divide-slate-100">
-          {FAQS.map((item, index) => {
-            const isOpen = openFaqIndex === index;
-            return (
-              <div id={`faq-item-${index}`} key={index} className={`${index > 0 ? "pt-3.5" : ""}`}>
-                <button
-                  onClick={() => toggleFaq(index)}
-                  className="w-full flex justify-between items-center text-left text-xs font-extrabold text-slate-800 hover:text-blue-600 transition-colors cursor-pointer"
-                >
-                  <span className="pr-4">{item.q}</span>
-                  {isOpen ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
-                </button>
-                {isOpen && (
-                  <p className="mt-2.5 text-[11px] text-slate-500 font-bold leading-relaxed">
-                    {item.a}
-                  </p>
-                )}
+            <div className="relative">
+              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-black text-sm">
+                <Headphones className="h-4.5 w-4.5" />
               </div>
-            );
-          })}
+              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1">
+                <h2 className="text-sm font-bold text-slate-900 tracking-tight">Administrateur Nutrien</h2>
+                <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
+              </div>
+              <p className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                En ligne
+              </p>
+            </div>
+          </div>
         </div>
+
+        {activeTab === "chat" && (
+          <button
+            onClick={clearChat}
+            title="Effacer l'historique"
+            className="p-1.5 text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        )}
       </div>
+
+      {/* Navigation Tabs - Minimalist, smooth style */}
+      <div className="flex bg-slate-100 p-1 rounded-full gap-1">
+        <button
+          onClick={() => setActiveTab("chat")}
+          className={`flex-1 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+            activeTab === "chat"
+              ? "bg-white text-blue-600 shadow-2xs"
+              : "text-slate-500 hover:text-slate-800"
+          }`}
+        >
+          <MessageSquare className="h-3.5 w-3.5" />
+          Chat Support
+        </button>
+        <button
+          onClick={() => setActiveTab("channels")}
+          className={`flex-1 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+            activeTab === "channels"
+              ? "bg-white text-blue-600 shadow-2xs"
+              : "text-slate-500 hover:text-slate-800"
+          }`}
+        >
+          <PhoneCall className="h-3.5 w-3.5" />
+          Canaux & Règles
+        </button>
+      </div>
+
+      {/* TAB 1: LIVE CHAT - COMPLETELY SMOOTH, NO OUTER FRAME/BORDER */}
+      {activeTab === "chat" && (
+        <div className="flex flex-col h-[540px]">
+          {/* Chat Messages Scroll Container */}
+          <div className="flex-1 py-2 px-1 overflow-y-auto space-y-3 scrollbar-none">
+            {/* Notice / Badge */}
+            <div className="flex justify-center my-1">
+              <span className="bg-blue-50 text-blue-700 text-[10px] font-semibold px-3 py-1 rounded-full flex items-center gap-1">
+                <ShieldCheck className="h-3 w-3 text-blue-600" />
+                Discussion sécurisée
+              </span>
+            </div>
+
+            {conversation.messages.map((msg) => {
+              const isAdmin = msg.sender === "admin";
+              return (
+                <div
+                  key={msg.id}
+                  className={`flex flex-col ${isAdmin ? "items-start" : "items-end"}`}
+                >
+                  <div className="flex items-end gap-1.5 max-w-[88%]">
+                    {isAdmin && (
+                      <div className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-black flex-shrink-0">
+                        A
+                      </div>
+                    )}
+                    <div
+                      className={`p-3 rounded-2xl text-xs leading-relaxed font-medium ${
+                        isAdmin
+                          ? "bg-slate-100 text-slate-800 rounded-bl-xs"
+                          : "bg-blue-600 text-white rounded-br-xs"
+                      }`}
+                    >
+                      {isAdmin && (
+                        <span className="block text-[9px] font-bold uppercase text-blue-600 tracking-wider mb-1">
+                          Administrateur
+                        </span>
+                      )}
+                      
+                      {msg.attachment && (
+                        <div className="mb-2 rounded-xl overflow-hidden max-w-[200px]">
+                          <img src={msg.attachment} alt="Pièce jointe" className="w-full h-auto object-cover" />
+                        </div>
+                      )}
+
+                      <p className="whitespace-pre-wrap">{msg.text}</p>
+                      
+                      <div className={`mt-1 text-[9px] flex items-center justify-end gap-1 ${isAdmin ? "text-slate-400" : "text-blue-100"}`}>
+                        <span>{msg.time}</span>
+                        {!isAdmin && <CheckCheck className="h-3 w-3" />}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Admin typing indicator */}
+            {isAdminTyping && (
+              <div className="flex items-center gap-2 text-slate-500 text-xs font-semibold pl-1">
+                <div className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-black">
+                  A
+                </div>
+                <div className="bg-slate-100 rounded-2xl px-3 py-2 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-bounce" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-bounce [animation-delay:0.2s]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-bounce [animation-delay:0.4s]" />
+                </div>
+              </div>
+            )}
+
+            <div ref={chatEndRef} />
+          </div>
+
+          {/* Quick topic buttons */}
+          <div className="py-2 overflow-x-auto flex gap-1.5 scrollbar-none">
+            <button
+              onClick={() => handleQuickTopic(`J'ai fait un dépôt de ${currency}. Voici ma référence : `)}
+              className="px-2.5 py-1 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 text-[10px] font-bold rounded-full transition-colors whitespace-nowrap cursor-pointer flex-shrink-0"
+            >
+              💳 Soumettre un reçu
+            </button>
+            <button
+              onClick={() => handleQuickTopic("Combien de temps prend la validation de mon retrait ?")}
+              className="px-2.5 py-1 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 text-[10px] font-bold rounded-full transition-colors whitespace-nowrap cursor-pointer flex-shrink-0"
+            >
+              💸 Statut du retrait
+            </button>
+            <button
+              onClick={() => handleQuickTopic("Comment activer un nouveau plan VIP Nutrien ?")}
+              className="px-2.5 py-1 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 text-[10px] font-bold rounded-full transition-colors whitespace-nowrap cursor-pointer flex-shrink-0"
+            >
+              🌾 Aide Packs VIP
+            </button>
+          </div>
+
+          {/* Attachment Preview */}
+          {selectedImage && (
+            <div className="px-3 py-1.5 bg-blue-50 rounded-xl flex items-center justify-between my-1">
+              <div className="flex items-center gap-2">
+                <ImageIcon className="h-4 w-4 text-blue-600" />
+                <span className="text-xs font-bold text-blue-900 truncate max-w-[200px]">Image sélectionnée</span>
+              </div>
+              <button
+                onClick={() => setSelectedImage(null)}
+                className="text-xs text-rose-600 font-bold hover:underline cursor-pointer"
+              >
+                Annuler
+              </button>
+            </div>
+          )}
+
+          {/* Input Box - Smooth pill style */}
+          <div className="pt-2 flex items-center gap-2">
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              title="Joindre un reçu de paiement"
+              className="p-2.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all cursor-pointer"
+            >
+              <Paperclip className="h-4.5 w-4.5" />
+            </button>
+
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              placeholder="Écrivez votre message..."
+              className="flex-1 bg-slate-100 border-none rounded-full px-4 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-slate-900 placeholder:text-slate-400"
+            />
+
+            <button
+              onClick={() => handleSend()}
+              disabled={!input.trim() && !selectedImage}
+              className={`p-2.5 rounded-full transition-all cursor-pointer flex items-center justify-center ${
+                input.trim() || selectedImage
+                  ? "bg-blue-600 hover:bg-blue-700 text-white shadow-sm active:scale-95"
+                  : "bg-slate-200 text-slate-400 cursor-not-allowed"
+              }`}
+            >
+              <Send className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 2: OFFICIAL CHANNELS & CLIENT RULES */}
+      {activeTab === "channels" && (
+        <div className="space-y-4 pt-1">
+          {/* TOP CHANNELS CARD */}
+          <div className="bg-white rounded-3xl p-5 shadow-xs border border-slate-100 space-y-4">
+            {/* Telegram */}
+            <div className="flex items-center justify-between py-1.5 border-b border-slate-100/80 last:border-none">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#0088cc] flex items-center justify-center text-white shadow-xs flex-shrink-0">
+                  <Send className="h-5 w-5 -ml-0.5 mt-0.5" />
+                </div>
+                <span className="text-xs font-bold text-slate-900 tracking-tight">
+                  Chaîne de télégramme
+                </span>
+              </div>
+              <a
+                id="support-telegram-btn"
+                href="https://t.me/nutrien_official"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-[#ff0000] hover:bg-[#e00000] text-white font-bold text-xs px-4 py-2 rounded-xl transition-all active:scale-95 cursor-pointer uppercase"
+              >
+                Commencer
+              </a>
+            </div>
+
+            {/* WhatsApp Service */}
+            <div className="flex items-center justify-between py-1.5 border-b border-slate-100/80 last:border-none">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#25D366] flex items-center justify-center text-white shadow-xs flex-shrink-0">
+                  <PhoneCall className="h-5 w-5" />
+                </div>
+                <span className="text-xs font-bold text-slate-900 tracking-tight">
+                  WhatsApp Service
+                </span>
+              </div>
+              <a
+                id="support-whatsapp-service-btn"
+                href="https://wa.me/22890000000?text=Bonjour%20Service%20Client%20Nutrien!"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-[#ff0000] hover:bg-[#e00000] text-white font-bold text-xs px-4 py-2 rounded-xl transition-all active:scale-95 cursor-pointer uppercase"
+              >
+                Commencer
+              </a>
+            </div>
+
+            {/* WhatsApp Channel */}
+            <div className="flex items-center justify-between py-1.5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#25D366] flex items-center justify-center text-white shadow-xs flex-shrink-0">
+                  <MessageSquare className="h-5 w-5" />
+                </div>
+                <span className="text-xs font-bold text-slate-900 tracking-tight">
+                  chaîne WhatsApp
+                </span>
+              </div>
+              <a
+                id="support-whatsapp-channel-btn"
+                href="https://whatsapp.com/channel/0029VaNutrienOfficial"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-[#ff0000] hover:bg-[#e00000] text-white font-bold text-xs px-4 py-2 rounded-xl transition-all active:scale-95 cursor-pointer uppercase"
+              >
+                Commencer
+              </a>
+            </div>
+          </div>
+
+          {/* RÈGLES DU CLIENT CARD */}
+          <div className="bg-white rounded-3xl p-5 shadow-xs border border-slate-100 space-y-4">
+            <div className="relative flex items-center justify-center my-1">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200/70" />
+              </div>
+              <span className="relative bg-white px-4 text-xs font-bold text-slate-700 tracking-tight">
+                Règles du client
+              </span>
+            </div>
+
+            <div className="space-y-3.5 pt-1 text-slate-800 text-xs font-medium leading-relaxed">
+              <div className="flex items-start gap-2.5">
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-sky-100 text-sky-800 text-xs font-black flex-shrink-0 mt-0.5">
+                  1
+                </span>
+                <p>
+                  <strong className="font-bold text-slate-900">Horaires du service :</strong> de 9h30 à 21h30 tous les jours. Nous sommes là pour vous aider à tout moment.
+                </p>
+              </div>
+
+              <div className="flex items-start gap-2.5">
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-sky-100 text-sky-800 text-xs font-black flex-shrink-0 mt-0.5">
+                  2
+                </span>
+                <div className="space-y-1">
+                  <p>
+                    Pour toute question concernant notre plateforme, veuillez contacter notre service client en ligne.
+                  </p>
+                  <p className="text-slate-500 font-normal text-xs">
+                    Si notre service client en ligne ne répond pas immédiatement à votre message, veuillez patienter.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2.5">
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-sky-100 text-sky-800 text-xs font-black flex-shrink-0 mt-0.5">
+                  3
+                </span>
+                <p>
+                  <strong className="font-bold text-slate-900">Problèmes de dépôt :</strong> si votre dépôt n'apparaît pas sur votre compte, veuillez envoyer le reçu de paiement au service client dès que possible. Quel que soit le problème, nous le résoudrons pour vous.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

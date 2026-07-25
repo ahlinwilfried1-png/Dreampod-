@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="100%" height="100%">
+  <defs>
+    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="40%" stop-color="#7dd3fc"/>
+      <stop offset="70%" stop-color="#bae6fd"/>
+      <stop offset="100%" stop-color="#e0f2fe"/>
+    </linearGradient>
+
+    <linearGradient id="siloGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#94a3b8"/>
+      <stop offset="30%" stop-color="#f8fafc"/>
+      <stop offset="70%" stop-color="#cbd5e1"/>
+      <stop offset="100%" stop-color="#64748b"/>
+    </linearGradient>
+
+    <linearGradient id="buildingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+
+    <linearGradient id="groundGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#475569"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="2" dy="4" stdDeviation="4" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="1200" height="420" fill="url(#skyGrad)"/>
+
+  <!-- Clouds -->
+  <path d="M 100 80 Q 140 50 190 70 Q 230 40 280 70 Q 320 80 300 110 L 90 110 Z" fill="#ffffff" opacity="0.75"/>
+  <path d="M 600 60 Q 640 30 690 50 Q 730 20 780 50 Q 820 60 800 90 L 590 90 Z" fill="#ffffff" opacity="0.85"/>
+  <path d="M 900 100 Q 940 70 990 90 Q 1030 60 1080 90 Q 1120 100 1100 130 L 890 130 Z" fill="#ffffff" opacity="0.6"/>
+
+  <!-- Distant horizon / fields -->
+  <rect x="0" y="380" width="1200" height="60" fill="#15803d" opacity="0.7"/>
+  <rect x="0" y="410" width="1200" height="220" fill="url(#groundGrad)"/>
+
+  <!-- TOWER & PIPING STRUCTURE (Center & Right Background) -->
+  <!-- Main High Steel Lattice Tower -->
+  <g stroke="#475569" stroke-width="3" fill="none">
+    <!-- Vertical columns -->
+    <line x1="620" y1="380" x2="620" y2="80"/>
+    <line x1="680" y1="380" x2="680" y2="80"/>
+    <line x1="740" y1="380" x2="740" y2="120"/>
+    
+    <!-- Cross braces -->
+    <line x1="620" y1="80" x2="680" y2="130"/>
+    <line x1="680" y1="80" x2="620" y2="130"/>
+    <line x1="620" y1="130" x2="680" y2="180"/>
+    <line x1="680" y1="130" x2="620" y2="180"/>
+    <line x1="620" y1="180" x2="680" y2="230"/>
+    <line x1="680" y1="180" x2="620" y2="230"/>
+    <line x1="620" y1="230" x2="680" y2="280"/>
+    <line x1="680" y1="230" x2="620" y2="280"/>
+    <line x1="620" y1="280" x2="680" y2="330"/>
+    <line x1="680" y1="280" x2="620" y2="330"/>
+
+    <!-- Right tower braces -->
+    <line x1="680" y1="120" x2="740" y2="170"/>
+    <line x1="740" y1="120" x2="680" y2="170"/>
+    <line x1="680" y1="170" x2="740" y2="220"/>
+    <line x1="740" y1="170" x2="680" y2="220"/>
+    <line x1="680" y1="220" x2="740" y2="270"/>
+    <line x1="740" y1="220" x2="680" y2="270"/>
+  </g>
+
+  <!-- Platforms on Tower -->
+  <rect x="610" y="125" x2="140" height="8" fill="#334155"/>
+  <rect x="610" y="175" x2="140" height="8" fill="#334155"/>
+  <rect x="610" y="225" x2="140" height="8" fill="#334155"/>
+  <rect x="610" y="275" x2="140" height="8" fill="#334155"/>
+
+  <!-- Vertical Distillation Columns (Tanks behind framework) -->
+  <rect x="750" y="140" width="70" height="250" rx="10" fill="url(#siloGrad)"/>
+  <rect x="830" y="180" width="50" height="210" rx="8" fill="url(#siloGrad)"/>
+
+  <!-- LARGE SILO BATTERY (Right side) -->
+  <g filter="url(#shadow)">
+    <!-- Silo 1 -->
+    <rect x="890" y="180" width="60" height="220" rx="6" fill="url(#siloGrad)"/>
+    <path d="M 890 180 Q 920 160 950 180 Z" fill="#e2e8f0"/>
+    
+    <!-- Silo 2 -->
+    <rect x="955" y="180" width="60" height="220" rx="6" fill="url(#siloGrad)"/>
+    <path d="M 955 180 Q 985 160 1015 180 Z" fill="#e2e8f0"/>
+
+    <!-- Silo 3 -->
+    <rect x="1020" y="180" width="60" height="220" rx="6" fill="url(#siloGrad)"/>
+    <path d="M 1020 180 Q 1050 160 1080 180 Z" fill="#e2e8f0"/>
+
+    <!-- Silo 4 -->
+    <rect x="1085" y="200" width="60" height="200" rx="6" fill="url(#siloGrad)"/>
+    <path d="M 1085 200 Q 1115 180 1145 200 Z" fill="#e2e8f0"/>
+  </g>
+
+  <!-- OVERHEAD PIPE BRIDGE (Connecting Left to Right) -->
+  <rect x="420" y="320" width="480" height="20" fill="#64748b"/>
+  <line x1="420" y1="322" x2="900" y2="322" stroke="#e2e8f0" stroke-width="2"/>
+  <!-- Pipe Bridge Support Pillars -->
+  <rect x="520" y="340" width="12" height="70" fill="#475569"/>
+  <rect x="650" y="340" width="12" height="70" fill="#475569"/>
+  <rect x="780" y="340" width="12" height="70" fill="#475569"/>
+
+  <!-- MAIN NUTRIEN BUILDING (Left side) -->
+  <g filter="url(#shadow)">
+    <!-- Main white warehouse building -->
+    <rect x="50" y="280" width="380" height="150" fill="url(#buildingGrad)" stroke="#cbd5e1" stroke-width="2"/>
+    
+    <!-- Roof trim -->
+    <rect x="45" y="275" width="390" height="10" fill="#94a3b8"/>
+
+    <!-- Loading Bay Entrances -->
+    <rect x="180" y="370" width="100" height="60" fill="#1e293b"/>
+    <rect x="300" y="370" width="80" height="60" fill="#334155"/>
+
+    <!-- NUTRIEN LOGO ON BUILDING -->
+    <g transform="translate(140, 310)">
+      <!-- Green Leaf Swoosh -->
+      <path d="M -15 -10 C -5 -25, 15 -5, 5 15 C -5 25, -25 5, -15 -10 Z" fill="#16a34a"/>
+      <path d="M -10 -5 C -2 -18, 10 -2, 2 10 C -5 18, -18 2, -10 -5 Z" fill="#84cc16"/>
+      
+      <!-- Nutrien Typography -->
+      <text x="15" y="15" font-family="'Arial Black', sans-serif" font-size="38" font-weight="900" font-style="italic" fill="#0f172a" letter-spacing="-1">Nutrien</text>
+    </g>
+  </g>
+
+  <!-- TRUCKS IN FOREGROUND -->
+  <!-- Tanker Truck 1 -->
+  <g transform="translate(500, 410)">
+    <rect x="0" y="10" width="70" height="25" rx="5" fill="#e2e8f0" stroke="#94a3b8"/>
+    <rect x="65" y="15" width="25" height="20" fill="#2563eb" rx="3"/>
+    <circle cx="15" cy="38" r="7" fill="#0f172a"/>
+    <circle cx="50" cy="38" r="7" fill="#0f172a"/>
+    <circle cx="78" cy="38" r="7" fill="#0f172a"/>
+  </g>
+
+  <!-- Steam / Smoke plumes from plant -->
+  <ellipse cx="750" cy="110" rx="25" ry="15" fill="#ffffff" opacity="0.6"/>
+  <ellipse cx="770" cy="85" rx="35" ry="20" fill="#ffffff" opacity="0.5"/>
+  <ellipse cx="790" cy="60" rx="45" ry="25" fill="#ffffff" opacity="0.4"/>
+</svg>

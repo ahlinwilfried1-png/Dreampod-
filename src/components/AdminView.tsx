@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { 
   Shield, 
   Users, 
@@ -29,10 +29,24 @@ import {
   Clock,
   ShoppingBag,
   Edit,
-  Trash2
+  Trash2,
+  MessageSquare,
+  Paperclip,
+  Send,
+  MessageCircle,
+  Phone
 } from "lucide-react";
 import { User, Transaction, Product, BonusCode, UserReview, Investment } from "../types";
 import { api, getLocalDbExport, saveLocalDbExport, getUseLocalFallback, setUseLocalFallback } from "../lib/api";
+import { getCurrencySymbol } from "../lib/currency";
+import {
+  getAllConversations,
+  addSupportMessage,
+  markAsRead,
+  deleteConversation,
+  subscribeChatUpdates,
+  SupportConversation
+} from "../lib/chatStore";
 
 interface AdminViewProps {
   onRefresh: () => void;
@@ -40,7 +54,14 @@ interface AdminViewProps {
 
 export default function AdminView({ onRefresh }: AdminViewProps) {
   // Navigation internal tab
-  const [adminTab, setAdminTab] = useState<"stats" | "users" | "deposits" | "withdrawals" | "products" | "codes" | "notifications" | "reviews" | "investments" | "channels">("stats");
+  const [adminTab, setAdminTab] = useState<"stats" | "users" | "deposits" | "withdrawals" | "products" | "codes" | "notifications" | "reviews" | "investments" | "channels" | "chat">("stats");
+
+  // Chat State
+  const [chatConversations, setChatConversations] = useState<SupportConversation[]>(() => getAllConversations());
+  const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
+  const [adminChatInput, setAdminChatInput] = useState("");
+  const [adminImageAttachment, setAdminImageAttachment] = useState<string | null>(null);
+  const adminChatEndRef = useRef<HTMLDivElement>(null);
 
   // User Edit Form State
   const [editingUser, setEditingUser] = useState<any>(null); // holds user object being edited
@@ -65,6 +86,8 @@ export default function AdminView({ onRefresh }: AdminViewProps) {
   const [productsList, setProductsList] = useState<Product[]>([]);
   const [codesList, setCodesList] = useState<BonusCode[]>([]);
   const [reviewsList, setReviewsList] = useState<UserReview[]>([]);
+  const [reviewSearchQuery, setReviewSearchQuery] = useState("");
+  const [reviewFilterStatus, setReviewFilterStatus] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const [investmentsList, setInvestmentsList] = useState<Investment[]>([]);
   const [channelsList, setChannelsList] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -115,6 +138,7 @@ export default function AdminView({ onRefresh }: AdminViewProps) {
   const [isLocalFallback, setIsLocalFallback] = useState(getUseLocalFallback());
   const [syncing, setSyncing] = useState(false);
   const [isSupabaseHealthy, setIsSupabaseHealthy] = useState<boolean | null>(null);
+  const [supabaseStatus, setSupabaseStatus] = useState<string>("disconnected");
 
   // Sync with remote server logic
   const handleDatabaseSync = async () => {
@@ -191,6 +215,9 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
       setGlobalStats(statsResp.stats);
       if (statsResp && typeof statsResp.isSupabaseHealthy === "boolean") {
         setIsSupabaseHealthy(statsResp.isSupabaseHealthy);
+      }
+      if (statsResp && statsResp.supabaseStatus) {
+        setSupabaseStatus(statsResp.supabaseStatus);
       }
 
       const usersResp = await api.admin.getUsers(searchQuery);
@@ -279,6 +306,27 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
     
     return () => clearInterval(interval);
   }, [adminTab, searchQuery]);
+
+  // Live chat subscription
+  useEffect(() => {
+    const refreshChat = () => {
+      const convs = getAllConversations();
+      setChatConversations(convs);
+    };
+    refreshChat();
+    const unsub = subscribeChatUpdates(refreshChat);
+    return () => unsub();
+  }, []);
+
+  // Auto-scroll admin chat thread
+  useEffect(() => {
+    if (adminTab === "chat") {
+      const timer = setTimeout(() => {
+        adminChatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [adminTab, selectedConvId, chatConversations]);
 
   // Actions
   const handleToggleBlock = async (user: any) => {
@@ -715,17 +763,17 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
   };
 
   return (
-    <div className="space-y-6 pb-28 text-slate-800 select-none bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-md">
+    <div className="space-y-6 text-slate-800 select-none bg-white p-5 sm:p-6 rounded-3xl shadow-sm">
       
       {/* Title */}
       <div className="flex items-center justify-between py-1 relative">
         <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl bg-orange-50 text-orange-600 border border-orange-100 shadow-2xs">
+          <div className="p-2 rounded-xl bg-orange-50 text-orange-600 shadow-2xs">
             <Shield id="icon-admin-logo" className="h-5 w-5 animate-pulse" />
           </div>
           <div>
             <h2 className="text-xl font-extrabold tracking-tight text-slate-950">Panneau d'Administration</h2>
-            <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-0.5">Dreampod Control Center</p>
+            <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-0.5">Nutrien Control Center</p>
           </div>
         </div>
 
@@ -733,71 +781,17 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
           id="admin-btn-reload"
           onClick={loadAdminData}
           disabled={loading}
-          className="p-2.5 rounded-xl bg-white text-blue-600 hover:text-white hover:bg-blue-600 border border-slate-200 hover:border-blue-600 shadow-2xs transition-all cursor-pointer active:scale-95"
+          className="p-2.5 rounded-xl bg-slate-100 text-blue-600 hover:text-white hover:bg-blue-600 transition-all cursor-pointer active:scale-95"
         >
           <RefreshCw className={`h-4.5 w-4.5 ${loading ? "animate-spin" : ""}`} />
         </button>
       </div>
 
-      {/* Synchronization Control Center */}
-      <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 shadow-3xs select-none">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-          <div className="space-y-1">
-            <h3 className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
-              <span className="flex h-2.5 w-2.5 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-              </span>
-              Mode Synchro Temps Réel :{" "}
-              <span className="font-black text-emerald-800">
-                Activé
-              </span>
-            </h3>
-            <p className="text-[11px] text-emerald-700 leading-normal max-w-xl">
-              Toutes les inscriptions, dépôts, retraits et opérations effectués sur n'importe quel appareil sont automatiquement enregistrés et synchronisés ici en temps réel toutes les 5 secondes sans rechargement.
-            </p>
-          </div>
-          <div className="flex gap-2 w-full sm:w-auto shrink-0">
-            <div className="py-1 px-2.5 rounded-lg bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider">
-              En Ligne
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {isSupabaseHealthy === false && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 shadow-3xs animate-slide-in">
-          <div className="flex items-start gap-3">
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-800 text-xs font-black">
-              ⚠️
-            </span>
-            <div className="space-y-1">
-              <h4 className="text-xs font-black text-amber-900">
-                Liaison Base de Données Globale : Clé API Supabase Invalide
-              </h4>
-              <p className="text-[11px] text-amber-700 leading-normal">
-                Les clés API configurées dans les secrets de l'application (<code className="bg-amber-100 px-1 py-0.5 rounded text-amber-900 font-mono text-[10px]">SUPABASE_URL</code> et <code className="bg-amber-100 px-1 py-0.5 rounded text-amber-900 font-mono text-[10px]">SUPABASE_SERVICE_ROLE_KEY</code>) sont absentes, expirées ou incorrectes. 
-              </p>
-              <p className="text-[11px] text-amber-700 leading-normal font-bold">
-                💡 Conséquence : Les données sont stockées temporairement dans le stockage local du serveur et ne seront pas synchronisées si les utilisateurs se connectent depuis différents téléphones.
-              </p>
-              <div className="pt-1 text-[10.5px] text-amber-800 font-semibold leading-normal">
-                Comment résoudre ce problème :
-                <ol className="list-decimal pl-4 mt-1 space-y-0.5 font-normal">
-                  <li>Allez dans le menu <strong className="font-bold">Settings (Paramètres/Secrets)</strong> de AI Studio en haut à droite.</li>
-                  <li>Vérifiez et remplacez la clé de service <strong className="font-bold">SUPABASE_SERVICE_ROLE_KEY</strong> par une clé valide de votre projet Supabase.</li>
-                  <li>Assurez-vous que la table <strong className="font-bold">dreampod_state</strong> est créée dans votre base Supabase si nécessaire.</li>
-                </ol>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Admin navigation layout sub-tabs */}
       <div className="flex gap-1.5 overflow-x-auto pb-1 select-none no-scrollbar">
         {[
           { id: "stats", label: "Analytiques", icon: TrendingUp },
+          { id: "chat", label: "Chat Support", icon: MessageSquare },
           { id: "users", label: "Utilisateurs", icon: Users },
           { id: "deposits", label: "Dépôts", icon: ArrowUpRight },
           { id: "withdrawals", label: "Retraits", icon: ArrowDownLeft },
@@ -806,23 +800,29 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
           { id: "codes", label: "Codes/Bonus", icon: Gift },
           { id: "notifications", label: "Annonces", icon: Bell },
           { id: "reviews", label: "Avis Clients", icon: Star },
-          { id: "channels", label: "Configuration des canaux", icon: Wallet },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = adminTab === tab.id;
+          const unreadTotal = chatConversations.reduce((acc, c) => acc + (c.unreadCountForAdmin || 0), 0);
+
           return (
             <button
               id={`admin-tab-btn-${tab.id}`}
               key={tab.id}
               onClick={() => { setAdminTab(tab.id as any); }}
-              className={`py-2 px-4 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`py-2 px-4 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer relative ${
                 isActive 
                   ? "bg-blue-600 text-white shadow-sm" 
-                  : "bg-white border border-slate-200 hover:bg-slate-50 text-slate-600"
+                  : "bg-slate-100 hover:bg-slate-200 text-slate-600"
               }`}
             >
               <Icon className="h-3.5 w-3.5" />
               <span>{tab.label}</span>
+              {tab.id === "chat" && unreadTotal > 0 && (
+                <span className="ml-1 px-1.5 py-0.2 rounded-full bg-rose-500 text-white font-black text-[9px] animate-pulse">
+                  {unreadTotal}
+                </span>
+              )}
             </button>
           );
         })}
@@ -854,8 +854,8 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
             </h3>
             <div className="grid grid-cols-2 gap-3">
               {/* Total Dépôts */}
-              <div className="bg-white border border-slate-200 p-4 rounded-2xl flex items-center gap-3 shadow-xs">
-                <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100">
+              <div className="bg-slate-50 p-4 rounded-2xl flex items-center gap-3 shadow-2xs">
+                <div className="p-2 bg-emerald-100 text-emerald-700 rounded-xl">
                   <ArrowUpRight className="h-5 w-5" />
                 </div>
                 <div>
@@ -865,8 +865,8 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
               </div>
 
               {/* Total Retraits */}
-              <div className="bg-white border border-slate-200 p-4 rounded-2xl flex items-center gap-3 shadow-xs">
-                <div className="p-2 bg-red-50 text-red-600 rounded-xl border border-red-100">
+              <div className="bg-slate-50 p-4 rounded-2xl flex items-center gap-3 shadow-2xs">
+                <div className="p-2 bg-red-100 text-red-700 rounded-xl">
                   <ArrowDownLeft className="h-5 w-5" />
                 </div>
                 <div>
@@ -887,14 +887,14 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
               {/* Dépôts en attente */}
               <button 
                 onClick={() => setAdminTab("deposits")}
-                className="text-left bg-white border border-slate-200 p-4 rounded-2xl flex flex-col justify-between hover:border-blue-300 transition-all shadow-xs cursor-pointer active:scale-98"
+                className="text-left bg-amber-50/80 p-4 rounded-2xl flex flex-col justify-between transition-all shadow-2xs cursor-pointer active:scale-98"
               >
                 <div className="flex items-center gap-2 mb-2">
                   <span className="w-2 h-2 bg-amber-500 rounded-full animate-ping" />
                   <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Dépôts En Attente</p>
                 </div>
                 <div>
-                  <p className="text-base font-black text-amber-500">{(globalStats.numberOfPendingDeposits || 0)} demandes</p>
+                  <p className="text-base font-black text-amber-600">{(globalStats.numberOfPendingDeposits || 0)} demandes</p>
                   <p className="text-[11px] text-slate-500 font-mono mt-0.5">Val: {(globalStats.totalPendingDepositsAmount || 0).toLocaleString()} F</p>
                 </div>
               </button>
@@ -902,14 +902,14 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
               {/* Retraits en attente */}
               <button 
                 onClick={() => setAdminTab("withdrawals")}
-                className="text-left bg-white border border-slate-200 p-4 rounded-2xl flex flex-col justify-between hover:border-red-300 transition-all shadow-xs cursor-pointer active:scale-98"
+                className="text-left bg-rose-50/80 p-4 rounded-2xl flex flex-col justify-between transition-all shadow-2xs cursor-pointer active:scale-98"
               >
                 <div className="flex items-center gap-2 mb-2">
                   <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
                   <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Retraits En Attente</p>
                 </div>
                 <div>
-                  <p className="text-base font-black text-red-500">{(globalStats.numberOfPendingWithdrawals || 0)} demandes</p>
+                  <p className="text-base font-black text-red-600">{(globalStats.numberOfPendingWithdrawals || 0)} demandes</p>
                   <p className="text-[11px] text-slate-500 font-mono mt-0.5">Val: {(globalStats.totalPendingWithdrawalsAmount || 0).toLocaleString()} F</p>
                 </div>
               </button>
@@ -918,7 +918,7 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
 
           {/* Quick Pending Validation list directly on Dashboard */}
           {txsList.filter(t => t.status === "pending").length > 0 && (
-            <div className="space-y-3 bg-amber-50/40 border border-amber-200/60 p-4 rounded-2xl">
+            <div className="space-y-3 bg-amber-50/50 p-4 rounded-2xl">
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-black text-amber-700 uppercase tracking-wider flex items-center gap-1.5">
                   <Clock className="h-4 w-4 animate-spin text-amber-600" />
@@ -1042,44 +1042,15 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
             </div>
           </div>
 
-          {/* Section: Configuration rapide */}
-          <div className="space-y-2.5">
-            <h3 className="text-xs font-extrabold tracking-wider text-slate-500 uppercase px-1 flex items-center gap-2">
-              <Wallet className="h-4 w-4 text-indigo-500" />
-              Paramètres & Configuration de la Plateforme
-            </h3>
-            <div className="grid grid-cols-1 gap-3">
-              {/* Configuration des Canaux de Dépôt Card */}
-              <button
-                id="admin-dashboard-channels-shortcut"
-                onClick={() => setAdminTab("channels")}
-                className="text-left w-full bg-white border border-slate-200 p-4 rounded-2xl flex items-center justify-between shadow-xs hover:border-blue-400 hover:bg-blue-50/10 transition-all cursor-pointer active:scale-[0.98]"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
-                    <Wallet className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-800 font-sans">Configuration des canaux</p>
-                    <p className="text-[10px] text-slate-500">Gérer les réseaux de dépôt (Moov, Orange, Airtel, TMoney, Amana, Nita, etc.)</p>
-                  </div>
-                </div>
-                <span className="text-xs font-black text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 flex items-center gap-1">
-                  Configurer ⚙️
-                </span>
-              </button>
-            </div>
-          </div>
-
           {/* Section: Marges & Profits */}
           <div className="bg-gradient-to-br from-blue-600 to-indigo-700 border border-blue-600 p-5 rounded-2xl shadow-md text-white">
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-[10px] uppercase tracking-widest font-extrabold text-blue-100 flex items-center gap-1.5">
                   <DollarSign className="h-3.5 w-3.5" />
-                  Bénéfices Estimés de la Plateforme (FCFA)
+                  Bénéfices Estimés de la Plateforme (XAF / XOF)
                 </p>
-                <p className="text-2xl font-black text-white mt-1">{(globalStats.platformRevenues || 0).toLocaleString()} FCFA</p>
+                <p className="text-2xl font-black text-white mt-1">{(globalStats.platformRevenues || 0).toLocaleString()} XAF / XOF</p>
               </div>
               <div className="p-3 bg-white/20 rounded-xl border border-white/20 text-white font-bold text-xs">
                 Net / 2026
@@ -1193,7 +1164,7 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
                       <div className="flex gap-4 mt-2.5 text-[9.5px] text-slate-700">
                         <div>
                           <span className="text-slate-400 block uppercase tracking-wider font-semibold">Solde portefeuille</span>
-                          <span className="font-extrabold mt-0.5 block text-blue-600">{usr.balance.toLocaleString()} FCFA</span>
+                          <span className="font-extrabold mt-0.5 block text-blue-600">{usr.balance.toLocaleString()} {getCurrencySymbol(usr.phone)}</span>
                         </div>
                         <div className="border-l border-slate-200 pl-3">
                           <span className="text-slate-400 block uppercase tracking-wider font-semibold">Filleuls (1er Ordre)</span>
@@ -1371,7 +1342,7 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
 
                       <div className="text-right">
                         <span className={`text-sm font-extrabold ${tx.type === "deposit" ? "text-green-600" : "text-red-600"}`}>
-                          {tx.type === "deposit" ? "+" : "-"}{tx.amount.toLocaleString()} FCFA
+                          {tx.type === "deposit" ? "+" : "-"}{tx.amount.toLocaleString()} {getCurrencySymbol(tx.userPhone)}
                         </span>
                         
                         <div className="mt-1">
@@ -1468,7 +1439,7 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
 
                       <div className="text-right">
                         <span className="text-sm font-extrabold text-red-600">
-                          -{tx.amount.toLocaleString()} FCFA
+                          -{tx.amount.toLocaleString()} {getCurrencySymbol(tx.userPhone)}
                         </span>
                         
                         <div className="mt-1">
@@ -1546,7 +1517,7 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
 
                 {/* Price */}
                 <div className="space-y-1">
-                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider px-0.5">Prix d'activation (FCFA)</label>
+                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider px-0.5">Prix d'activation (XAF / XOF)</label>
                   <input
                     id="admin-prod-price"
                     type="number"
@@ -1560,7 +1531,7 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
 
                 {/* Incomes daily */}
                 <div className="space-y-1">
-                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider px-0.5">Revenu Journalier (FCFA)</label>
+                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider px-0.5">Revenu Journalier (XAF / XOF)</label>
                   <input
                     id="admin-prod-income"
                     type="number"
@@ -1596,8 +1567,8 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
                     {p.isBlocked && <span className="text-[8px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-md font-bold uppercase border border-red-200">Désactivé</span>}
                     <span className="text-[8px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-md font-mono border border-blue-100">VIPLevel {p.level}</span>
                   </h4>
-                  <p className="text-[10px] text-emerald-600 font-black mt-1">+{p.dailyIncome.toLocaleString()} FCFA / Jour | Durée: {p.durationDays}J</p>
-                  <p className="text-[9px] text-slate-500 mt-0.5">Prix d'achat : {p.price.toLocaleString()} FCFA</p>
+                  <p className="text-[10px] text-emerald-600 font-black mt-1">+{p.dailyIncome.toLocaleString()} XAF/XOF / Jour | Durée: {p.durationDays}J</p>
+                  <p className="text-[9px] text-slate-500 mt-0.5">Prix d'achat : {p.price.toLocaleString()} XAF/XOF</p>
                 </div>
 
                 <div className="flex gap-2">
@@ -1709,7 +1680,7 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
                   <span className="text-[9.5px] text-slate-400 mt-1 block">Créé le : {new Date(codeObj.createdAt).toLocaleDateString()}</span>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs font-black text-emerald-600 block">+{codeObj.amount.toLocaleString()} FCFA</span>
+                  <span className="text-xs font-black text-emerald-600 block">+{codeObj.amount.toLocaleString()} XAF/XOF</span>
                   <span className="text-[9.5px] text-slate-500 block mt-0.5">{codeObj.usedCount} / {codeObj.maxUses} réclamés</span>
                 </div>
               </div>
@@ -1767,104 +1738,184 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
         </div>
       )}
 
-      {/* --- PANEL 7: REVIEWS MODERATION --- */}
+      {/* --- PANEL 7: REVIEWS & PROOFS MODERATION --- */}
       {adminTab === "reviews" && (
-        <div className="bg-white border border-slate-200 p-5 rounded-2xl space-y-4 shadow-xs text-slate-800">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="p-1.5 rounded-lg bg-yellow-500/10 text-yellow-500">
-              <Star className="h-4 w-4" />
+        <div className="bg-white p-5 rounded-2xl space-y-4 shadow-xs text-slate-800">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-yellow-500/10 text-yellow-500">
+                <Star className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-extrabold text-slate-900">Modération & Suppression des Témoignages / Preuves</h3>
+                <p className="text-[10px] text-slate-500">Gérez, filtrez et supprimez définitivement les témoignages et preuves de retrait de la plateforme</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-sm font-extrabold text-slate-900">Modération des Avis Clients</h3>
-              <p className="text-[10px] text-slate-500">Validez ou rejetez les témoignages écrits par les utilisateurs</p>
+
+            <div className="text-right">
+              <span className="text-[11px] font-black bg-slate-100 text-slate-700 px-3 py-1 rounded-full">
+                Total : {reviewsList.length} Témoignages
+              </span>
             </div>
           </div>
 
-          {reviewsList.length === 0 ? (
-            <p className="text-center text-slate-400 text-xs py-10 bg-slate-50 border border-slate-200 rounded-xl">
-              Aucun avis soumis pour le moment.
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {reviewsList.map((rev) => (
-                <div key={rev.id} className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5">
-                  <div className="flex justify-between items-start gap-3">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-slate-900">{rev.userName}</span>
-                        <span className="text-[9.5px] text-slate-500 font-mono">📞 {rev.userPhone}</span>
-                      </div>
-                      <div className="flex items-center gap-0.5 mt-1">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <Star
-                            key={i}
-                            className="h-3 w-3 text-yellow-500"
-                            fill={i < rev.rating ? "currentColor" : "none"}
-                            strokeWidth={2.2}
-                          />
-                        ))}
-                      </div>
-                    </div>
+          {/* Search and Filters for Reviews */}
+          <div className="flex flex-col sm:flex-row gap-2 pt-1 pb-1">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Rechercher par nom, téléphone, commentaire..."
+                value={reviewSearchQuery}
+                onChange={(e) => setReviewSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-amber-500"
+              />
+            </div>
 
-                    <div className="flex flex-col items-end gap-1">
-                      <span className="text-[9px] text-slate-500 font-mono">
-                        {new Date(rev.createdAt).toLocaleDateString("fr-FR", {
-                          day: "numeric",
-                          month: "short",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                      {rev.status === "approved" ? (
-                        <span className="text-[8.5px] font-black tracking-wider uppercase py-0.5 px-2 bg-green-50 border border-green-200 rounded text-green-600">
-                          Approuvé
-                        </span>
-                      ) : rev.status === "rejected" ? (
-                        <span className="text-[8.5px] font-black tracking-wider uppercase py-0.5 px-2 bg-red-50 border border-red-200 rounded text-red-600">
-                          Rejeté
-                        </span>
-                      ) : (
-                        <span className="text-[8.5px] font-black tracking-wider uppercase py-0.5 px-2 bg-amber-50 border border-amber-200 rounded text-amber-600 animate-pulse">
-                          En attente
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <p className="text-xs text-slate-600 font-normal italic leading-relaxed bg-white p-2.5 rounded-lg border border-slate-200/50">
-                    " {rev.comment} "
-                  </p>
-
-                  <div className="flex items-center gap-2 pt-1 justify-end">
-                    {rev.status === "pending" && (
-                      <>
-                        <button
-                          onClick={() => handleVerifyReview(rev.id, "approve")}
-                          className="px-2.5 py-1 bg-green-600 hover:bg-green-500 text-white font-bold rounded-lg text-[10px] flex items-center gap-1 transition-colors cursor-pointer"
-                        >
-                          <Check className="h-3 w-3" />
-                          Approuver
-                        </button>
-                        <button
-                          onClick={() => handleVerifyReview(rev.id, "reject")}
-                          className="px-2.5 py-1 bg-red-900 hover:bg-red-800 text-white font-bold rounded-lg text-[10px] flex items-center gap-1 transition-colors cursor-pointer"
-                        >
-                          <X className="h-3 w-3" />
-                          Rejeter
-                        </button>
-                      </>
-                    )}
-                    <button
-                      onClick={() => handleDeleteReview(rev.id)}
-                      className="px-2.5 py-1 bg-slate-100 hover:bg-red-600 text-slate-600 hover:text-white font-bold rounded-lg text-[10px] flex items-center gap-1 transition-colors cursor-pointer"
-                    >
-                      Supprimer
-                    </button>
-                  </div>
-                </div>
+            <div className="flex gap-1 overflow-x-auto pb-1 sm:pb-0">
+              {(["all", "pending", "approved", "rejected"] as const).map((st) => (
+                <button
+                  key={st}
+                  onClick={() => setReviewFilterStatus(st)}
+                  className={`px-3 py-1.5 rounded-xl text-[10.5px] font-extrabold cursor-pointer transition-all whitespace-nowrap ${
+                    reviewFilterStatus === st
+                      ? "bg-slate-900 text-white"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  {st === "all" ? "Tous" : st === "pending" ? "En attente" : st === "approved" ? "Approuvés" : "Rejetés"}
+                </button>
               ))}
             </div>
-          )}
+          </div>
+
+          {(() => {
+            const filteredReviews = reviewsList.filter((rev) => {
+              const matchesSearch =
+                (rev.userName || "").toLowerCase().includes(reviewSearchQuery.toLowerCase()) ||
+                (rev.userPhone || "").includes(reviewSearchQuery) ||
+                (rev.comment || "").toLowerCase().includes(reviewSearchQuery.toLowerCase());
+              
+              const matchesStatus =
+                reviewFilterStatus === "all" || rev.status === reviewFilterStatus;
+
+              return matchesSearch && matchesStatus;
+            });
+
+            if (filteredReviews.length === 0) {
+              return (
+                <p className="text-center text-slate-400 text-xs py-10 bg-slate-50 rounded-xl">
+                  {reviewsList.length === 0 
+                    ? "Aucune preuve ou avis soumis pour le moment." 
+                    : "Aucun témoignage ne correspond aux critères de recherche."}
+                </p>
+              );
+            }
+
+            return (
+              <div className="space-y-3">
+                {filteredReviews.map((rev) => (
+                  <div key={rev.id} className="p-4 bg-slate-50 rounded-xl space-y-2.5 shadow-2xs hover:bg-slate-100/70 transition-colors">
+                    <div className="flex justify-between items-start gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-slate-900">{rev.userName}</span>
+                          <span className="text-[9.5px] text-slate-500 font-mono">📞 {rev.userPhone}</span>
+                        </div>
+                        <div className="flex items-center gap-0.5 mt-1">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star
+                              key={i}
+                              className="h-3 w-3 text-yellow-500"
+                              fill={i < rev.rating ? "currentColor" : "none"}
+                              strokeWidth={2.2}
+                            />
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="text-[9px] text-slate-500 font-mono">
+                          {new Date(rev.createdAt).toLocaleDateString("fr-FR", {
+                            day: "numeric",
+                            month: "short",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                        {rev.status === "approved" ? (
+                          <span className="text-[8.5px] font-black tracking-wider uppercase py-0.5 px-2 bg-green-100 text-green-700 rounded-full">
+                            Approuvé
+                          </span>
+                        ) : rev.status === "rejected" ? (
+                          <span className="text-[8.5px] font-black tracking-wider uppercase py-0.5 px-2 bg-red-100 text-red-700 rounded-full">
+                            Rejeté
+                          </span>
+                        ) : (
+                          <span className="text-[8.5px] font-black tracking-wider uppercase py-0.5 px-2 bg-amber-100 text-amber-700 rounded-full animate-pulse">
+                            En attente
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-slate-700 font-medium italic leading-relaxed bg-white p-3 rounded-xl border border-slate-100">
+                      " {rev.comment} "
+                    </p>
+
+                    {/* Capture d'écran preuve si présente */}
+                    {rev.image && (
+                      <div className="mt-2 rounded-xl overflow-hidden max-w-xs bg-slate-900/5 p-1.5">
+                        <p className="text-[9px] font-bold text-slate-500 mb-1 px-1">📸 Capture Preuve de Retrait :</p>
+                        <img 
+                          src={rev.image} 
+                          alt="Preuve" 
+                          className="w-full h-auto max-h-52 object-contain rounded-lg cursor-zoom-in hover:opacity-95 transition-all"
+                          onClick={() => {
+                            const w = window.open();
+                            if (w) {
+                              w.document.write(`<img src="${rev.image}" style="max-width:100%; height:auto;" />`);
+                            }
+                          }}
+                        />
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2 pt-1 justify-end border-t border-slate-200/50">
+                      {rev.status === "pending" && (
+                        <>
+                          <button
+                            onClick={() => handleVerifyReview(rev.id, "approve")}
+                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-xl text-[10px] flex items-center gap-1 transition-colors cursor-pointer shadow-2xs"
+                          >
+                            <Check className="h-3 w-3" />
+                            Approuver
+                          </button>
+                          <button
+                            onClick={() => handleVerifyReview(rev.id, "reject")}
+                            className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-extrabold rounded-xl text-[10px] flex items-center gap-1 transition-colors cursor-pointer"
+                          >
+                            <X className="h-3 w-3" />
+                            Rejeter
+                          </button>
+                        </>
+                      )}
+
+                      {/* Bouton de suppression définitive du témoignage */}
+                      <button
+                        onClick={() => handleDeleteReview(rev.id)}
+                        className="px-3 py-1.5 bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white font-extrabold rounded-xl text-[10px] flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                        title="Supprimer définitivement ce témoignage ou cette preuve"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        <span>Supprimer le témoignage</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
         </div>
       )}
 
@@ -1939,7 +1990,7 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
                               +{inv.dailyIncome.toLocaleString()} F / j
                             </span>
                             <span className="text-[10px] text-slate-500 font-mono block mt-0.5">
-                              Prix: {inv.price.toLocaleString()} FCFA
+                              Prix: {inv.price.toLocaleString()} XAF/XOF
                             </span>
                           </div>
                         </div>
@@ -1987,210 +2038,284 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
         </div>
       )}
 
-      {/* --- PANEL 9: CHANNELS CONFIGURATION (CANAUX DE DÉPÔT) --- */}
-      {adminTab === "channels" && (
-        <div id="admin-channels-panel" className="space-y-4">
-          <div className="bg-white border border-slate-200 p-5 rounded-2xl space-y-4 shadow-xs text-slate-800">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600">
-                  <Wallet className="h-4 w-4" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-extrabold text-slate-900">Configuration des Canaux de Dépôt (SIM & Numéros)</h3>
-                  <p className="text-[10px] text-slate-500">Ajoutez, modifiez ou supprimez les cartes SIM et réseaux officiels en temps réel.</p>
-                </div>
+      {/* SECTION: MESSAGERIE SUPPORT CLIENT (LIVE CHAT ADMIN) */}
+      {adminTab === "chat" && (() => {
+        const activeConv = chatConversations.find((c) => c.id === selectedConvId) || chatConversations[0] || null;
+        const totalUnreadAdmin = chatConversations.reduce((acc, c) => acc + (c.unreadCountForAdmin || 0), 0);
+
+        return (
+          <div className="space-y-4 animate-fade-in">
+            <div className="flex items-center justify-between bg-gradient-to-r from-slate-900 to-blue-900 p-4 rounded-2xl text-white shadow-md">
+              <div>
+                <h3 className="text-sm font-black tracking-tight flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5 text-blue-400" />
+                  Messagerie Support Client & Direct Chat
+                </h3>
+                <p className="text-[11px] text-slate-300 mt-0.5">
+                  Recevez et répondez directement aux messages des utilisateurs en temps réel.
+                </p>
               </div>
-              <button
-                id="admin-add-new-channel-btn"
-                type="button"
-                onClick={handleAddChannel}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] uppercase tracking-wider py-2.5 px-4 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-sm"
-              >
-                <PlusCircle className="h-4 w-4" />
-                <span>Ajouter un canal</span>
-              </button>
+              <div className="bg-blue-800/60 border border-blue-400/30 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>{totalUnreadAdmin} message(s) non lu(s)</span>
+              </div>
             </div>
 
-            <div className="space-y-4">
-              {channelsList.length === 0 ? (
-                <div className="text-center py-8 text-slate-400 text-xs">
-                  Aucun canal de paiement configuré. Cliquez sur le bouton "Ajouter un canal" pour commencer.
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[550px] bg-slate-100/70 rounded-2xl overflow-hidden shadow-2xs">
+              {/* LEFT SIDE: Conversations List */}
+              <div className="bg-white flex flex-col h-full">
+                <div className="p-3 bg-slate-50">
+                  <div className="relative">
+                    <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Chercher client / téléphone..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full bg-slate-100 py-1.5 pl-9 pr-3 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
                 </div>
-              ) : (
-                channelsList.map((chan, idx) => (
-                  <div key={chan.id || idx} className="border border-slate-200/80 rounded-2xl p-4 bg-slate-50/50 space-y-4 relative">
-                    <div className="flex justify-between items-center pb-2 border-b border-slate-200/60">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-black text-slate-800 uppercase tracking-wider">
-                          {chan.name || "Nouveau Canal"}
-                        </span>
-                        <span className="text-[9px] bg-slate-200 text-slate-600 font-bold px-1.5 py-0.5 rounded uppercase">
-                          ID: {chan.id}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] font-bold text-slate-500">Actif :</span>
-                          <input
-                            id={`channel-active-toggle-${chan.id || idx}`}
-                            type="checkbox"
-                            checked={!!chan.active}
-                            onChange={(e) => {
-                              const copy = [...channelsList];
-                              copy[idx] = { ...copy[idx], active: e.target.checked };
-                              setChannelsList(copy);
+
+                <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
+                  {chatConversations.length === 0 ? (
+                    <div className="p-6 text-center text-slate-400 text-xs">
+                      Aucune discussion client enregistrée.
+                    </div>
+                  ) : (
+                    chatConversations
+                      .filter((conv) => {
+                        const q = searchQuery.toLowerCase();
+                        return (
+                          conv.userName.toLowerCase().includes(q) ||
+                          conv.userPhone.toLowerCase().includes(q) ||
+                          conv.lastMessage.toLowerCase().includes(q)
+                        );
+                      })
+                      .map((conv) => {
+                        const isSelected = activeConv?.id === conv.id;
+                        const hasUnread = conv.unreadCountForAdmin > 0;
+                        return (
+                          <div
+                            key={conv.id}
+                            onClick={() => {
+                              setSelectedConvId(conv.id);
+                              markAsRead(conv.id, "admin");
                             }}
-                            className="h-4 w-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer"
-                          />
+                            className={`p-3 transition-colors cursor-pointer flex items-start justify-between gap-2 ${
+                              isSelected
+                                ? "bg-blue-50/80 font-bold"
+                                : "hover:bg-slate-50"
+                            }`}
+                          >
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-black text-slate-900 truncate">
+                                  {conv.userName}
+                                </span>
+                                {hasUnread && (
+                                  <span className="px-1.5 py-0.5 rounded-full bg-rose-500 text-white text-[9px] font-black">
+                                    {conv.unreadCountForAdmin}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-slate-500 font-mono">📞 {conv.userPhone}</p>
+                              <p className="text-[11px] text-slate-600 truncate mt-1 font-medium">
+                                {conv.lastMessage}
+                              </p>
+                            </div>
+                            <span className="text-[9px] text-slate-400 font-mono whitespace-nowrap">
+                              {conv.lastTime}
+                            </span>
+                          </div>
+                        );
+                      })
+                  )}
+                </div>
+              </div>
+
+              {/* RIGHT SIDE: Active Chat Thread */}
+              <div className="md:col-span-2 bg-white flex flex-col h-full">
+                {activeConv ? (
+                  <>
+                    {/* Chat Header */}
+                    <div className="p-3 bg-slate-100/80 flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-xs font-black text-slate-900">{activeConv.userName}</h4>
+                          <span className="text-[9px] font-mono font-bold bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-md">
+                            ID: {activeConv.id}
+                          </span>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const copy = [...channelsList];
-                            copy.splice(idx, 1);
-                            setChannelsList(copy);
-                            setSuccessMsg("Canal retiré temporairement. Pensez à cliquer sur Sauvegarder ci-dessous pour confirmer !");
-                          }}
-                          className="p-1.5 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-lg transition-colors cursor-pointer"
-                          title="Supprimer ce canal"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
+                        <p className="text-[10px] text-slate-500 font-mono mt-0.5">📞 {activeConv.userPhone}</p>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          deleteConversation(activeConv.id);
+                          setSelectedConvId(null);
+                        }}
+                        className="text-xs text-rose-600 hover:bg-rose-50 px-2.5 py-1 rounded-lg font-bold bg-rose-50 cursor-pointer transition-colors"
+                      >
+                        Effacer discussion
+                      </button>
+                    </div>
+
+                    {/* Messages Area */}
+                    <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50/50">
+                      {activeConv.messages.map((m) => {
+                        const isAdmin = m.sender === "admin";
+                        return (
+                          <div
+                            key={m.id}
+                            className={`flex flex-col ${isAdmin ? "items-end" : "items-start"}`}
+                          >
+                            <div className={`p-3 rounded-2xl max-w-[80%] text-xs leading-relaxed font-semibold shadow-2xs ${
+                              isAdmin
+                                ? "bg-emerald-600 text-white rounded-br-xs"
+                                : "bg-white text-slate-900 rounded-bl-xs shadow-2xs"
+                            }`}>
+                              <span className={`block text-[9px] font-black uppercase mb-1 ${isAdmin ? "text-emerald-200" : "text-blue-600"}`}>
+                                {isAdmin ? "Administrateur Nutrien" : m.userName || "Client"}
+                              </span>
+                              {m.attachment && (
+                                <div className="mb-2 rounded-xl overflow-hidden max-w-[220px]">
+                                  <img src={m.attachment} alt="Pièce jointe" className="w-full h-auto object-cover" />
+                                </div>
+                              )}
+                              <p className="whitespace-pre-wrap">{m.text}</p>
+                              <span className={`block text-[9px] mt-1 text-right font-mono ${isAdmin ? "text-emerald-100" : "text-slate-400"}`}>
+                                {m.time}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div ref={adminChatEndRef} />
+                    </div>
+
+                    {/* Quick Response Templates */}
+                    <div className="px-3 py-1.5 bg-slate-100 flex gap-1.5 overflow-x-auto no-scrollbar">
+                      <button
+                        type="button"
+                        onClick={() => setAdminChatInput("Bonjour ! Votre demande a été traitée avec succès par l'administration.")}
+                        className="px-2.5 py-1 bg-white hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 text-[9.5px] font-bold rounded-lg whitespace-nowrap cursor-pointer shadow-2xs"
+                      >
+                        ✅ Traité avec succès
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAdminChatInput("Votre dépôt a bien été crédité sur votre compte Nutrien.")}
+                        className="px-2.5 py-1 bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 text-[9.5px] font-bold rounded-lg whitespace-nowrap cursor-pointer shadow-2xs"
+                      >
+                        💳 Dépôt validé
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAdminChatInput("Veuillez nous fournir une capture d'écran claire du SMS de confirmation.")}
+                        className="px-2.5 py-1 bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-700 text-[9.5px] font-bold rounded-lg whitespace-nowrap cursor-pointer shadow-2xs"
+                      >
+                        📩 Demander capture SMS
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAdminChatInput("Votre demande de retrait a été validée et envoyée vers votre Mobile Money.")}
+                        className="px-2.5 py-1 bg-white hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 text-[9.5px] font-bold rounded-lg whitespace-nowrap cursor-pointer shadow-2xs"
+                      >
+                        💸 Retrait effectué
+                      </button>
+                    </div>
+
+                    {/* Image Preview if selected */}
+                    {adminImageAttachment && (
+                      <div className="px-3 py-1.5 bg-emerald-50 flex justify-between items-center text-xs">
+                        <span className="font-bold text-emerald-900">Capture / Reçu prêt à être envoyé</span>
+                        <button onClick={() => setAdminImageAttachment(null)} className="text-rose-600 font-bold hover:underline cursor-pointer">
+                          Annuler
                         </button>
                       </div>
-                    </div>
+                    )}
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block px-1">ID (Clé unique)</label>
-                        <input
-                          id={`channel-id-input-${chan.id || idx}`}
-                          type="text"
-                          value={chan.id || ""}
-                          onChange={(e) => {
-                            const copy = [...channelsList];
-                            copy[idx] = { ...copy[idx], id: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') };
-                            setChannelsList(copy);
-                          }}
-                          className="w-full bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-800 font-mono font-bold focus:outline-none focus:border-blue-500"
-                          placeholder="Ex: airtel"
-                        />
-                      </div>
-
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block px-1">Nom d'affichage</label>
-                        <input
-                          id={`channel-name-input-${chan.id || idx}`}
-                          type="text"
-                          value={chan.name || ""}
-                          onChange={(e) => {
-                            const copy = [...channelsList];
-                            copy[idx] = { ...copy[idx], name: e.target.value };
-                            setChannelsList(copy);
-                          }}
-                          className="w-full bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-800 font-bold focus:outline-none focus:border-blue-500"
-                          placeholder="Ex: Orange Money 🟠"
-                        />
-                      </div>
-
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block px-1">Opérateur (Réseau)</label>
-                        <input
-                          id={`channel-operator-input-${chan.id || idx}`}
-                          type="text"
-                          value={chan.operator || ""}
-                          onChange={(e) => {
-                            const copy = [...channelsList];
-                            copy[idx] = { ...copy[idx], operator: e.target.value };
-                            setChannelsList(copy);
-                          }}
-                          className="w-full bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-800 font-bold focus:outline-none focus:border-blue-500"
-                          placeholder="Ex: Orange, Airtel, Moov"
-                        />
-                      </div>
-
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block px-1">Pays supportés</label>
-                        <input
-                          id={`channel-countries-input-${chan.id || idx}`}
-                          type="text"
-                          value={chan.countries || ""}
-                          onChange={(e) => {
-                            const copy = [...channelsList];
-                            copy[idx] = { ...copy[idx], countries: e.target.value };
-                            setChannelsList(copy);
-                          }}
-                          className="w-full bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-800 font-bold focus:outline-none focus:border-blue-500"
-                          placeholder="Ex: Niger, Togo"
-                        />
-                      </div>
-
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block px-1">Numéro du Receveur</label>
-                        <input
-                          id={`channel-number-input-${chan.id || idx}`}
-                          type="text"
-                          value={chan.number || ""}
-                          onChange={(e) => {
-                            const copy = [...channelsList];
-                            copy[idx] = { ...copy[idx], number: e.target.value };
-                            setChannelsList(copy);
-                          }}
-                          className="w-full bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-800 font-mono font-bold focus:outline-none focus:border-blue-500"
-                          placeholder="Ex: +227 96 11 22 33"
-                        />
-                      </div>
-
-                      <div className="space-y-1">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block px-1">Nom Propriétaire SIM</label>
-                        <input
-                          id={`channel-sim-input-${chan.id || idx}`}
-                          type="text"
-                          value={chan.simOwnerName || ""}
-                          placeholder="Ex: Orange Money Services SARL"
-                          onChange={(e) => {
-                            const copy = [...channelsList];
-                            copy[idx] = { ...copy[idx], simOwnerName: e.target.value };
-                            setChannelsList(copy);
-                          }}
-                          className="w-full bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-800 font-bold focus:outline-none focus:border-blue-500"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-1 pt-1.5">
-                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block px-1">Instructions spécifiques de transfert (visible par l'utilisateur)</label>
-                      <textarea
-                        id={`channel-instructions-input-${chan.id || idx}`}
-                        value={chan.instructions || ""}
-                        rows={2}
+                    {/* Input form */}
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (!adminChatInput.trim() && !adminImageAttachment) return;
+                        addSupportMessage({
+                          conversationId: activeConv.id,
+                          sender: "admin",
+                          senderName: "Administrateur Nutrien",
+                          text: adminChatInput.trim(),
+                          attachment: adminImageAttachment || undefined
+                        });
+                        setSelectedConvId(activeConv.id);
+                        markAsRead(activeConv.id, "admin");
+                        setAdminChatInput("");
+                        setAdminImageAttachment(null);
+                        setTimeout(() => {
+                          adminChatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+                        }, 50);
+                      }}
+                      className="p-2.5 bg-slate-50 flex items-center gap-2"
+                    >
+                      <input
+                        type="file"
+                        id="admin-chat-file-input"
+                        accept="image/*"
                         onChange={(e) => {
-                          const copy = [...channelsList];
-                          copy[idx] = { ...copy[idx], instructions: e.target.value };
-                          setChannelsList(copy);
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (evt) => {
+                              if (evt.target?.result) setAdminImageAttachment(evt.target.result as string);
+                            };
+                            reader.readAsDataURL(file);
+                          }
                         }}
-                        className="w-full bg-white border border-slate-200 rounded-2xl py-2 px-3 text-xs text-slate-800 font-medium focus:outline-none focus:border-indigo-500 resize-none"
-                        placeholder="Ex: Composez le *144*2*1*... ou effectuez un transfert simple vers le numéro."
+                        className="hidden"
                       />
-                    </div>
-                  </div>
-                ))
-              )}
+                      <button
+                        type="button"
+                        onClick={() => document.getElementById("admin-chat-file-input")?.click()}
+                        className="p-2 text-slate-400 hover:text-emerald-600 rounded-xl hover:bg-slate-100 transition-all cursor-pointer"
+                        title="Joindre une image/reçu"
+                      >
+                        <Paperclip className="h-4.5 w-4.5" />
+                      </button>
 
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-                <p className="text-[10px] text-slate-400 font-medium">Les modifications ne prendront effet que lorsque vous cliquerez sur Enregistrer ci-contre.</p>
-                <button
-                  id="admin-save-payment-channels-btn"
-                  onClick={() => handleUpdateChannels(channelsList)}
-                  className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-black text-xs py-3.5 px-6 rounded-2xl transition-all cursor-pointer shadow-md shadow-blue-500/10 active:scale-98 uppercase tracking-wider"
-                >
-                  Enregistrer les Canaux
-                </button>
+                      <input
+                        type="text"
+                        placeholder="Répondre à ce client..."
+                        value={adminChatInput}
+                        onChange={(e) => setAdminChatInput(e.target.value)}
+                        className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-900"
+                      />
+
+                      <button
+                        type="submit"
+                        disabled={!adminChatInput.trim() && !adminImageAttachment}
+                        className={`p-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-center ${
+                          adminChatInput.trim() || adminImageAttachment
+                            ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 active:scale-95"
+                            : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                        }`}
+                      >
+                        <Send className="h-4 w-4" />
+                      </button>
+                    </form>
+                  </>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8 text-center space-y-2">
+                    <MessageSquare className="h-10 w-10 text-slate-300" />
+                    <p className="text-xs font-bold text-slate-600">Sélectionnez une discussion dans la liste de gauche</p>
+                    <p className="text-[11px] text-slate-400">Pour répondre aux questions, vérifier les reçus ou conseiller vos clients.</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* --- EXTRA INTERNAL MODAL: DISTRIBUTE USER BONUS --- */}
       {showBonusUserModal && (
@@ -2223,7 +2348,7 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
                 
                 {/* Currency value */}
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">Montant du Bonus (FCFA)</label>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">Montant du Bonus (XAF / XOF)</label>
                   <input
                     id="admin-bonus-value-usr"
                     type="number"
@@ -2324,7 +2449,7 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
 
                 {/* Wallet Balance */}
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">Solde Portefeuille (FCFA)</label>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">Solde Portefeuille (XAF / XOF)</label>
                   <input
                     id="edit-user-balance"
                     type="number"
@@ -2350,7 +2475,7 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
 
                 {/* Commissions Earned */}
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">Commissions Gagnées (FCFA)</label>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">Commissions Gagnées (XAF / XOF)</label>
                   <input
                     id="edit-user-commission"
                     type="number"
@@ -2423,7 +2548,7 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
 
                 {/* Price */}
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">Prix d'Achat (FCFA)</label>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">Prix d'Achat (XAF / XOF)</label>
                   <input
                     id="edit-prod-price"
                     type="number"
@@ -2436,7 +2561,7 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
 
                 {/* Daily Income */}
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">Revenu Journalier (FCFA)</label>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">Revenu Journalier (XAF / XOF)</label>
                   <input
                     id="edit-prod-daily"
                     type="number"

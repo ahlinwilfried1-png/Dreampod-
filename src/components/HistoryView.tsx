@@ -6,16 +6,19 @@
 import React, { useState } from "react";
 import { History, ArrowLeft, Calendar, Layers, CheckCircle2, Clock } from "lucide-react";
 import { Transaction, Investment } from "../types";
+import { getCurrencySymbol } from "../lib/currency";
 
 interface HistoryViewProps {
   transactions: Transaction[];
   investments: Investment[];
   onBack: () => void;
+  userPhone?: string;
 }
 
 type FilterType = "all" | "deposit" | "withdrawal" | "bonus" | "commission";
 
-export default function HistoryView({ transactions, investments, onBack }: HistoryViewProps) {
+export default function HistoryView({ transactions, investments, onBack, userPhone }: HistoryViewProps) {
+  const currency = getCurrencySymbol(userPhone);
   const [historyTab, setHistoryTab] = useState<"transactions" | "investments">("transactions");
   const [filter, setFilter] = useState<FilterType>("all");
 
@@ -179,7 +182,7 @@ export default function HistoryView({ transactions, investments, onBack }: Histo
                           }`}
                         >
                           {isPositive ? "+" : "-"}
-                          {t.amount.toLocaleString()} <span className="text-[10px]">FCFA</span>
+                          {t.amount.toLocaleString()} <span className="text-[10px]">{currency}</span>
                         </span>
                         {getStatusBadge(t.status)}
                       </div>
@@ -242,11 +245,11 @@ export default function HistoryView({ transactions, investments, onBack }: Histo
                     <div className="grid grid-cols-2 gap-2.5 bg-white border border-slate-100 p-3 rounded-xl text-[10px] font-bold text-slate-500 font-mono">
                       <div>
                         <span className="text-[9px] text-slate-400 block uppercase font-sans tracking-wide">Prix d'Achat</span>
-                        <span className="text-slate-800 font-black">{inv.price.toLocaleString()} FCFA</span>
+                        <span className="text-slate-800 font-black">{inv.price.toLocaleString()} {currency}</span>
                       </div>
                       <div className="text-right">
                         <span className="text-[9px] text-slate-400 block uppercase font-sans tracking-wide font-sans">Rendement Quotidien</span>
-                        <span className="text-green-600 font-black">+{inv.dailyIncome.toLocaleString()} FCFA</span>
+                        <span className="text-green-600 font-black">+{inv.dailyIncome.toLocaleString()} {currency}</span>
                       </div>
                     </div>
 
@@ -268,7 +271,7 @@ export default function HistoryView({ transactions, investments, onBack }: Histo
                     <div className="flex justify-between items-center text-[11px] font-bold pt-2 border-t border-slate-200/30">
                       <span className="text-slate-500">Revenus générés</span>
                       <span className="text-green-600 font-black text-xs font-mono">
-                        {accumulatedIncome.toLocaleString()} <span className="text-[9px] text-slate-400 font-normal">sur</span> {totalExpectedIncome.toLocaleString()} FCFA
+                        {accumulatedIncome.toLocaleString()} <span className="text-[9px] text-slate-400 font-normal">sur</span> {totalExpectedIncome.toLocaleString()} {currency}
                       </span>
                     </div>
                   </div>

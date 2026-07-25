@@ -19,6 +19,7 @@ import {
   Share2
 } from "lucide-react";
 import { User, Transaction, TeamMember } from "../types";
+import { getCurrencySymbol } from "../lib/currency";
 
 interface TeamViewProps {
   user: User;
@@ -41,7 +42,7 @@ export default function TeamView({ user, transactions = [], team = [] }: TeamVie
   };
 
   // Pre-formatted promotional text
-  const shareText = `Gagnez de l'argent quotidiennement avec Dreampod ! 🚀 Machines VIP performantes, retraits ultra-rapides et fiables. Rejoignez mon équipe maintenant : ${inviteLink}`;
+  const shareText = `Gagnez de l'argent quotidiennement avec Nutrien ! 🚀 Machines VIP performantes, retraits ultra-rapides et fiables. Rejoignez mon équipe maintenant : ${inviteLink}`;
   const shareTextEncoded = encodeURIComponent(shareText);
   const inviteLinkEncoded = encodeURIComponent(inviteLink);
 
@@ -77,62 +78,60 @@ export default function TeamView({ user, transactions = [], team = [] }: TeamVie
   });
 
   return (
-    <div className="space-y-6 pb-28 text-slate-800 select-none">
+    <div className="space-y-6 text-slate-800 select-none pb-4">
       
       {/* Intro Header */}
-      <div className="text-center py-2 relative">
-        <h2 className="text-lg font-black tracking-tight text-slate-900 flex items-center justify-center gap-2">
+      <div className="py-2 border-b border-slate-200/60 pb-4">
+        <h2 className="text-lg font-black tracking-tight text-slate-900 flex items-center gap-2">
           <Trophy className="text-blue-600 h-5 w-5" />
-          Filleuls & Récompenses d'Équipe
+          Réseau & Commissions d'Affiliation
         </h2>
-        <p className="text-xs text-slate-500 mt-1.5 max-w-sm mx-auto leading-relaxed">
-          Gagnez des commissions instantanées sur 3 niveaux d’affiliation à chaque fois que vos filleuls rechargent leur compte et investissent.
+        <p className="text-xs text-slate-500 mt-1 max-w-sm leading-relaxed font-medium">
+          Percevez des commissions directes sur 3 niveaux d’affiliation à chaque rechargement et souscription de votre réseau.
         </p>
       </div>
 
-      {/* Referrals Total Summary Box */}
-      <div className="bg-white border border-slate-100 rounded-3xl p-5 shadow-xs flex items-center justify-between">
-        <div className="flex items-center space-x-3.5">
-          <div className="p-3 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600">
-            <Users className="h-6 w-6 stroke-[1.8]" />
+      {/* Referrals Total Summary - Direct Stats Row */}
+      <div className="flex items-center justify-between py-2 border-b border-slate-200/60">
+        <div className="flex items-center space-x-3">
+          <div className="p-2 rounded-xl bg-blue-100/60 text-blue-600">
+            <Users className="h-5 w-5 stroke-[1.8]" />
           </div>
           <div>
-            <p className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Total Filleuls Invités</p>
-            <h3 id="referrals-total-count" className="text-base font-black mt-0.5 text-slate-900">{user?.referralsCount || 0} invités</h3>
+            <p className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Membres Parrainés</p>
+            <h3 id="referrals-total-count" className="text-base font-black text-slate-900">{user?.referralsCount || 0} membres</h3>
           </div>
         </div>
 
-        <div className="text-right border-l border-slate-100 pl-4">
-          <p className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Commissions</p>
-          <h3 className="text-base font-black mt-0.5 text-green-600">{(user?.commissionEarned || 0).toLocaleString()} <span className="text-xs">F</span></h3>
+        <div className="text-right">
+          <p className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Commissions Cumulées</p>
+          <h3 className="text-base font-black text-emerald-600">{(user?.commissionEarned || 0).toLocaleString()} <span className="text-xs">{getCurrencySymbol(user?.phone)}</span></h3>
         </div>
       </div>
 
-      {/* Invite Code, Link Card & Sharing Buttons */}
-      <div className="bg-white border border-slate-100 rounded-3xl p-5 relative overflow-hidden shadow-xs">
-        <div className="absolute right-0 bottom-0 translate-y-4 translate-x-4 w-24 h-24 bg-blue-500/5 rounded-full blur-xl pointer-events-none" />
-        
-        <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-          <Award className="h-4 w-4 text-blue-600 animate-pulse" />
-          Votre lien d'invitation exclusif
+      {/* Invite Code & Link Section */}
+      <div className="space-y-3 py-2 border-b border-slate-200/60">
+        <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-1.5">
+          <Award className="h-4 w-4 text-blue-600" />
+          Lien de parrainage officiel
         </h3>
 
-        <div className="flex bg-slate-50 border border-slate-100 rounded-xl p-2.5 items-center justify-between gap-2">
-          <span className="text-[11px] font-mono select-all text-slate-600 break-all truncate">{inviteLink}</span>
+        <div className="flex bg-slate-100/80 rounded-xl p-2 items-center justify-between gap-2 border border-slate-200/60">
+          <span className="text-[11px] font-mono select-all text-slate-700 break-all truncate pl-1">{inviteLink}</span>
           
           <button
             id="btn-copy-invite-link"
             onClick={handleCopyLink}
             className={`cursor-pointer min-w-[76px] py-1.5 px-3 rounded-lg text-[10px] font-extrabold tracking-wide uppercase transition-all duration-300 flex items-center justify-center space-x-1.5 shrink-0 ${
               copied 
-                ? "bg-green-600 text-white" 
+                ? "bg-emerald-600 text-white" 
                 : "bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white"
             }`}
           >
             {copied ? (
               <>
                 <Check className="h-3 w-3" />
-                <span>Copié !</span>
+                <span>Copié</span>
               </>
             ) : (
               <>
@@ -143,18 +142,18 @@ export default function TeamView({ user, transactions = [], team = [] }: TeamVie
           </button>
         </div>
 
-        {/* Brand Sharing Row */}
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-4 mb-2">Partager automatiquement :</p>
+        {/* Brand Sharing Buttons */}
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pt-1">Partager directement :</p>
         <div className="grid grid-cols-5 gap-2">
           {/* WhatsApp */}
           <a
             href={shareUrls.whatsapp}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-[#25D366]/10 border border-[#25D366]/20 text-[#25D366] hover:bg-[#25D366]/20 transition-all duration-300"
+            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-[#25D366] text-white hover:bg-[#20bd5a] active:scale-95 transition-all duration-200"
           >
-            <MessageCircle className="h-5 w-5" />
-            <span className="text-[8.5px] font-bold mt-1">WhatsApp</span>
+            <MessageCircle className="h-4.5 w-4.5 fill-white" />
+            <span className="text-[9px] font-extrabold mt-1">WhatsApp</span>
           </a>
 
           {/* Twitter / X */}
@@ -162,10 +161,10 @@ export default function TeamView({ user, transactions = [], team = [] }: TeamVie
             href={shareUrls.twitter}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 hover:bg-slate-100 transition-all duration-300"
+            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-[#1DA1F2] text-white hover:bg-[#1a91da] active:scale-95 transition-all duration-200"
           >
-            <Twitter className="h-5 w-5" />
-            <span className="text-[8.5px] font-bold mt-1">Twitter</span>
+            <Twitter className="h-4.5 w-4.5 fill-white" />
+            <span className="text-[9px] font-extrabold mt-1">Twitter</span>
           </a>
 
           {/* Telegram */}
@@ -173,10 +172,10 @@ export default function TeamView({ user, transactions = [], team = [] }: TeamVie
             href={shareUrls.telegram}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-[#0088cc]/10 border border-[#0088cc]/20 text-[#0088cc] hover:bg-[#0088cc]/20 transition-all duration-300"
+            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-[#0088cc] text-white hover:bg-[#0077b3] active:scale-95 transition-all duration-200"
           >
-            <Send className="h-5 w-5 animate-pulse" />
-            <span className="text-[8.5px] font-bold mt-1">Telegram</span>
+            <Send className="h-4.5 w-4.5" />
+            <span className="text-[9px] font-extrabold mt-1">Telegram</span>
           </a>
 
           {/* Facebook */}
@@ -184,61 +183,52 @@ export default function TeamView({ user, transactions = [], team = [] }: TeamVie
             href={shareUrls.facebook}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-[#1877F2]/10 border border-[#1877F2]/20 text-[#1877F2] hover:bg-[#1877F2]/20 transition-all duration-300"
+            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-[#1877F2] text-white hover:bg-[#166fe5] active:scale-95 transition-all duration-200"
           >
-            <Facebook className="h-5 w-5" />
-            <span className="text-[8.5px] font-bold mt-1">Facebook</span>
+            <Facebook className="h-4.5 w-4.5 fill-white" />
+            <span className="text-[9px] font-extrabold mt-1">Facebook</span>
           </a>
 
           {/* Instagram */}
           <button
             onClick={handleInstagramShare}
-            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-gradient-to-tr from-[#f9ce34]/10 via-[#ee2a7b]/10 to-[#6228d7]/10 border border-[#ee2a7b]/20 text-[#ee2a7b] hover:from-[#f9ce34]/20 hover:via-[#ee2a7b]/20 hover:to-[#6228d7]/20 transition-all duration-300 cursor-pointer"
+            className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] text-white active:scale-95 transition-all duration-200 cursor-pointer"
           >
-            <Instagram className="h-5 w-5" />
-            <span className="text-[8.5px] font-bold mt-1 truncate max-w-full">{instaCopied ? "Copié !" : "Instagram"}</span>
+            <Instagram className="h-4.5 w-4.5" />
+            <span className="text-[9px] font-extrabold mt-1 truncate max-w-full">{instaCopied ? "Copié" : "Instagram"}</span>
           </button>
         </div>
       </div>
 
-      {/* Three Commission Levels Visual Layout */}
-      <h3 className="text-xs font-black tracking-widest text-slate-500 uppercase mt-2 px-1">Structure de l'Équipe</h3>
-      <div className="grid grid-cols-3 gap-3">
-        
-        {/* L1 */}
-        <div className="bg-white border border-slate-100 p-3 px-2 rounded-2xl text-center shadow-xs relative">
-          <div className="absolute top-1 right-1 px-1 py-0.5 bg-blue-500/10 border border-blue-500/20 text-[8px] font-bold text-blue-600 rounded-sm">
-            N1 (15%)
+      {/* Three Commission Levels */}
+      <div className="py-2 border-b border-slate-200/60 space-y-2">
+        <h3 className="text-xs font-black tracking-widest text-slate-500 uppercase">Structure de l'Équipe</h3>
+        <div className="grid grid-cols-3 gap-2 text-center py-1">
+          {/* L1 */}
+          <div className="py-2 px-1">
+            <span className="text-[10px] text-emerald-700 font-extrabold bg-emerald-50 px-2 py-0.5 rounded uppercase border border-emerald-200/50">Niveau 1 (20%)</span>
+            <span className="text-xl font-black text-slate-900 mt-1.5 block">{user?.referralsN1 || 0}</span>
+            <span className="text-[9px] text-slate-500 font-semibold block">Filleuls directs</span>
           </div>
-          <span className="text-[10px] text-slate-400 uppercase tracking-wider block mt-2 font-bold">Niveau 1</span>
-          <span className="text-lg font-black text-slate-900 mt-1.5 block">{user?.referralsN1 || 0}</span>
-          <span className="text-[8.5px] text-slate-500 mt-1 block">Filleuls directs</span>
-        </div>
 
-        {/* L2 */}
-        <div className="bg-white border border-slate-100 p-3 px-2 rounded-2xl text-center shadow-xs relative">
-          <div className="absolute top-1 right-1 px-1 py-0.5 bg-cyan-500/10 border border-cyan-500/20 text-[8px] font-bold text-cyan-600 rounded-sm">
-            N2 (2%)
+          {/* L2 */}
+          <div className="py-2 px-1 border-x border-slate-200/60">
+            <span className="text-[10px] text-cyan-600 font-extrabold bg-cyan-50 px-2 py-0.5 rounded uppercase">Niveau 2 (2%)</span>
+            <span className="text-xl font-black text-slate-900 mt-1.5 block">{user?.referralsN2 || 0}</span>
+            <span className="text-[9px] text-slate-500 font-semibold block">Filleuls de N1</span>
           </div>
-          <span className="text-[10px] text-slate-400 uppercase tracking-wider block mt-2 font-bold">Niveau 2</span>
-          <span className="text-lg font-black text-slate-900 mt-1.5 block">{user?.referralsN2 || 0}</span>
-          <span className="text-[8.5px] text-slate-500 mt-1 block">Filleuls de N1</span>
-        </div>
 
-        {/* L3 */}
-        <div className="bg-white border border-slate-100 p-3 px-2 rounded-2xl text-center shadow-xs relative">
-          <div className="absolute top-1 right-1 px-1 py-0.5 bg-amber-500/10 border border-amber-500/20 text-[8px] font-bold text-amber-600 rounded-sm">
-            N3 (1%)
+          {/* L3 */}
+          <div className="py-2 px-1">
+            <span className="text-[10px] text-amber-600 font-extrabold bg-amber-50 px-2 py-0.5 rounded uppercase">Niveau 3 (1%)</span>
+            <span className="text-xl font-black text-slate-900 mt-1.5 block">{user?.referralsN3 || 0}</span>
+            <span className="text-[9px] text-slate-500 font-semibold block">Filleuls de N2</span>
           </div>
-          <span className="text-[10px] text-slate-400 uppercase tracking-wider block mt-2 font-bold">Niveau 3</span>
-          <span className="text-lg font-black text-slate-900 mt-1.5 block">{user?.referralsN3 || 0}</span>
-          <span className="text-[8.5px] text-slate-500 mt-1 block">Filleuls de N2</span>
         </div>
-
       </div>
 
       {/* Guide explaining affiliation program */}
-      <div className="bg-blue-50/50 border border-blue-100/60 p-4 rounded-3xl flex items-start space-x-3 text-xs leading-relaxed">
+      <div className="py-2 border-b border-slate-200/60 flex items-start space-x-3 text-xs leading-relaxed">
         <HelpCircle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
         <div className="space-y-1">
           <p className="font-black text-slate-900">Comment fonctionnent les commissions ?</p>
@@ -246,41 +236,41 @@ export default function TeamView({ user, transactions = [], team = [] }: TeamVie
             Chaque fois qu'un utilisateur s'inscrit via votre lien, il rejoint votre équipe. S'il investit dans une machine :
           </p>
           <ul className="list-disc pl-4 text-slate-600 text-[10.5px] space-y-0.5 leading-relaxed font-semibold">
-            <li>S'il s'agit de votre <span className="text-blue-600 font-bold">N1 direct</span>, vous recevez instantanément <span className="text-green-600 font-extrabold">15%</span> du prix de son plan.</li>
-            <li>S'il s'agit d'un filleul <span className="text-cyan-600 font-bold">N2 d'équipe</span>, vous recevez instantanément <span className="text-green-600 font-extrabold">2%</span>.</li>
-            <li>S'il s'agit d'un filleul <span className="text-amber-600 font-bold">N3 d'équipe</span>, vous recevez instantanément <span className="text-green-600 font-extrabold">1%</span>.</li>
+            <li>S'il s'agit de votre <span className="text-blue-600 font-bold">N1 direct</span>, vous recevez instantanément <span className="text-emerald-600 font-extrabold">20%</span> du prix de son plan.</li>
+            <li>S'il s'agit d'un filleul <span className="text-cyan-600 font-bold">N2 d'équipe</span>, vous recevez instantanément <span className="text-emerald-600 font-extrabold">2%</span>.</li>
+            <li>S'il s'agit d'un filleul <span className="text-amber-600 font-bold">N3 d'équipe</span>, vous recevez instantanément <span className="text-emerald-600 font-extrabold">1%</span>.</li>
           </ul>
         </div>
       </div>
 
       {/* Team Members List */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between px-1">
+      <div className="space-y-3 py-2 border-b border-slate-200/60">
+        <div className="flex items-center justify-between">
           <h3 className="text-xs font-black tracking-widest text-slate-500 uppercase">Membres de votre équipe ({team.length})</h3>
           
           {/* Level Filters */}
-          <div className="flex bg-slate-100 border border-slate-200/80 rounded-xl p-0.5 text-[9px] font-extrabold uppercase">
+          <div className="flex bg-slate-200/70 rounded-lg p-0.5 text-[9px] font-extrabold uppercase">
             <button
               onClick={() => setSelectedLevel("all")}
-              className={`px-2 py-1 rounded-md transition-all duration-200 cursor-pointer ${selectedLevel === "all" ? "bg-blue-600 text-white" : "text-slate-400 hover:text-white"}`}
+              className={`px-2 py-0.5 rounded-md transition-all duration-200 cursor-pointer ${selectedLevel === "all" ? "bg-blue-600 text-white" : "text-slate-500 hover:text-slate-800"}`}
             >
               Tous
             </button>
             <button
               onClick={() => setSelectedLevel(1)}
-              className={`px-2 py-1 rounded-md transition-all duration-200 cursor-pointer ${selectedLevel === 1 ? "bg-blue-600 text-white" : "text-slate-400 hover:text-white"}`}
+              className={`px-2 py-0.5 rounded-md transition-all duration-200 cursor-pointer ${selectedLevel === 1 ? "bg-blue-600 text-white" : "text-slate-500 hover:text-slate-800"}`}
             >
               N1
             </button>
             <button
               onClick={() => setSelectedLevel(2)}
-              className={`px-2 py-1 rounded-md transition-all duration-200 cursor-pointer ${selectedLevel === 2 ? "bg-blue-600 text-white" : "text-slate-400 hover:text-white"}`}
+              className={`px-2 py-0.5 rounded-md transition-all duration-200 cursor-pointer ${selectedLevel === 2 ? "bg-blue-600 text-white" : "text-slate-500 hover:text-slate-800"}`}
             >
               N2
             </button>
             <button
               onClick={() => setSelectedLevel(3)}
-              className={`px-2 py-1 rounded-md transition-all duration-200 cursor-pointer ${selectedLevel === 3 ? "bg-blue-600 text-white" : "text-slate-400 hover:text-white"}`}
+              className={`px-2 py-0.5 rounded-md transition-all duration-200 cursor-pointer ${selectedLevel === 3 ? "bg-blue-600 text-white" : "text-slate-500 hover:text-slate-800"}`}
             >
               N3
             </button>
@@ -288,28 +278,28 @@ export default function TeamView({ user, transactions = [], team = [] }: TeamVie
         </div>
 
         {filteredTeam.length === 0 ? (
-          <div className="p-6 bg-white border border-slate-100 rounded-2xl text-center text-xs text-slate-400 font-bold">
+          <div className="py-4 text-center text-xs text-slate-400 font-bold">
             {selectedLevel === "all" 
               ? "Aucun membre inscrit sous votre lien pour le moment." 
               : `Aucun membre enregistré au Niveau ${selectedLevel} pour le moment.`}
           </div>
         ) : (
-          <div className="space-y-2.5">
+          <div className="divide-y divide-slate-100">
             {filteredTeam.map((member) => (
-              <div key={member.id} className="p-3.5 bg-white border border-slate-100 rounded-3xl flex justify-between items-center transition-all duration-300 hover:border-slate-200 shadow-xs">
+              <div key={member.id} className="py-3 flex justify-between items-center">
                 <div className="flex items-center space-x-3 min-w-0">
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-[10px] font-black uppercase tracking-wider shrink-0 ${
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-black uppercase tracking-wider shrink-0 ${
                     member.level === 1 
-                      ? "bg-blue-50 border border-blue-100 text-blue-600" 
+                      ? "bg-blue-100 text-blue-700" 
                       : member.level === 2 
-                        ? "bg-cyan-50 border border-cyan-100 text-cyan-600" 
-                        : "bg-amber-50 border border-amber-100 text-amber-600"
+                        ? "bg-cyan-100 text-cyan-700" 
+                        : "bg-amber-100 text-amber-700"
                   }`}>
                     N{member.level || 1}
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <p className="text-xs font-bold text-slate-800 truncate max-w-[120px]">{member.name || "Utilisateur"}</p>
+                      <p className="text-xs font-bold text-slate-900 truncate max-w-[130px]">{member.name || "Utilisateur"}</p>
                       <span className="text-[10px] text-slate-400 font-mono font-bold">({obfuscatePhone(member.phone || "")})</span>
                     </div>
                     <p className="text-[10px] text-slate-400 mt-0.5 font-bold">
@@ -318,7 +308,7 @@ export default function TeamView({ user, transactions = [], team = [] }: TeamVie
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <span className={`text-xs font-black ${(member.totalInvested || 0) > 0 ? "text-green-600" : "text-slate-500"}`}>
+                  <span className={`text-xs font-black ${(member.totalInvested || 0) > 0 ? "text-emerald-600" : "text-slate-500"}`}>
                     {(member.totalInvested || 0).toLocaleString()} F
                   </span>
                   <p className="text-[8.5px] uppercase font-bold tracking-widest text-slate-400 mt-0.5">Montant Investi</p>
@@ -330,30 +320,32 @@ export default function TeamView({ user, transactions = [], team = [] }: TeamVie
       </div>
 
       {/* Referral Commission history log */}
-      <h3 className="text-xs font-black tracking-widest text-slate-500 uppercase mt-4 px-1">Historique des commissions</h3>
-      
-      {commissionLogs.length === 0 ? (
-        <div className="p-6 bg-white border border-slate-100 rounded-2xl text-center text-xs text-slate-400 font-bold">
-          Aucune commission parrainage reçue pour le moment.
-        </div>
-      ) : (
-        <div className="space-y-2.5">
-          {commissionLogs.map((log) => (
-            <div key={log.id} className="p-3.5 bg-white border border-slate-100 rounded-3xl flex justify-between items-center shadow-xs">
-              <div>
-                <p className="text-xs font-bold text-slate-800">{log.method || "Commission d'affiliation"}</p>
-                <p className="text-[10px] text-slate-400 mt-1 font-bold">
-                  {log.date ? new Date(log.date).toLocaleString() : ""}
-                </p>
+      <div className="space-y-3 py-2">
+        <h3 className="text-xs font-black tracking-widest text-slate-500 uppercase">Historique des commissions</h3>
+        
+        {commissionLogs.length === 0 ? (
+          <div className="py-4 text-center text-xs text-slate-400 font-bold">
+            Aucune commission parrainage reçue pour le moment.
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {commissionLogs.map((log) => (
+              <div key={log.id} className="py-3 flex justify-between items-center">
+                <div>
+                  <p className="text-xs font-bold text-slate-800">{log.method || "Commission d'affiliation"}</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5 font-bold">
+                    {log.date ? new Date(log.date).toLocaleString() : ""}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-black text-emerald-600">+{(log.amount || 0).toLocaleString()} F</span>
+                  <p className="text-[9.5px] text-slate-400 font-mono font-bold mt-0.5">FIL_REWARD</p>
+                </div>
               </div>
-              <div className="text-right">
-                <span className="text-xs font-black text-green-600">+{(log.amount || 0).toLocaleString()} F</span>
-                <p className="text-[9.5px] text-slate-400 font-mono font-bold mt-0.5">FIL_REWARD</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
 
     </div>
   );
