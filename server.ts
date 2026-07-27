@@ -110,8 +110,8 @@ const cleanEnvVar = (val: string | undefined): string => {
   return cleaned;
 };
 
-const supabaseUrl = cleanEnvVar(process.env.SUPABASE_URL) || "https://hrgxrpehueedovrekpxw.supabase.co";
-const supabaseServiceKey = cleanEnvVar(process.env.SUPABASE_SERVICE_ROLE_KEY) || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhyZ3hycGVodWVlZG92cmVrcHh3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDY0MDc3NywiZXhwIjoyMTAwMjE2Nzc3fQ.PdKmsGxrg-gCma92QPaYhDfC08i-OSI4jYiX3VH7KPk";
+const supabaseUrl = cleanEnvVar(process.env.SUPABASE_URL) || "https://iscwzlhozeglcwpagvzf.supabase.co";
+const supabaseServiceKey = cleanEnvVar(process.env.SUPABASE_SERVICE_ROLE_KEY) || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzY3d6bGhvemVnbGN3cGFndnpmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NTE1MzQxOCwiZXhwIjoyMTAwNzI5NDE4fQ.Ow0QHrK66aEcYyXukVBNFOjFJimAMYOEJWj93WKs6uE";
 const supabase = (supabaseUrl && supabaseServiceKey)
   ? createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
