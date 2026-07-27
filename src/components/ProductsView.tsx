@@ -3,60 +3,91 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Check, Cpu, Info, X, AlertTriangle, CheckCircle2, Lock, Clock } from "lucide-react";
 import { Product, Investment } from "../types";
 import { api } from "../lib/api";
 import { getCurrencySymbol } from "../lib/currency";
+import ProductImage from "./ProductImage";
 
 const PRODUCT_IMAGES: Record<number, { url: string; label: string; bgGradient: string; textAccent: string }> = {
+  0: {
+    url: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80",
+    label: "Nutrien Ag Découverte (VIP 0)",
+    bgGradient: "from-sky-50 to-emerald-50",
+    textAccent: "text-sky-600"
+  },
   1: {
-    url: "/public/nutrien_bag.svg",
-    label: "Nutrien Ag Élite",
+    url: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80",
+    label: "Nutrien Ag Élite (Produits Agricoles)",
     bgGradient: "from-emerald-50 to-green-50",
     textAccent: "text-emerald-600"
   },
   2: {
-    url: "/public/nutrien_bag.svg",
-    label: "Nutrien Ag Premium",
+    url: "https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=800&q=80",
+    label: "Nutrien Ag Premium (Lait Milk)",
     bgGradient: "from-teal-50 to-emerald-50",
     textAccent: "text-teal-600"
   },
   3: {
-    url: "/public/nutrien_bag.svg",
-    label: "Nutrien Ag Gold",
+    url: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80",
+    label: "Nutrien Ag Gold (Récoltes Agricoles)",
     bgGradient: "from-amber-50 to-yellow-50",
     textAccent: "text-amber-600"
   },
   4: {
-    url: "/public/nutrien_bag.svg",
-    label: "Nutrien Ag Platinum",
+    url: "https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=800&q=80",
+    label: "Nutrien Ag Platinum (Lait Pur)",
     bgGradient: "from-green-50 to-emerald-50",
     textAccent: "text-green-600"
   },
   5: {
-    url: "/public/nutrien_bag.svg",
-    label: "Nutrien Ag Infini",
+    url: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=800&q=80",
+    label: "Nutrien Ag Infini (Céréales & Grains)",
     bgGradient: "from-emerald-50 to-green-50",
     textAccent: "text-emerald-600"
   },
   6: {
-    url: "/public/nutrien_bag.svg",
-    label: "Nutrien Ag Saphir",
+    url: "https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=800&q=80",
+    label: "Nutrien Ag Saphir (Agro-Alimentaire)",
     bgGradient: "from-teal-50 to-cyan-50",
     textAccent: "text-teal-700"
   },
   7: {
-    url: "/public/nutrien_bag.svg",
-    label: "Nutrien Ag Diamant",
+    url: "https://images.unsplash.com/photo-1586771107445-d3ca888129ff?auto=format&fit=crop&w=800&q=80",
+    label: "Nutrien Ag Diamant (Complexe Agricole)",
     bgGradient: "from-amber-50 to-emerald-50",
     textAccent: "text-emerald-700"
+  },
+  8: {
+    url: "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80",
+    label: "Nutrien Ag Rubis (Parc Éolien & Irrigation)",
+    bgGradient: "from-rose-50 to-emerald-50",
+    textAccent: "text-rose-700"
+  },
+  9: {
+    url: "https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=800&q=80",
+    label: "Nutrien Ag Émeraude (Centrale Solaire Agricole)",
+    bgGradient: "from-emerald-50 to-teal-50",
+    textAccent: "text-emerald-800"
+  },
+  10: {
+    url: "https://images.unsplash.com/photo-1530507629858-e4977d30e9e0?auto=format&fit=crop&w=800&q=80",
+    label: "Nutrien Ag Alchimie (Exportation Agro-Industrielle)",
+    bgGradient: "from-purple-50 to-amber-50",
+    textAccent: "text-purple-700"
+  },
+  11: {
+    url: "https://images.unsplash.com/photo-1595838729819-374d7f82a71a?auto=format&fit=crop&w=800&q=80",
+    label: "Nutrien Ag Titane (Consortium Agro Global)",
+    bgGradient: "from-blue-50 to-indigo-50",
+    textAccent: "text-indigo-800"
   }
 };
 
 const getProductConfig = (level: number) => {
   return PRODUCT_IMAGES[level] || {
-    url: "/public/nutrien_bag.svg",
+    url: "/nutrien_bag.svg",
     label: `Nutrien VIP ${level}`,
     bgGradient: "from-emerald-50 to-zinc-50",
     textAccent: "text-emerald-600"
@@ -83,6 +114,17 @@ export default function ProductsView({
   const [activeConfirmProduct, setActiveConfirmProduct] = useState<Product | null>(null);
   const [alertModal, setAlertModal] = useState<{ title: string; message: string; type: "success" | "error" | "info"; onClose?: () => void } | null>(null);
 
+  useEffect(() => {
+    if (alertModal) {
+      const timer = setTimeout(() => {
+        const action = alertModal.onClose;
+        setAlertModal(null);
+        if (action) action();
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [alertModal]);
+
   const handleInvest = (product: Product) => {
     if (product.isBlocked) {
       setAlertModal({
@@ -108,8 +150,8 @@ export default function ProductsView({
     try {
       const response = await api.invest(product.id);
       setAlertModal({
-        title: "Investissement Réussi",
-        message: response.message || `Votre investissement de ${product.price.toLocaleString()} ${currency} dans "${product.name}" a été complété avec succès !`,
+        title: "Achat Réussi ! 🎉",
+        message: response.message || `Investissement dans "${product.name}" (${product.price.toLocaleString()} ${currency}) activé avec succès !`,
         type: "success",
         onClose: () => onRefresh()
       });
@@ -156,14 +198,30 @@ export default function ProductsView({
 
       {/* List of Products */}
       <div className="space-y-4">
-        {products.length === 0 ? (
-          <div className="text-center py-12 px-4">
-            <Cpu className="h-8 w-8 text-slate-300 mx-auto animate-pulse mb-2" />
-            <p className="text-sm font-black text-slate-600">Aucun produit disponible</p>
-            <p className="text-xs text-slate-400 mt-0.5">Revenez bientôt pour de nouveaux plans.</p>
-          </div>
-        ) : (
-          products.map((prod) => {
+        {(() => {
+          const userHasVip0 = investments.some(
+            inv => inv.productId === "vip0" || inv.productId === "vp0" || inv.productName?.toLowerCase().includes("vip 0") || inv.productName?.toLowerCase().includes("vp 0") || inv.productName?.toLowerCase().includes("découverte") || inv.productName?.toLowerCase().includes("decouverte")
+          );
+
+          const visibleProducts = products.filter(p => {
+            const isVip0 = p.id === "vip0" || p.id === "vp0" || p.level === 0 || p.name?.toLowerCase().includes("vip 0") || p.name?.toLowerCase().includes("vp 0") || p.name?.toLowerCase().includes("découverte") || p.name?.toLowerCase().includes("decouverte");
+            if (isVip0 && userHasVip0) {
+              return false; // Disappears automatically once collected / subscribed!
+            }
+            return true;
+          });
+
+          if (visibleProducts.length === 0) {
+            return (
+              <div className="text-center py-12 px-4">
+                <Cpu className="h-8 w-8 text-slate-300 mx-auto animate-pulse mb-2" />
+                <p className="text-sm font-black text-slate-600">Aucun produit disponible</p>
+                <p className="text-xs text-slate-400 mt-0.5">Revenez bientôt pour de nouveaux plans.</p>
+              </div>
+            );
+          }
+
+          return visibleProducts.map((prod) => {
             const ownedCount = getSubscribedCount(prod.id);
             const isBuying = buyingId === prod.id;
             const config = getProductConfig(prod.level);
@@ -173,26 +231,29 @@ export default function ProductsView({
               <div 
                 id={`product-card-${prod.id}`}
                 key={prod.id}
-                className="bg-white/90 rounded-3xl p-3.5 sm:p-4 border border-slate-200/80 shadow-xs hover:shadow-md transition-all space-y-3 relative overflow-hidden"
+                className={`rounded-3xl p-3.5 sm:p-4 border transition-all space-y-3 relative overflow-hidden ${
+                  isBlocked ? "bg-slate-100/90 border-slate-300/80 opacity-80" : "bg-white/90 border-slate-200/80 shadow-xs hover:shadow-md"
+                }`}
               >
                 {/* Product Image Showcase Banner with Text Overlay */}
-                <div className="w-full h-56 sm:h-64 rounded-2xl bg-gradient-to-br from-slate-100 via-emerald-50/30 to-slate-200 relative overflow-hidden flex items-center justify-center border border-slate-200/80 shadow-inner">
+                <div className="w-full h-52 sm:h-60 md:h-64 rounded-2xl bg-gradient-to-br from-slate-100 via-emerald-50/30 to-slate-200 relative overflow-hidden flex items-center justify-center border border-slate-200/80 shadow-inner">
                   {/* Image */}
-                  <img 
-                    src={config.url} 
-                    alt={config.label}
-                    referrerPolicy="no-referrer"
-                    className={`h-full max-h-52 sm:max-h-60 object-contain drop-shadow-lg transition-transform duration-300 hover:scale-105 ${isBlocked ? "opacity-40 grayscale-[20%]" : ""}`}
+                  <ProductImage
+                    src={prod.image || config.url}
+                    alt={prod.name || config.label}
+                    level={prod.level}
+                    isBlocked={isBlocked}
+                    className="w-full h-full transition-transform duration-300 hover:scale-105"
                   />
 
                   {/* Top Overlay Row: Badges */}
                   <div className="absolute top-3 inset-x-3 flex justify-between items-center z-10">
                     <div className="flex items-center gap-1.5">
                       <span className="bg-slate-900/85 backdrop-blur-md text-white text-[11px] font-mono font-black px-2.5 py-1 rounded-xl shadow-md border border-slate-700/50">
-                        POD-{prod.level}
+                        POD {prod.level}
                       </span>
                       <span className="bg-amber-400 text-slate-950 font-black text-xs px-2.5 py-1 rounded-xl shadow-md border border-amber-300 flex items-center gap-1">
-                        <span>💎</span> VIP {prod.level - 1}
+                        <span>💎</span> {prod.name.replace(/-/g, " ").trim()}
                       </span>
                     </div>
 
@@ -203,14 +264,14 @@ export default function ProductsView({
                     )}
 
                     {isBlocked && (
-                      <span className="inline-flex items-center gap-1 bg-amber-400 text-slate-950 text-xs font-black px-2.5 py-1 rounded-xl shadow-md">
-                        <Lock className="h-3.5 w-3.5 text-slate-950" /> Verrouillé
+                      <span className="inline-flex items-center gap-1 bg-amber-400 text-slate-950 text-xs font-black px-2.5 py-1 rounded-xl shadow-md border border-amber-300/80">
+                        <Lock className="h-3.5 w-3.5 text-slate-950" /> Désactivé
                       </span>
                     )}
                   </div>
 
                   {/* Gradient Overlay for Text Readability at Bottom of Image */}
-                  <div className="absolute inset-x-0 bottom-0 pt-10 pb-3 px-3 sm:px-4 bg-gradient-to-t from-slate-950/85 via-slate-950/50 to-transparent flex flex-col justify-end z-10">
+                  <div className={`absolute inset-x-0 bottom-0 pt-10 pb-3 px-3 sm:px-4 bg-gradient-to-t from-slate-950/85 via-slate-950/50 to-transparent flex flex-col justify-end z-10 ${isBlocked ? "blur-[1px]" : ""}`}>
                     <h4 className="text-base sm:text-lg font-black text-white leading-tight drop-shadow-sm">
                       {config.label}
                     </h4>
@@ -219,10 +280,10 @@ export default function ProductsView({
                     </p>
                   </div>
 
-                  {/* Blocked Full Overlay if in preparation */}
+                  {/* Blocked Full Overlay with Blur */}
                   {isBlocked && (
-                    <div className="absolute inset-0 bg-slate-950/55 backdrop-blur-[1px] flex items-center justify-center p-2 text-center z-20">
-                      <span className="bg-amber-400 text-slate-950 font-black text-xs px-3.5 py-2 rounded-2xl uppercase tracking-wider flex items-center gap-1.5 shadow-xl">
+                    <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-md flex items-center justify-center p-3 text-center z-20">
+                      <span className="bg-amber-400 text-slate-950 font-black text-xs px-3.5 py-2 rounded-2xl uppercase tracking-wider flex items-center gap-1.5 shadow-2xl border border-amber-300">
                         <Clock className="h-4 w-4 animate-spin" />
                         EN COURS DE PRÉPARATION
                       </span>
@@ -230,8 +291,8 @@ export default function ProductsView({
                   )}
                 </div>
 
-                {/* Larger Key-Value Pairs Specification Box */}
-                <div className="space-y-1.5 text-xs font-bold text-slate-600 bg-slate-50/90 p-3 rounded-2xl border border-slate-200/60">
+                {/* Larger Key-Value Pairs Specification Box (Blurred if isBlocked) */}
+                <div className={`space-y-1.5 text-xs font-bold text-slate-600 bg-slate-50/90 p-3 rounded-2xl border border-slate-200/60 ${isBlocked ? "blur-[2px] opacity-70 select-none" : ""}`}>
                   <div className="flex justify-between items-center py-0.5">
                     <span className="text-slate-500">Durée du contrat</span>
                     <span className="text-slate-900 font-extrabold text-xs sm:text-sm">{prod.durationDays} Jours</span>
@@ -286,8 +347,8 @@ export default function ProductsView({
 
               </div>
             );
-          })
-        )}
+          });
+        })()}
       </div>
 
       {/* Confirmation Modal */}
@@ -348,30 +409,38 @@ export default function ProductsView({
         </div>
       )}
 
-      {/* Alert Modal */}
+      {/* Frameless Floating Message Banner (No modal box frame) */}
       {alertModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white rounded-2xl max-w-xs w-full p-4 shadow-xl border border-slate-100 text-center space-y-3">
-            <div className="mx-auto h-9 w-9 rounded-full flex items-center justify-center text-xl">
-              {alertModal.type === "success" && <CheckCircle2 className="h-8 w-8 text-green-500" />}
-              {alertModal.type === "error" && <AlertTriangle className="h-8 w-8 text-red-500" />}
-              {alertModal.type === "info" && <Info className="h-8 w-8 text-emerald-500" />}
+        <div 
+          onClick={() => {
+            const action = alertModal.onClose;
+            setAlertModal(null);
+            if (action) action();
+          }}
+          className="fixed top-4 inset-x-3 sm:inset-x-auto sm:right-4 sm:max-w-md z-[100] cursor-pointer animate-slide-down select-none"
+        >
+          <div className={`p-3.5 rounded-2xl shadow-2xl flex items-center gap-3 text-white backdrop-blur-md transition-all ${
+            alertModal.type === "success" 
+              ? "bg-emerald-600/95" 
+              : alertModal.type === "error" 
+              ? "bg-rose-600/95" 
+              : "bg-slate-900/95"
+          }`}>
+            <div className="shrink-0 h-9 w-9 rounded-xl bg-white/20 flex items-center justify-center text-white font-bold">
+              {alertModal.type === "success" && <CheckCircle2 className="h-5 w-5 text-white" />}
+              {alertModal.type === "error" && <AlertTriangle className="h-5 w-5 text-white" />}
+              {alertModal.type === "info" && <Info className="h-5 w-5 text-white" />}
             </div>
-
-            <div className="space-y-1">
-              <h3 className="text-xs sm:text-sm font-black text-slate-900">{alertModal.title}</h3>
-              <p className="text-[10.5px] text-slate-500 leading-snug">{alertModal.message}</p>
+            <div className="flex-1 min-w-0 pr-1">
+              <p className="text-xs font-black uppercase tracking-wider text-white/90 leading-tight">
+                {alertModal.title}
+              </p>
+              <p className="text-xs font-bold text-white leading-snug mt-0.5">
+                {alertModal.message}
+              </p>
             </div>
-
-            <button
-              onClick={() => {
-                const action = alertModal.onClose;
-                setAlertModal(null);
-                if (action) action();
-              }}
-              className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-[11px] font-black cursor-pointer"
-            >
-              Fermer
+            <button className="shrink-0 text-white/80 hover:text-white p-1">
+              <X className="h-4 w-4" />
             </button>
           </div>
         </div>

@@ -5,9 +5,10 @@ import { api } from "../lib/api";
 
 interface AnnouncementsViewProps {
   onBack: () => void;
+  userPhone?: string;
 }
 
-export default function AnnouncementsView({ onBack }: AnnouncementsViewProps) {
+export default function AnnouncementsView({ onBack, userPhone }: AnnouncementsViewProps) {
   const [announcements, setAnnouncements] = useState<GlobalNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -15,7 +16,14 @@ export default function AnnouncementsView({ onBack }: AnnouncementsViewProps) {
   const fetchAnnouncements = async () => {
     try {
       const res = await api.getNotifications();
-      setAnnouncements(res.notifications || []);
+      const list = res.notifications || [];
+      setAnnouncements(list);
+
+      if (list.length > 0) {
+        const storageKey = userPhone ? `nutrien_read_notif_ids_${userPhone}` : "nutrien_read_notif_ids";
+        const allIds = list.map(n => n.id);
+        localStorage.setItem(storageKey, JSON.stringify(allIds));
+      }
     } catch (err) {
       console.warn("Erreur chargement annonces:", err);
     } finally {
@@ -25,7 +33,6 @@ export default function AnnouncementsView({ onBack }: AnnouncementsViewProps) {
   };
 
   useEffect(() => {
-    localStorage.setItem("nutrien_notif_read", "true");
     fetchAnnouncements();
   }, []);
 

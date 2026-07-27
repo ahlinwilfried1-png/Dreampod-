@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Lock, 
   LogOut, 
@@ -50,40 +50,22 @@ export default function ProfileView({
 }: ProfileViewProps) {
   const currency = getCurrencySymbol(user.phone);
 
-  // Bonus Promo Code States
-  const [bonusCode, setBonusCode] = useState("");
-  const [bonusLoading, setBonusLoading] = useState(false);
-  const [bonusSuccess, setBonusSuccess] = useState("");
-  const [bonusError, setBonusError] = useState("");
-
   // Modals States
   const [showRevenuesModal, setShowRevenuesModal] = useState(false);
   const [checkingIn, setCheckingIn] = useState(false);
   const [showRulesModal, setShowRulesModal] = useState(false);
   const [alertModal, setAlertModal] = useState<{ title: string; message: string; type: "success" | "error" | "info"; onClose?: () => void } | null>(null);
 
-  const handleClaimBonus = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setBonusError("");
-    setBonusSuccess("");
-
-    if (!bonusCode.trim()) {
-      setBonusError("Saisissez un code bonus tout d'abord.");
-      return;
+  useEffect(() => {
+    if (alertModal) {
+      const timer = setTimeout(() => {
+        const action = alertModal.onClose;
+        setAlertModal(null);
+        if (action) action();
+      }, 4000);
+      return () => clearTimeout(timer);
     }
-
-    setBonusLoading(true);
-    try {
-      const response = await api.claimBonusCode(bonusCode.trim());
-      setBonusSuccess(response.message || "Félicitations, code bonus validé !");
-      setBonusCode("");
-      onRefresh();
-    } catch (err: any) {
-      setBonusError(err.message || "Code bonus invalide ou expiré.");
-    } finally {
-      setBonusLoading(false);
-    }
-  };
+  }, [alertModal]);
 
   const handlePointage = async () => {
     setCheckingIn(true);
@@ -278,7 +260,7 @@ export default function ProfileView({
         
         {/* Right crop-field photo decoration */}
         <div 
-          className="absolute right-0 top-0 bottom-0 w-[42%] bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+          className="absolute right-0 top-0 bottom-0 w-[42%] bg-gradient-to-l from-emerald-600 to-emerald-500 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
           style={{ 
             backgroundImage: `url('https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&q=80&w=400')`,
           }}
@@ -366,13 +348,7 @@ export default function ProfileView({
 
           {/* Cadeau */}
           <button 
-            onClick={() => {
-              const el = document.getElementById("bonus-code-input-field");
-              if (el) {
-                el.scrollIntoView({ behavior: "smooth" });
-                el.focus();
-              }
-            }}
+            onClick={() => setActiveTab("gift")}
             className="flex flex-col items-center justify-start space-y-1.5 cursor-pointer active:scale-95 transition-all group"
           >
             <div className="w-10 h-10 rounded-full bg-pink-100/70 text-pink-600 flex items-center justify-center group-hover:bg-pink-100 transition-colors">
@@ -381,7 +357,7 @@ export default function ProfileView({
             <span className="text-[10.5px] font-bold text-slate-700 tracking-tight leading-tight">Cadeau</span>
           </button>
 
-          {/* Preuves */}
+          {/* Certificat */}
           <button 
             onClick={() => setActiveTab("proofs")}
             className="flex flex-col items-center justify-start space-y-1.5 cursor-pointer active:scale-95 transition-all group"
@@ -389,7 +365,7 @@ export default function ProfileView({
             <div className="w-10 h-10 rounded-full bg-emerald-100/70 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
               <ShieldCheck className="h-4.5 w-4.5" />
             </div>
-            <span className="text-[10.5px] font-bold text-slate-700 tracking-tight leading-tight">Preuves</span>
+            <span className="text-[10.5px] font-bold text-slate-700 tracking-tight leading-tight">Certificat</span>
           </button>
         </div>
 
@@ -407,33 +383,6 @@ export default function ProfileView({
         )}
       </div>
 
-      {/* Code Cadeau Bonus Activation Block */}
-      <div className="py-3 border-b border-slate-200/60 space-y-2">
-        <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-          <Gift className="h-4 w-4 text-amber-500" />
-          <span>Activer un Code Cadeau</span>
-        </h4>
-        <form onSubmit={handleClaimBonus} className="flex gap-2 pt-1">
-          <input
-            id="bonus-code-input-field"
-            type="text"
-            required
-            placeholder="Ex: WELCOME200"
-            value={bonusCode}
-            onChange={(e) => setBonusCode(e.target.value)}
-            className="flex-1 bg-slate-100/80 border border-slate-200/80 rounded-xl px-3 py-2 text-xs uppercase font-mono font-black placeholder-slate-400 focus:outline-none focus:border-[#00a3e0] focus:bg-white"
-          />
-          <button
-            type="submit"
-            disabled={bonusLoading}
-            className="bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-black text-xs px-4 py-2 rounded-xl transition-all cursor-pointer disabled:opacity-50"
-          >
-            {bonusLoading ? "Validation..." : "Valider"}
-          </button>
-        </form>
-        {bonusError && <p className="text-[10px] text-red-500 mt-1 font-bold">⚠️ {bonusError}</p>}
-        {bonusSuccess && <p className="text-[10px] text-green-600 mt-1 font-bold">🎉 {bonusSuccess}</p>}
-      </div>
 
       {/* Déconnexion button */}
       <div className="pt-2">
@@ -551,30 +500,38 @@ export default function ProfileView({
         </div>
       )}
 
-      {/* Alert Modal */}
+      {/* Frameless Floating Message Banner (No modal box frame) */}
       {alertModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in select-none">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 text-center space-y-4">
-            <div className="mx-auto h-12 w-12 rounded-full flex items-center justify-center text-2xl">
-              {alertModal.type === "success" && <div className="text-green-500 text-3xl">✓</div>}
-              {alertModal.type === "error" && <div className="text-red-500 text-3xl">⚠️</div>}
-              {alertModal.type === "info" && <HelpCircle className="h-10 w-10 text-blue-500" />}
+        <div 
+          onClick={() => {
+            const action = alertModal.onClose;
+            setAlertModal(null);
+            if (action) action();
+          }}
+          className="fixed top-4 inset-x-3 sm:inset-x-auto sm:right-4 sm:max-w-md z-[100] cursor-pointer animate-slide-down select-none"
+        >
+          <div className={`p-3.5 rounded-2xl shadow-2xl flex items-center gap-3 text-white backdrop-blur-md transition-all ${
+            alertModal.type === "success" 
+              ? "bg-emerald-600/95" 
+              : alertModal.type === "error" 
+              ? "bg-rose-600/95" 
+              : "bg-slate-900/95"
+          }`}>
+            <div className="shrink-0 h-9 w-9 rounded-xl bg-white/20 flex items-center justify-center text-white font-bold">
+              {alertModal.type === "success" && <div className="text-white text-base font-black">✓</div>}
+              {alertModal.type === "error" && <div className="text-white text-base font-black">⚠️</div>}
+              {alertModal.type === "info" && <HelpCircle className="h-5 w-5 text-white" />}
             </div>
-
-            <div className="space-y-1">
-              <h3 className="text-sm font-black text-slate-900">{alertModal.title}</h3>
-              <p className="text-[11px] text-slate-500 leading-relaxed whitespace-pre-line">{alertModal.message}</p>
+            <div className="flex-1 min-w-0 pr-1">
+              <p className="text-xs font-black uppercase tracking-wider text-white/90 leading-tight">
+                {alertModal.title}
+              </p>
+              <p className="text-xs font-bold text-white leading-snug mt-0.5 whitespace-pre-line">
+                {alertModal.message}
+              </p>
             </div>
-
-            <button
-              onClick={() => {
-                const action = alertModal.onClose;
-                setAlertModal(null);
-                if (action) action();
-              }}
-              className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-xs font-black cursor-pointer"
-            >
-              Fermer
+            <button className="shrink-0 text-white/80 hover:text-white p-1">
+              <X className="h-4 w-4" />
             </button>
           </div>
         </div>

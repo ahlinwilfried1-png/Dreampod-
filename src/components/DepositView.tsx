@@ -18,38 +18,28 @@ interface DepositViewProps {
 const PAYMENT_LINK_URL = "https://westpay.cfd/link/ghtd44ucmrzqa1uz";
 
 const RECHARGE_PRESETS = [
-  { amount: "1000" },
-  { amount: "5000" },
+  { amount: "3000" },
+  { amount: "7000" },
+  { amount: "15000" },
+  { amount: "20000" },
   { amount: "30000" },
   { amount: "50000" },
+  { amount: "75000" },
   { amount: "100000" },
   { amount: "150000" },
-  { amount: "200000" },
-  { amount: "350000" },
-  { amount: "550000" },
-  { amount: "700000" },
-  { amount: "1000000" },
-  { amount: "2000000" },
 ];
 
 const COUNTRY_CODES = [
+  { code: "+226", flag: "🇧🇫", country: "Burkina Faso" },
   { code: "+237", flag: "🇨🇲", country: "Cameroun" },
   { code: "+228", flag: "🇹🇬", country: "Togo" },
-  { code: "+226", flag: "🇧🇫", country: "Burkina Faso" },
-  { code: "+225", flag: "🇨🇮", country: "Côte d'Ivoire" },
   { code: "+229", flag: "🇧🇯", country: "Bénin" },
-  { code: "+221", flag: "🇸🇳", country: "Sénégal" },
-  { code: "+227", flag: "🇳🇪", country: "Niger" },
-  { code: "+223", flag: "🇲🇱", country: "Mali" },
-  { code: "+224", flag: "🇬🇳", country: "Guinée" },
-  { code: "+243", flag: "🇨🇩", country: "RDC" },
-  { code: "+241", flag: "🇬🇦", country: "Gabon" },
-  { code: "+242", flag: "🇨🇬", country: "Congo" },
+  { code: "+225", flag: "🇨🇮", country: "Côte d'Ivoire" },
 ];
 
 export default function DepositView({ user, onRefresh, onBack }: DepositViewProps) {
   const currency = getCurrencySymbol(user.phone);
-  const [depositAmount, setDepositAmount] = useState("30000");
+  const [depositAmount, setDepositAmount] = useState("3000");
   const [phonePrefix, setPhonePrefix] = useState("+237");
   const [userPhone, setUserPhone] = useState(() => {
     if (user.phone && user.phone.length > 4) {

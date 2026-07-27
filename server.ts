@@ -53,13 +53,16 @@ function generateReferralCode(): string {
 
 // Initial/Mock database structures
 const initialProducts: Product[] = [
-  { id: "vip1", name: "VIP 1 - Plan Élite", price: 5000, dailyIncome: 1000, durationDays: 30, totalIncome: 30000, level: 1, category: "stability" },
-  { id: "vip2", name: "VIP 2 - Plan Premium", price: 10000, dailyIncome: 2500, durationDays: 30, totalIncome: 75000, level: 2, category: "stability" },
-  { id: "vip3", name: "VIP 3 - Plan Gold", price: 25000, dailyIncome: 7000, durationDays: 30, totalIncome: 210000, level: 3, category: "wellbeing" },
-  { id: "vip4", name: "VIP 4 - Plan Platinum", price: 50000, dailyIncome: 16000, durationDays: 30, totalIncome: 480000, level: 4, category: "wellbeing" },
-  { id: "vip5", name: "VIP 5 - Plan Infini", price: 100000, dailyIncome: 35000, durationDays: 30, totalIncome: 1050000, level: 5, category: "activity" },
-  { id: "vip6", name: "VIP 6 - Plan Saphir", price: 250000, dailyIncome: 95000, durationDays: 30, totalIncome: 2850000, level: 6, category: "activity" },
-  { id: "vip7", name: "VIP 7 - Plan Diamant", price: 500000, dailyIncome: 200000, durationDays: 30, totalIncome: 6000000, level: 7, category: "activity" },
+  { id: "vip0", name: "VIP 0 - Plan Découverte", price: 1000, dailyIncome: 480, durationDays: 3, totalIncome: 1440, level: 0, category: "wellbeing", image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80" },
+  { id: "vip1", name: "VIP 1 - Plan Élite", price: 3000, dailyIncome: 400, durationDays: 200, totalIncome: 80000, level: 1, category: "stability", image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80" },
+  { id: "vip2", name: "VIP 2 - Plan Premium", price: 7000, dailyIncome: 850, durationDays: 200, totalIncome: 170000, level: 2, category: "stability", image: "https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=800&q=80" },
+  { id: "vip3", name: "VIP 3 - Plan Gold", price: 15000, dailyIncome: 1600, durationDays: 200, totalIncome: 320000, level: 3, category: "wellbeing", image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80" },
+  { id: "vip4", name: "VIP 4 - Plan Platinum", price: 20000, dailyIncome: 2200, durationDays: 200, totalIncome: 440000, level: 4, category: "wellbeing", image: "https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=800&q=80" },
+  { id: "vip5", name: "VIP 5 - Plan Infini", price: 30000, dailyIncome: 3600, durationDays: 200, totalIncome: 720000, level: 5, category: "activity", image: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=800&q=80" },
+  { id: "vip6", name: "VIP 6 - Plan Saphir", price: 50000, dailyIncome: 5600, durationDays: 200, totalIncome: 1120000, level: 6, category: "activity", image: "https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=800&q=80" },
+  { id: "vip7", name: "VIP 7 - Plan Diamant", price: 75000, dailyIncome: 7700, durationDays: 200, totalIncome: 1540000, level: 7, category: "activity", image: "https://images.unsplash.com/photo-1586771107445-d3ca888129ff?auto=format&fit=crop&w=800&q=80" },
+  { id: "vip8", name: "VIP 8 - Plan Rubis", price: 100000, dailyIncome: 12500, durationDays: 200, totalIncome: 2500000, level: 8, category: "activity", image: "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80" },
+  { id: "vip9", name: "VIP 9 - Plan Émeraude", price: 150000, dailyIncome: 25000, durationDays: 200, totalIncome: 5000000, level: 9, category: "activity", image: "https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=800&q=80" },
 ];
 
 const initialBonusCodes: BonusCode[] = [
@@ -107,8 +110,8 @@ const cleanEnvVar = (val: string | undefined): string => {
   return cleaned;
 };
 
-const supabaseUrl = cleanEnvVar(process.env.SUPABASE_URL);
-const supabaseServiceKey = cleanEnvVar(process.env.SUPABASE_SERVICE_ROLE_KEY);
+const supabaseUrl = cleanEnvVar(process.env.SUPABASE_URL) || "https://kpamzpdjjswmlpujlqpp.supabase.co";
+const supabaseServiceKey = cleanEnvVar(process.env.SUPABASE_SERVICE_ROLE_KEY) || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtwYW16cGRqanN3bWxwdWpscXBwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NTEzNzMwMywiZXhwIjoyMTAwNzEzMzAzfQ.VZHZPRoD3Rj4YOQUMs9Z1uuKW_1iy-lqn0d4B3eBU7k";
 const supabase = (supabaseUrl && supabaseServiceKey)
   ? createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
@@ -274,38 +277,33 @@ function migrateDatabase(parsed: any): DatabaseSchema {
     ];
   }
 
-  // Migrate existing products to have categories and ensure all 6 VIP plans are always present
+  // Migrate existing products to have categories and ensure all VIP plans are always present with exact NUTRIEN rates
   const defaultProducts = [
-    { id: "vip1", name: "VIP 1 - Plan Élite", price: 5000, dailyIncome: 1000, durationDays: 30, totalIncome: 30000, level: 1, category: "stability" },
-    { id: "vip2", name: "VIP 2 - Plan Premium", price: 10000, dailyIncome: 2500, durationDays: 30, totalIncome: 75000, level: 2, category: "stability" },
-    { id: "vip3", name: "VIP 3 - Plan Gold", price: 25000, dailyIncome: 7000, durationDays: 30, totalIncome: 210000, level: 3, category: "wellbeing" },
-    { id: "vip4", name: "VIP 4 - Plan Platinum", price: 50000, dailyIncome: 16000, durationDays: 30, totalIncome: 480000, level: 4, category: "wellbeing" },
-    { id: "vip5", name: "VIP 5 - Plan Infini", price: 100000, dailyIncome: 35000, durationDays: 30, totalIncome: 1050000, level: 5, category: "activity" },
-    { id: "vip6", name: "VIP 6 - Plan Saphir", price: 250000, dailyIncome: 95000, durationDays: 30, totalIncome: 2850000, level: 6, category: "activity" },
-    { id: "vip7", name: "VIP 7 - Plan Diamant", price: 500000, dailyIncome: 200000, durationDays: 30, totalIncome: 6000000, level: 7, category: "activity" },
+    { id: "vip0", name: "VIP 0 - Plan Découverte", price: 1000, dailyIncome: 480, durationDays: 3, totalIncome: 1440, level: 0, category: "wellbeing", image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip1", name: "VIP 1 - Plan Élite", price: 3000, dailyIncome: 400, durationDays: 200, totalIncome: 80000, level: 1, category: "stability", image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip2", name: "VIP 2 - Plan Premium", price: 7000, dailyIncome: 850, durationDays: 200, totalIncome: 170000, level: 2, category: "stability", image: "https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip3", name: "VIP 3 - Plan Gold", price: 15000, dailyIncome: 1600, durationDays: 200, totalIncome: 320000, level: 3, category: "wellbeing", image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip4", name: "VIP 4 - Plan Platinum", price: 20000, dailyIncome: 2200, durationDays: 200, totalIncome: 440000, level: 4, category: "wellbeing", image: "https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip5", name: "VIP 5 - Plan Infini", price: 30000, dailyIncome: 3600, durationDays: 200, totalIncome: 720000, level: 5, category: "activity", image: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip6", name: "VIP 6 - Plan Saphir", price: 50000, dailyIncome: 5600, durationDays: 200, totalIncome: 1120000, level: 6, category: "activity", image: "https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip7", name: "VIP 7 - Plan Diamant", price: 75000, dailyIncome: 7700, durationDays: 200, totalIncome: 1540000, level: 7, category: "activity", image: "https://images.unsplash.com/photo-1586771107445-d3ca888129ff?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip8", name: "VIP 8 - Plan Rubis", price: 100000, dailyIncome: 12500, durationDays: 200, totalIncome: 2500000, level: 8, category: "activity", image: "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip9", name: "VIP 9 - Plan Émeraude", price: 150000, dailyIncome: 25000, durationDays: 200, totalIncome: 5000000, level: 9, category: "activity", image: "https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=800&q=80" },
   ];
 
   if (!parsed.products || parsed.products.length === 0) {
     parsed.products = defaultProducts;
   } else {
-    parsed.products = parsed.products.map((p: any) => {
-      if (!p.category) {
-        if (p.id === "vip1" || p.id === "vip2") {
-          p.category = "stability";
-        } else if (p.id === "vip3" || p.id === "vip4") {
-          p.category = "wellbeing";
-        } else {
-          p.category = "activity";
-        }
+    // Always sync products with updated DOOSAN rates
+    parsed.products = defaultProducts.map((defP: any) => {
+      const existing = parsed.products.find((p: any) => p.id === defP.id || (defP.id === "vip0" && (p.id === "vp0" || p.level === 0 || p.name?.toLowerCase().includes("vip 0"))));
+      if (existing) {
+        return {
+          ...defP,
+          isBlocked: existing.isBlocked ?? false,
+        };
       }
-      return p;
-    });
-
-    // Ensure all default products exist in the array
-    defaultProducts.forEach(defProd => {
-      if (!parsed.products.some((p: any) => p.id === defProd.id)) {
-        parsed.products.push(defProd);
-      }
+      return defP;
     });
   }
 
@@ -1161,7 +1159,11 @@ async function startServer() {
 
   // Notifications
   app.get("/api/notifications", (req, res) => {
-    const activeNotifs = db.notifications.filter(n => n.active);
+    if (!db.notifications || db.notifications.length === 0) {
+      db.notifications = initialNotifications;
+      saveDatabase(db);
+    }
+    const activeNotifs = db.notifications.filter(n => n.active !== false);
     res.json({ notifications: activeNotifs });
   });
 
@@ -1182,6 +1184,35 @@ async function startServer() {
 
     if (product.isBlocked) {
       return res.status(400).json({ error: "Désolé, ce produit/plan VIP est temporairement désactivé par l'administration." });
+    }
+
+    // Single-use constraint for VIP 0
+    const isVip0Product =
+      product.id === "vip0" ||
+      product.id === "vp0" ||
+      product.level === 0 ||
+      product.name.toLowerCase().includes("vip 0") ||
+      product.name.toLowerCase().includes("vp 0") ||
+      product.name.toLowerCase().includes("découverte") ||
+      product.name.toLowerCase().includes("decouverte");
+
+    if (isVip0Product) {
+      const alreadySubscribedVip0 = db.investments.some(
+        inv => inv.userId === userId && (
+          inv.productId === product.id ||
+          inv.productId === "vip0" ||
+          inv.productId === "vp0" ||
+          inv.productName.toLowerCase().includes("vip 0") ||
+          inv.productName.toLowerCase().includes("vp 0") ||
+          inv.productName.toLowerCase().includes("découverte") ||
+          inv.productName.toLowerCase().includes("decouverte")
+        )
+      );
+      if (alreadySubscribedVip0) {
+        return res.status(400).json({
+          error: "Vous avez déjà bénéficié de l'offre spéciale VIP 0. Ce produit est réservé à un usage unique par utilisateur."
+        });
+      }
     }
 
     // Find user
@@ -1938,7 +1969,7 @@ async function startServer() {
 
   // Admin: Add new VIP investment plan product
   app.post("/api/admin/products/add", authenticateAdmin, (req, res) => {
-    const { name, price, dailyIncome, durationDays, category } = req.body;
+    const { name, price, dailyIncome, durationDays, category, image } = req.body;
     if (!name || !price || !dailyIncome || !durationDays) {
       return res.status(400).json({ error: "Veuillez remplir tous les champs du produit." });
     }
@@ -1951,7 +1982,8 @@ async function startServer() {
       durationDays: Number(durationDays),
       totalIncome: Number(dailyIncome) * Number(durationDays),
       level: db.products.length + 1,
-      category: category || "stability",
+      category: category || "wellbeing",
+      image: image || undefined,
     };
 
     db.products.push(newProd);
@@ -1980,7 +2012,7 @@ async function startServer() {
   // Admin: Update VIP plan product
   app.put("/api/admin/products/:id", authenticateAdmin, (req, res) => {
     const id = req.params.id;
-    const { name, price, dailyIncome, durationDays, category, isBlocked } = req.body;
+    const { name, price, dailyIncome, durationDays, category, isBlocked, image } = req.body;
     const prodIdx = db.products.findIndex(p => p.id === id);
     if (prodIdx === -1) {
       return res.status(404).json({ error: "Produit/Plan introuvable." });
@@ -1992,6 +2024,7 @@ async function startServer() {
     if (durationDays !== undefined) prod.durationDays = Number(durationDays);
     if (category !== undefined) prod.category = category;
     if (isBlocked !== undefined) prod.isBlocked = !!isBlocked;
+    if (image !== undefined) prod.image = image;
     prod.totalIncome = prod.dailyIncome * prod.durationDays;
     
     saveDatabase(db);
@@ -2118,6 +2151,14 @@ async function startServer() {
       message: "Notification globale diffusée avec succès !",
       notification: newNotif,
     });
+  });
+
+  // Admin: Delete a notification
+  app.delete("/api/admin/notifications/:id", authenticateAdmin, (req, res) => {
+    const { id } = req.params;
+    db.notifications = (db.notifications || []).filter(n => n.id !== id);
+    saveDatabase(db);
+    res.json({ message: "Annonce supprimée avec succès." });
   });
 
   // Admin: Synchronize local storage state with server state
@@ -2376,6 +2417,34 @@ async function startServer() {
   // Admin: Get all reviews
   app.get("/api/admin/reviews", authenticateAdmin, (req, res) => {
     res.json({ reviews: db.userReviews });
+  });
+
+  // Admin: Create official review/proof with image
+  app.post("/api/admin/reviews", authenticateAdmin, (req, res) => {
+    const { userName, userPhone, rating, comment, image } = req.body;
+    if (!comment) {
+      return res.status(400).json({ error: "Un commentaire ou témoignage est requis." });
+    }
+
+    const newReview: UserReview = {
+      id: generateId("rev"),
+      userId: (req as any).user?.id || "admin_official",
+      userName: userName || "Membre Nutrien Ag",
+      userPhone: userPhone || "+22890000000",
+      rating: Number(rating) || 5,
+      comment: comment.trim(),
+      image: image || undefined,
+      createdAt: new Date().toISOString(),
+      status: "approved",
+    };
+
+    db.userReviews.unshift(newReview);
+    saveDatabase(db);
+
+    res.status(201).json({
+      message: "Preuve / Certificat officiel publié avec succès !",
+      review: newReview,
+    });
   });
 
   // Admin: Verify a user review

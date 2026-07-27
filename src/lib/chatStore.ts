@@ -17,6 +17,8 @@ export interface SupportMessage {
   timestamp: number;
   readByAdmin?: boolean;
   readByUser?: boolean;
+  deletedForAdmin?: boolean;
+  deletedForUser?: boolean;
 }
 
 export interface SupportConversation {
@@ -269,6 +271,82 @@ export function deleteConversation(convId: string) {
   let conversations = getAllConversations();
   conversations = conversations.filter((c) => c.id !== convId && c.userId !== convId);
   saveConversations(conversations);
+}
+
+export function clearConversationForAdmin(convId: string) {
+  const conversations = getAllConversations();
+  const conv = conversations.find((c) => c.id === convId || c.userId === convId);
+  if (!conv) return;
+
+  conv.messages.forEach((m) => {
+    m.deletedForAdmin = true;
+  });
+  conv.unreadCountForAdmin = 0;
+
+  const remainingAdminMsgs = conv.messages.filter((m) => !m.deletedForAdmin);
+  if (remainingAdminMsgs.length > 0) {
+    conv.lastMessage = remainingAdminMsgs[remainingAdminMsgs.length - 1].text || "Fichier joint";
+  } else {
+    conv.lastMessage = "Discussion effacée par l'administrateur";
+  }
+
+  saveConversations(conversations);
+}
+
+export function clearConversationForUser(convId: string) {
+  const conversations = getAllConversations();
+  const conv = conversations.find((c) => c.id === convId || c.userId === convId);
+  if (!conv) return;
+
+  conv.messages.forEach((m) => {
+    m.deletedForUser = true;
+  });
+  conv.unreadCountForUser = 0;
+
+  const remainingUserMsgs = conv.messages.filter((m) => !m.deletedForUser);
+  if (remainingUserMsgs.length > 0) {
+    conv.lastMessage = remainingUserMsgs[remainingUserMsgs.length - 1].text || "Fichier joint";
+  } else {
+    conv.lastMessage = "Discussion effacée";
+  }
+
+  saveConversations(conversations);
+}
+
+export function deleteMessageForAdmin(msgId: string, convId: string) {
+  const conversations = getAllConversations();
+  const conv = conversations.find((c) => c.id === convId || c.userId === convId);
+  if (!conv) return;
+
+  const msg = conv.messages.find((m) => m.id === msgId);
+  if (msg) {
+    msg.deletedForAdmin = true;
+    const remainingAdminMsgs = conv.messages.filter((m) => !m.deletedForAdmin);
+    if (remainingAdminMsgs.length > 0) {
+      conv.lastMessage = remainingAdminMsgs[remainingAdminMsgs.length - 1].text || "Fichier joint";
+    } else {
+      conv.lastMessage = "Aucun message";
+    }
+    saveConversations(conversations);
+  }
+}
+
+export function deleteMessageForUser(msgId: string, convId: string) {
+  const conversations = getAllConversations();
+  const conv = conversations.find((c) => c.id === convId || c.userId === convId);
+  if (!conv) return;
+
+  const msg = conv.messages.find((m) => m.id === msgId);
+  if (msg) {
+    msg.deletedForUser = true;
+    const remainingUserMsgs = conv.messages.filter((m) => !m.deletedForUser);
+    if (remainingUserMsgs.length > 0) {
+      conv.lastMessage = remainingUserMsgs[remainingUserMsgs.length - 1].text || "Fichier joint";
+    } else {
+      conv.lastMessage = "Aucun message";
+    }
+    saveConversations(conversations);
+  }
 }
 
 export function subscribeChatUpdates(callback: () => void) {

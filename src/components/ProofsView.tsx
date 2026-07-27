@@ -39,20 +39,27 @@ export default function ProofsView({ onBack, userPhone }: ProofsViewProps) {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const loadProofs = async () => {
-    setLoading(true);
+  const OFFICIAL_CERTIFICATE_IMAGE = "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=1200&q=90";
+
+  const loadProofs = async (showLoadingState = true) => {
+    if (showLoadingState) setLoading(true);
     try {
       const res = await api.getReviews();
       setProofs(res.reviews || []);
     } catch (err) {
       console.warn("Erreur chargement des preuves:", err);
     } finally {
-      setLoading(false);
+      if (showLoadingState) setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadProofs();
+    loadProofs(true);
+    // Poll every 8 seconds to ensure newly published proofs/certificates are visible live across all user accounts
+    const interval = setInterval(() => {
+      loadProofs(false);
+    }, 8000);
+    return () => clearInterval(interval);
   }, []);
 
   const compressAndSetImage = (file: File) => {
@@ -63,7 +70,7 @@ export default function ProofsView({ onBack, userPhone }: ProofsViewProps) {
         const canvas = document.createElement("canvas");
         let width = img.width;
         let height = img.height;
-        const maxDim = 1000;
+        const maxDim = 1400;
 
         if (width > maxDim || height > maxDim) {
           if (width > height) {
@@ -80,7 +87,7 @@ export default function ProofsView({ onBack, userPhone }: ProofsViewProps) {
         const ctx = canvas.getContext("2d");
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.75);
+          const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.85);
           setImage(compressedDataUrl);
           setErrorMessage("");
         } else {
@@ -169,7 +176,7 @@ export default function ProofsView({ onBack, userPhone }: ProofsViewProps) {
           <ArrowLeft className="h-6 w-6 stroke-[2.5]" />
         </button>
         <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
-          Preuves de retrait
+          Téléchargement des Preuves
         </h1>
         <div className="w-6" /> {/* Spacer for symmetry */}
       </div>
@@ -180,14 +187,14 @@ export default function ProofsView({ onBack, userPhone }: ProofsViewProps) {
         <div className="relative bg-gradient-to-r from-amber-100 via-amber-50 to-orange-100 border border-amber-200 rounded-3xl p-4 sm:p-5 overflow-hidden shadow-xs flex items-center justify-between gap-3">
           <div className="space-y-2 z-10 max-w-[65%]">
             <h2 className="text-xs sm:text-sm font-black uppercase text-slate-900 leading-snug tracking-tight">
-              TÉLÉCHARGEZ VOTRE PROPRE BON DE RETRAIT POUR OBTENIR DES RÉCOMPENSES EN ESPÈCES
+              TÉLÉCHARGEZ VOTRE CERTIFICAT DE RETRAIT POUR OBTENIR DES RÉCOMPENSES EN ESPÈCES
             </h2>
             <button
               onClick={() => setShowUploadForm(!showUploadForm)}
               className="inline-flex items-center gap-1.5 bg-orange-500 hover:bg-orange-600 text-white text-[11px] font-black px-3 py-1.5 rounded-full shadow-xs cursor-pointer transition-transform active:scale-95"
             >
               <Upload className="h-3.5 w-3.5" />
-              <span>{showUploadForm ? "Fermer le formulaire" : "Télécharger ma preuve"}</span>
+              <span>{showUploadForm ? "Fermer le formulaire" : "Télécharger mon certificat"}</span>
             </button>
           </div>
 
@@ -208,7 +215,7 @@ export default function ProofsView({ onBack, userPhone }: ProofsViewProps) {
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <h3 className="text-xs font-black uppercase text-slate-900 flex items-center gap-1.5">
                 <Upload className="h-4 w-4 text-orange-500" />
-                Publier une preuve de retrait
+                Publier un certificat de retrait
               </h3>
               <button
                 type="button"
@@ -222,8 +229,8 @@ export default function ProofsView({ onBack, userPhone }: ProofsViewProps) {
             {submitSuccess ? (
               <div className="bg-emerald-50 p-4 rounded-2xl text-emerald-800 text-center space-y-1">
                 <CheckCircle2 className="h-8 w-8 text-emerald-600 mx-auto" />
-                <p className="text-xs font-black">Preuve Publiée avec Succès !</p>
-                <p className="text-[11px] text-emerald-700">Votre bon de retrait est désormais visible immédiatement sur le site pour toute la communauté.</p>
+                <p className="text-xs font-black">Certificat Publié avec Succès !</p>
+                <p className="text-[11px] text-emerald-700">Votre certificat de retrait est désormais disponible et visible immédiatement sur le compte de tout le monde.</p>
               </div>
             ) : (
               <form onSubmit={handleSubmitProof} className="space-y-3 text-left">
@@ -249,11 +256,11 @@ export default function ProofsView({ onBack, userPhone }: ProofsViewProps) {
 
                 <div>
                   <label className="text-[10px] font-black uppercase text-slate-700 block mb-1">
-                    Capture du reçu Mobile Money / SMS *
+                    Capture / Image du Certificat ou Reçu Mobile Money *
                   </label>
                   {image ? (
                     <div className="relative rounded-xl overflow-hidden max-h-40 bg-slate-100 border border-slate-200 flex items-center justify-center">
-                      <img src={image} alt="Preuve" className="object-contain max-h-40 w-full" />
+                      <img src={image} alt="Certificat" className="object-contain max-h-40 w-full" />
                       <button
                         type="button"
                         onClick={() => setImage(null)}
@@ -266,7 +273,7 @@ export default function ProofsView({ onBack, userPhone }: ProofsViewProps) {
                     <label className="flex flex-col items-center justify-center rounded-xl p-4 border border-dashed border-orange-300 bg-orange-50/30 hover:bg-orange-50/80 cursor-pointer transition-all text-center">
                       <Camera className="h-6 w-6 text-orange-500 mb-1" />
                       <span className="text-[11px] font-black text-slate-800">
-                        Cliquez pour importer la capture d'écran
+                        Cliquez pour importer le certificat ou la capture
                       </span>
                       <span className="text-[9px] text-slate-400 mt-0.5">JPG, PNG (Max 5Mo)</span>
                       <input
@@ -285,7 +292,7 @@ export default function ProofsView({ onBack, userPhone }: ProofsViewProps) {
                   </label>
                   <textarea
                     rows={2}
-                    placeholder="ex: Je confirme avoir reçu le dépôt merci❤️"
+                    placeholder="ex: Je confirme avoir reçu mon paiement, merci ❤️"
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-900 focus:outline-none focus:bg-white focus:border-orange-500"
@@ -302,7 +309,7 @@ export default function ProofsView({ onBack, userPhone }: ProofsViewProps) {
                   ) : (
                     <>
                       <CheckCircle2 className="h-4 w-4" />
-                      <span>Publier ma preuve & Obtenir ma récompense</span>
+                      <span>Publier mon certificat & Obtenir ma récompense</span>
                     </>
                   )}
                 </button>
@@ -311,23 +318,23 @@ export default function ProofsView({ onBack, userPhone }: ProofsViewProps) {
           </div>
         )}
 
-        {/* 4. SECTION HEADER */}
-        <div className="pt-1">
+        {/* SECTION HEADER */}
+        <div className="pt-2 flex items-center justify-between">
           <h2 className="text-sm sm:text-base font-black text-slate-900 tracking-tight">
             Téléchargement des preuves par l'utilisateur
           </h2>
         </div>
 
-        {/* 5. PROOFS LIST (MATCHING THE SCREENSHOT EXACTLY) */}
+        {/* 6. PROOFS LIST */}
         {loading ? (
           <div className="py-12 text-center text-xs text-slate-400 font-bold animate-pulse bg-white rounded-2xl border border-slate-200">
-            Chargement des preuves réelles...
+            Chargement des certificats...
           </div>
         ) : proofs.length === 0 ? (
           <div className="bg-white rounded-2xl border border-slate-200 p-6 text-center space-y-2">
-            <p className="text-xs font-extrabold text-slate-700">Aucune preuve disponible pour le moment.</p>
+            <p className="text-xs font-extrabold text-slate-700">Aucun certificat disponible pour le moment.</p>
             <p className="text-[11px] text-slate-400">
-              Soyez le premier à publier votre bon de retrait ci-dessus !
+              Soyez le premier à publier votre certificat de retrait ci-dessus !
             </p>
           </div>
         ) : (
@@ -374,16 +381,23 @@ export default function ProofsView({ onBack, userPhone }: ProofsViewProps) {
                     </p>
                   </div>
 
-                  {/* Right Column Image Thumbnail */}
+                  {/* Right Column Image Thumbnail (Clickable for full screen lightbox) */}
                   <div 
-                    className="w-20 h-16 sm:w-24 sm:h-20 rounded-xl border border-slate-300 overflow-hidden flex items-center justify-center bg-slate-50 shrink-0"
+                    onClick={() => item.image && setPreviewImage(item.image)}
+                    className={`w-20 h-16 sm:w-24 sm:h-20 rounded-xl border border-slate-300 overflow-hidden flex items-center justify-center bg-slate-50 shrink-0 relative group ${item.image ? 'cursor-pointer hover:border-orange-500 hover:shadow-md' : ''}`}
+                    title={item.image ? "Cliquer pour agrandir l'image" : undefined}
                   >
                     {item.image ? (
-                      <img 
-                        src={item.image} 
-                        alt="Aperçu preuve" 
-                        className="w-full h-full object-cover pointer-events-none select-none"
-                      />
+                      <>
+                        <img 
+                          src={item.image} 
+                          alt="Preuve de retrait" 
+                          className="w-full h-full object-cover pointer-events-none select-none group-hover:scale-105 transition-transform"
+                        />
+                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <span className="bg-slate-900/90 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow">🔍 Voir</span>
+                        </div>
+                      </>
                     ) : (
                       <div className="flex flex-col items-center justify-center text-slate-300">
                         <ImageIcon className="h-7 w-7 stroke-[1.5]" />
@@ -397,6 +411,34 @@ export default function ProofsView({ onBack, userPhone }: ProofsViewProps) {
         )}
 
       </div>
+
+      {/* FULL-SCREEN IMAGE LIGHTBOX PREVIEW MODAL */}
+      {previewImage && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4 animate-fade-in"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div className="relative max-w-2xl w-full max-h-[88vh] flex flex-col items-center justify-center" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute -top-11 right-0 bg-white/20 hover:bg-white/40 text-white p-2 rounded-full cursor-pointer transition-colors shadow-lg"
+              title="Fermer"
+            >
+              <X className="h-6 w-6" />
+            </button>
+            <img 
+              src={previewImage} 
+              alt="Certificat / Preuve en grand" 
+              className="max-w-full max-h-[82vh] object-contain rounded-2xl shadow-2xl border border-white/20"
+            />
+            <div className="mt-3 text-center">
+              <span className="text-white/80 text-xs font-bold bg-black/60 px-4 py-1.5 rounded-full border border-white/10">
+                🔍 Document Officiel / Preuve de Retrait
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

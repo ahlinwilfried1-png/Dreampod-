@@ -32,6 +32,7 @@ import { getCurrencySymbol } from "./lib/currency";
 import SpinWheelView from "./components/SpinWheelView";
 import ProofsView from "./components/ProofsView";
 import AnnouncementsView from "./components/AnnouncementsView";
+import GiftView from "./components/GiftView";
 import FloatingCustomerService from "./components/FloatingCustomerService";
 import { Cpu, ShieldCheck, X, Gift, Send } from "lucide-react";
 
@@ -266,7 +267,7 @@ export default function App() {
     <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-emerald-50/40 to-slate-50 text-slate-800 relative w-full overflow-x-hidden">
       
       {/* Main Multi-Tab Core View Layout */}
-      <main className="w-full max-w-xl mx-auto px-3 sm:px-5 pt-3 pb-24 overflow-x-hidden">
+      <main className="w-full max-w-2xl mx-auto px-3 sm:px-6 pt-3 pb-24 overflow-x-hidden">
         
         {activeTab === "dashboard" && (
           <DashboardView
@@ -348,6 +349,15 @@ export default function App() {
           <SupportView
             onBack={() => setActiveTab(previousTab)}
             userPhone={user.phone}
+            initialMode="chat"
+          />
+        )}
+
+        {activeTab === "customer_service" && (
+          <SupportView
+            onBack={() => setActiveTab(previousTab)}
+            userPhone={user.phone}
+            initialMode="channels"
           />
         )}
 
@@ -406,6 +416,15 @@ export default function App() {
         {activeTab === "announcements" && (
           <AnnouncementsView
             onBack={() => setActiveTab(previousTab)}
+            userPhone={user.phone}
+          />
+        )}
+
+        {activeTab === "gift" && (
+          <GiftView
+            user={user}
+            onRefresh={handleRefreshData}
+            onBack={() => setActiveTab(previousTab)}
           />
         )}
 
@@ -413,7 +432,7 @@ export default function App() {
 
       {/* Floating Draggable Customer Service Badge Widget */}
       {activeTab !== "admin" && (
-        <FloatingCustomerService onClick={() => handleSetActiveTab("support")} />
+        <FloatingCustomerService onClick={() => handleSetActiveTab("customer_service")} />
       )}
 
       {/* Persistent Elegant Bottom Navigation (fixed to bottom viewport) */}

@@ -69,13 +69,16 @@ let useLocalFallback = false;
 
 function getLocalDb() {
   const defaultProducts: Product[] = [
-    { id: "vip1", name: "VIP 1 - Plan Élite", price: 5000, dailyIncome: 1000, durationDays: 30, totalIncome: 30000, level: 1, category: "stability" },
-    { id: "vip2", name: "VIP 2 - Plan Premium", price: 10000, dailyIncome: 2500, durationDays: 30, totalIncome: 75000, level: 2, category: "stability" },
-    { id: "vip3", name: "VIP 3 - Plan Gold", price: 25000, dailyIncome: 7000, durationDays: 30, totalIncome: 210000, level: 3, category: "wellbeing" },
-    { id: "vip4", name: "VIP 4 - Plan Platinum", price: 50000, dailyIncome: 16000, durationDays: 30, totalIncome: 480000, level: 4, category: "wellbeing" },
-    { id: "vip5", name: "VIP 5 - Plan Infini", price: 100000, dailyIncome: 35000, durationDays: 30, totalIncome: 1050000, level: 5, category: "activity" },
-    { id: "vip6", name: "VIP 6 - Plan Saphir", price: 250000, dailyIncome: 95000, durationDays: 30, totalIncome: 2850000, level: 6, category: "activity" },
-    { id: "vip7", name: "VIP 7 - Plan Diamant", price: 500000, dailyIncome: 200000, durationDays: 30, totalIncome: 6000000, level: 7, category: "activity" },
+    { id: "vip0", name: "VIP 0 - Plan Découverte", price: 1000, dailyIncome: 480, durationDays: 3, totalIncome: 1440, level: 0, category: "wellbeing", image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip1", name: "VIP 1 - Plan Élite", price: 3000, dailyIncome: 400, durationDays: 200, totalIncome: 80000, level: 1, category: "stability", image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip2", name: "VIP 2 - Plan Premium", price: 7000, dailyIncome: 850, durationDays: 200, totalIncome: 170000, level: 2, category: "stability", image: "https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip3", name: "VIP 3 - Plan Gold", price: 15000, dailyIncome: 1600, durationDays: 200, totalIncome: 320000, level: 3, category: "wellbeing", image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip4", name: "VIP 4 - Plan Platinum", price: 20000, dailyIncome: 2200, durationDays: 200, totalIncome: 440000, level: 4, category: "wellbeing", image: "https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip5", name: "VIP 5 - Plan Infini", price: 30000, dailyIncome: 3600, durationDays: 200, totalIncome: 720000, level: 5, category: "activity", image: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip6", name: "VIP 6 - Plan Saphir", price: 50000, dailyIncome: 5600, durationDays: 200, totalIncome: 1120000, level: 6, category: "activity", image: "https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip7", name: "VIP 7 - Plan Diamant", price: 75000, dailyIncome: 7700, durationDays: 200, totalIncome: 1540000, level: 7, category: "activity", image: "https://images.unsplash.com/photo-1586771107445-d3ca888129ff?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip8", name: "VIP 8 - Plan Rubis", price: 100000, dailyIncome: 12500, durationDays: 200, totalIncome: 2500000, level: 8, category: "activity", image: "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip9", name: "VIP 9 - Plan Émeraude", price: 150000, dailyIncome: 25000, durationDays: 200, totalIncome: 5000000, level: 9, category: "activity", image: "https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=800&q=80" },
   ];
 
   const defaultBonusCodes: BonusCode[] = [
@@ -278,13 +281,36 @@ function getLocalDb() {
 
   const defaultUserReviews: UserReview[] = [
     {
+      id: "rev_cert_1",
+      userId: "admin_official",
+      userName: "Nutrien Ag Solutions®",
+      userPhone: "+22890000000",
+      rating: 5,
+      comment: "Certificat officiel d'enregistrement et d'exploitation légale Nutrien Ag Solutions.",
+      image: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=1200&q=90",
+      createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      status: "approved",
+    },
+    {
       id: "rev_1",
       userId: "usr_demo",
       userName: "Jean Kouassi",
       userPhone: "+22890123456",
       rating: 5,
-      comment: "Superbe plateforme d'investissement. Les gains journaliers sont payés à l'heure.",
+      comment: "Certificat de retrait de 15 000 FCFA reçu instantanément par Mobile Money. Merci !",
+      image: "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=1200&q=90",
       createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      status: "approved",
+    },
+    {
+      id: "rev_2",
+      userId: "usr_demo_2",
+      userName: "Awa Diallo",
+      userPhone: "+22507010203",
+      rating: 5,
+      comment: "Attestation de paiement du revenu VIP. Plateforme fiable à 100%.",
+      image: "https://images.unsplash.com/photo-1563013544-824ae1d704d3?auto=format&fit=crop&w=1200&q=90",
+      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
       status: "approved",
     }
   ];
@@ -292,7 +318,7 @@ function getLocalDb() {
   const defaultPaymentChannels: any[] = [];
 
   try {
-    const raw = localStorage.getItem("dreampod_local_db");
+    const raw = localStorage.getItem("dreampod_local_db_v3");
     if (!raw) {
       const db = {
         users: defaultUsers,
@@ -310,13 +336,23 @@ function getLocalDb() {
     }
     const parsed = JSON.parse(raw);
     if (!parsed.users) parsed.users = defaultUsers;
-    if (!parsed.products) parsed.products = defaultProducts;
+    parsed.products = defaultProducts; // Always sync latest products with images
     if (!parsed.investments) parsed.investments = defaultInvestments;
     if (!parsed.transactions) parsed.transactions = defaultTransactions;
     if (!parsed.bonusCodes) parsed.bonusCodes = defaultBonusCodes;
     if (!parsed.notifications) parsed.notifications = defaultNotifications;
     if (!parsed.forumPosts) parsed.forumPosts = defaultForumPosts;
-    if (!parsed.userReviews) parsed.userReviews = defaultUserReviews;
+    if (!parsed.userReviews || parsed.userReviews.length === 0) {
+      parsed.userReviews = defaultUserReviews;
+    } else {
+      // Ensure default certificate items exist if not present
+      defaultUserReviews.forEach((defRev) => {
+        const exists = parsed.userReviews.some((r: any) => r.id === defRev.id);
+        if (!exists) {
+          parsed.userReviews.push(defRev);
+        }
+      });
+    }
     if (!parsed.paymentChannels) parsed.paymentChannels = defaultPaymentChannels;
     return parsed;
   } catch (e) {
@@ -338,7 +374,7 @@ function getLocalDb() {
 
 function saveLocalDb(db: any) {
   try {
-    localStorage.setItem("dreampod_local_db", JSON.stringify(db));
+    localStorage.setItem("dreampod_local_db_v3", JSON.stringify(db));
   } catch (e) {}
 }
 
@@ -411,29 +447,67 @@ function processDailyRevenuesLocal(db: any) {
       const actualPeriods = Math.min(periods, remainingDays);
 
       if (actualPeriods > 0) {
-        const totalCredited = actualPeriods * inv.dailyIncome;
-        inv.daysPassed += actualPeriods;
-        inv.lastClaimAt = new Date(lastClaim.getTime() + actualPeriods * oneDayMs).toISOString();
+        const isWellbeing = inv.category === "wellbeing" || 
+                            inv.productName?.toLowerCase().includes("wellbeing") || 
+                            inv.productName?.toLowerCase().includes("bien-être") ||
+                            inv.productName?.toLowerCase().includes("agricole") ||
+                            inv.productName?.toLowerCase().includes("lait");
 
-        const uIdx = db.users.findIndex((u: any) => u.id === inv.userId);
-        if (uIdx !== -1) {
-          db.users[uIdx].balance += totalCredited;
-          db.users[uIdx].totalRevenue += totalCredited;
-          
-          // Generate a transaction log
-          const tx: any = {
-            id: generateLocalId("tx"),
-            userId: inv.userId,
-            userName: db.users[uIdx].name,
-            userPhone: db.users[uIdx].phone,
-            type: "bonus",
-            amount: totalCredited,
-            status: "completed",
-            date: now.toISOString(),
-            method: `Revenu journalier VIP (${actualPeriods} jour(s)) - ${inv.productName}`,
-          };
-          db.transactions.push(tx);
-          dbModified = true;
+        if (isWellbeing) {
+          // Wellbeing products: Income drops in full ONLY at the end of the cycle ("et c'est fini")
+          inv.daysPassed += actualPeriods;
+          inv.lastClaimAt = new Date(lastClaim.getTime() + actualPeriods * oneDayMs).toISOString();
+
+          // Check if the cycle has now reached or exceeded duration
+          if (inv.daysPassed >= inv.durationDays) {
+            const totalCredited = inv.totalIncome || (inv.dailyIncome * inv.durationDays);
+            const uIdx = db.users.findIndex((u: any) => u.id === inv.userId);
+            if (uIdx !== -1) {
+              db.users[uIdx].balance += totalCredited;
+              db.users[uIdx].totalRevenue += totalCredited;
+
+              const tx: any = {
+                id: generateLocalId("tx"),
+                userId: inv.userId,
+                userName: db.users[uIdx].name,
+                userPhone: db.users[uIdx].phone,
+                type: "income",
+                amount: totalCredited,
+                status: "completed",
+                date: now.toISOString(),
+                method: `Revenu de fin de cycle (Bien-être) - ${inv.productName}`,
+              };
+              db.transactions.push(tx);
+              dbModified = true;
+            }
+          } else {
+            dbModified = true;
+          }
+        } else {
+          // Standard VIP products: Daily income distribution
+          const totalCredited = actualPeriods * inv.dailyIncome;
+          inv.daysPassed += actualPeriods;
+          inv.lastClaimAt = new Date(lastClaim.getTime() + actualPeriods * oneDayMs).toISOString();
+
+          const uIdx = db.users.findIndex((u: any) => u.id === inv.userId);
+          if (uIdx !== -1) {
+            db.users[uIdx].balance += totalCredited;
+            db.users[uIdx].totalRevenue += totalCredited;
+            
+            const tx: any = {
+              id: generateLocalId("tx"),
+              userId: inv.userId,
+              userName: db.users[uIdx].name,
+              userPhone: db.users[uIdx].phone,
+              type: "income",
+              amount: totalCredited,
+              status: "completed",
+              date: now.toISOString(),
+              method: `Revenu journalier VIP (${actualPeriods} jour(s)) - ${inv.productName}`,
+            };
+            db.transactions.push(tx);
+            dbModified = true;
+          }
         }
       }
     }
@@ -612,6 +686,33 @@ async function handleLocalRequest<T>(path: string, options: RequestInit = {}): P
     if (!product) {
       throw new Error("Plan d'investissement introuvable.");
     }
+
+    // Single-use check for VIP 0
+    const isVip0Product =
+      product.id === "vip0" ||
+      product.id === "vp0" ||
+      product.level === 0 ||
+      product.name.toLowerCase().includes("vip 0") ||
+      product.name.toLowerCase().includes("vp 0") ||
+      product.name.toLowerCase().includes("découverte") ||
+      product.name.toLowerCase().includes("decouverte");
+
+    if (isVip0Product) {
+      const alreadySubscribedVip0 = (db.investments || []).some(
+        (inv: any) => inv.userId === user.id && (
+          inv.productId === product.id ||
+          inv.productId === "vip0" ||
+          inv.productId === "vp0" ||
+          inv.productName?.toLowerCase().includes("vip 0") ||
+          inv.productName?.toLowerCase().includes("vp 0") ||
+          inv.productName?.toLowerCase().includes("découverte") ||
+          inv.productName?.toLowerCase().includes("decouverte")
+        )
+      );
+      if (alreadySubscribedVip0) {
+        throw new Error("Vous avez déjà bénéficié de l'offre spéciale VIP 0. Ce produit est réservé à un usage unique par utilisateur.");
+      }
+    }
     if (user.balance < product.price) {
       throw new Error("Solde insuffisant pour souscrire à ce plan.");
     }
@@ -625,6 +726,8 @@ async function handleLocalRequest<T>(path: string, options: RequestInit = {}): P
       price: product.price,
       dailyIncome: product.dailyIncome,
       durationDays: product.durationDays,
+      totalIncome: product.totalIncome || (product.dailyIncome * product.durationDays),
+      category: product.category || "wellbeing",
       daysPassed: 0,
       activatedAt: new Date().toISOString(),
       lastClaimAt: new Date().toISOString(),
@@ -883,7 +986,11 @@ async function handleLocalRequest<T>(path: string, options: RequestInit = {}): P
 
   // Global: Notifications
   if (path === "/api/notifications" && method === "GET") {
-    return { notifications: db.notifications } as any;
+    if (!db.notifications || db.notifications.length === 0) {
+      db.notifications = getLocalDb().notifications || [];
+      saveLocalDb(db);
+    }
+    return { notifications: db.notifications.filter(n => n.active !== false) } as any;
   }
 
   // Forum: List
@@ -1152,6 +1259,16 @@ async function handleLocalRequest<T>(path: string, options: RequestInit = {}): P
     return { message: "Notification diffusée !", notification: newNotif } as any;
   }
 
+  // Admin: Delete notification
+  if (path.startsWith("/api/admin/notifications/") && method === "DELETE") {
+    const admin = getLocalCurrentUser(db);
+    if (admin.role !== "admin") throw new Error("Accès refusé.");
+    const id = path.split("/").pop();
+    db.notifications = (db.notifications || []).filter(n => n.id !== id);
+    saveLocalDb(db);
+    return { message: "Annonce supprimée." } as any;
+  }
+
   // Admin: All reviews
   if (path === "/api/admin/reviews" && method === "GET") {
     const admin = getLocalCurrentUser(db);
@@ -1164,6 +1281,26 @@ async function handleLocalRequest<T>(path: string, options: RequestInit = {}): P
     const admin = getLocalCurrentUser(db);
     if (admin.role !== "admin") throw new Error("Accès refusé.");
     return { investments: db.investments } as any;
+  }
+
+  // Admin: Create Review/Proof
+  if (path === "/api/admin/reviews" && method === "POST") {
+    const admin = getLocalCurrentUser(db);
+    if (admin.role !== "admin") throw new Error("Accès refusé.");
+    const newRev: UserReview = {
+      id: "rev_" + Date.now(),
+      userId: "admin_official",
+      userName: body.userName || "Membre Nutrien Ag",
+      userPhone: body.userPhone || "+22890000000",
+      rating: Number(body.rating) || 5,
+      comment: body.comment,
+      image: body.image,
+      createdAt: new Date().toISOString(),
+      status: "approved",
+    };
+    db.userReviews.unshift(newRev);
+    saveLocalDb(db);
+    return { message: "Preuve / Certificat officiel publié avec succès !", review: newRev } as any;
   }
 
   // Admin: Verify Review (Approve/Reject)
@@ -1459,7 +1596,14 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ title, content }),
     }),
+    deleteNotification: (id: string) => request<any>(`/api/admin/notifications/${id}`, {
+      method: "DELETE",
+    }),
     getReviews: () => request<{ reviews: UserReview[] }>("/api/admin/reviews"),
+    createReview: (data: { userName?: string; userPhone?: string; rating?: number; comment: string; image?: string }) => request<any>("/api/admin/reviews", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
     getInvestments: () => request<{ investments: Investment[] }>("/api/admin/investments"),
     verifyReview: (reviewId: string, action: "approve" | "reject") => request<any>(`/api/admin/reviews/${reviewId}/verify`, {
       method: "POST",

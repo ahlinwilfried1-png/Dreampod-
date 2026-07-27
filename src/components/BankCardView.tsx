@@ -15,7 +15,7 @@ interface BankCardViewProps {
 }
 
 export default function BankCardView({ user, onRefresh, onBack }: BankCardViewProps) {
-  const [cardOperator, setCardOperator] = useState(user.linkedWalletOperator || "airtel");
+  const [cardOperator, setCardOperator] = useState(user.linkedWalletOperator || "orange");
   const [cardPhone, setCardPhone] = useState(user.linkedWalletNumber || "");
   const [cardOwner, setCardOwner] = useState(user.linkedWalletOwnerName || user.name || "");
   const [withdrawalCode, setWithdrawalCode] = useState(user.withdrawalCode || "");
@@ -132,12 +132,11 @@ export default function BankCardView({ user, onRefresh, onBack }: BankCardViewPr
               onChange={(e) => setCardOperator(e.target.value)}
               className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-xs text-slate-800 focus:outline-none focus:border-blue-500 font-bold"
             >
-              <option value="airtel">Airtel Money 🔴</option>
-              <option value="moov">Moov Money (Flooz) 🟢</option>
-              <option value="orange">Orange Money 🟠</option>
-              <option value="tmoney">TMoney 🟡</option>
-              <option value="amana">Amana Transfert 🟣</option>
-              <option value="nita">Nita Transfert 🟤</option>
+              <option value="orange">Orange Money 🟠 (BF, CM, CI)</option>
+              <option value="mtn">MTN Mobile Money 🟡 (CM, BJ, CI)</option>
+              <option value="moov">Moov Money / Flooz / Celtiis 🟢 (BF, TG, BJ, CI)</option>
+              <option value="wave">Wave Mobile Money 🌊 (BF, BJ, CI)</option>
+              <option value="tmoney">TMoney (Togocom) 🟡 (Togo)</option>
             </select>
           </div>
 

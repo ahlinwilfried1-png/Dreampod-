@@ -40,6 +40,8 @@ export interface Product {
   level: number; // VIP level
   category?: 'stability' | 'wellbeing' | 'activity';
   isBlocked?: boolean;
+  image?: string;
+  cycleDays?: number;
 }
 
 export interface Investment {
@@ -50,6 +52,8 @@ export interface Investment {
   price: number;
   dailyIncome: number;
   durationDays: number;
+  totalIncome?: number;
+  category?: 'stability' | 'wellbeing' | 'activity' | string;
   daysPassed: number;
   activatedAt: string;
   lastClaimAt: string;
@@ -60,7 +64,7 @@ export interface Transaction {
   userId: string;
   userPhone?: string;
   userName?: string;
-  type: 'deposit' | 'withdrawal' | 'commission' | 'bonus' | 'investment';
+  type: 'deposit' | 'withdrawal' | 'commission' | 'bonus' | 'investment' | 'income';
   amount: number;
   status: 'pending' | 'completed' | 'rejected';
   date: string;

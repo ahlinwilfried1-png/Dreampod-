@@ -20,6 +20,7 @@ import {
   getConversationForUser,
   addSupportMessage,
   markAsRead,
+  clearConversationForUser,
   subscribeChatUpdates
 } from "../lib/chatStore";
 import { getCurrencySymbol } from "../lib/currency";
@@ -27,6 +28,7 @@ import { getCurrencySymbol } from "../lib/currency";
 interface SupportViewProps {
   onBack: () => void;
   userPhone?: string;
+  initialMode?: "chat" | "channels";
 }
 
 const AUTO_REPLIES: { keywords: string[]; response: string }[] = [
@@ -52,15 +54,20 @@ const AUTO_REPLIES: { keywords: string[]; response: string }[] = [
   }
 ];
 
-export default function SupportView({ onBack, userPhone }: SupportViewProps) {
+export default function SupportView({ onBack, userPhone, initialMode = "chat" }: SupportViewProps) {
   const currency = getCurrencySymbol(userPhone);
-  const [activeTab, setActiveTab] = useState<"chat" | "channels">("chat");
+  const [activeTab, setActiveTab] = useState<"channels" | "chat">(initialMode);
   const [conversation, setConversation] = useState(() => getConversationForUser());
   const [input, setInput] = useState("");
   const [isAdminTyping, setIsAdminTyping] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync with initialMode when prop changes
+  useEffect(() => {
+    setActiveTab(initialMode);
+  }, [initialMode]);
 
   // Load and subscribe to live chat updates
   useEffect(() => {
@@ -106,7 +113,7 @@ export default function SupportView({ onBack, userPhone }: SupportViewProps) {
 
       if (userMessageCount === 0) {
         // Official welcome message on first user message
-        replyText = `🚀 LANCEMENT OFFICIEL 🌱💰\n\n🌍 Pays concerné\n🇨🇲 Cameroun \n🇹🇬 Togo\n🇧🇫 Burkina Faso \n🇨🇮 Côte d'Ivoire \n🇧🇯 Bénin \n🇸🇳 Sénégal \n━━━━━━━━━━━━━━━\n🎁 Avantages offerts\n\n🎉 Bonus d’inscription : 200 FCFA\n🎯 Bonus de pointage quotidien : 20 XAF \n\n━━━━━━━━━━━━━━━\n💰 Conditions financières\n\n📥 Dépôt minimum : 3 000 XAF\n💸 Retrait minimum : 1 000 XAF\n📊 Frais de retrait : 14%\n🕘 Heures de retrait : De 09h à 17h00\n━━━━━━━━━━━━━━━\n👥 Programme de parrainage\n🥇 Niveau 1 : 20 %\n🥈 Niveau 2 : 3 %\n🥉 Niveau 3 : 2 %\n\n🚀 Rejoignez`;
+        replyText = `🚀 LANCEMENT OFFICIEL 🌱💰\n\n🌍 Pays concernés\n🇧🇫 Burkina Faso\n🇨🇲 Cameroun \n🇹🇬 Togo\n🇧🇯 Bénin \n🇨🇮 Côte d'Ivoire \n━━━━━━━━━━━━━━━\n🎁 Avantages offerts\n\n🎉 Bonus d’inscription : 200 FCFA\n🎯 Bonus de pointage quotidien : 20 XAF \n\n━━━━━━━━━━━━━━━\n💰 Conditions financières\n\n📥 Dépôt minimum : 3 000 XAF\n💸 Retrait minimum : 1 000 XAF\n📊 Frais de retrait : 14%\n🕘 Heures de retrait : De 09h à 17h00\n━━━━━━━━━━━━━━━\n👥 Programme de parrainage\n🥇 Niveau 1 : 20 %\n🥈 Niveau 2 : 3 %\n🥉 Niveau 3 : 2 %\n\n🚀 Rejoignez`;
       } else {
         replyText = "Merci pour votre message. L'Administrateur a bien reçu votre demande et vous répondra très rapidement.";
 
@@ -129,21 +136,8 @@ export default function SupportView({ onBack, userPhone }: SupportViewProps) {
   };
 
   const clearChat = () => {
-    const updated = getConversationForUser();
-    updated.messages = [
-      {
-        id: `init-${Date.now()}`,
-        conversationId: updated.id,
-        sender: "admin",
-        senderName: "Administrateur Nutrien",
-        text: "Bonjour ! Chat réinitialisé. Comment pouvons-nous vous aider ?",
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        timestamp: Date.now(),
-        readByAdmin: true,
-        readByUser: true
-      }
-    ];
-    setConversation(updated);
+    clearConversationForUser(conversation.id);
+    setConversation(getConversationForUser());
   };
 
   const handleQuickTopic = (topic: string) => {
@@ -165,7 +159,7 @@ export default function SupportView({ onBack, userPhone }: SupportViewProps) {
 
   return (
     <div id="support-view-container" className="space-y-3 text-slate-800 pb-8 select-none max-w-md mx-auto">
-      {/* Header Bar - Completely smooth without frame borders */}
+      {/* Header Bar */}
       <div className="py-2 px-1 flex items-center justify-between border-b border-slate-100">
         <div className="flex items-center gap-3">
           <button
@@ -177,25 +171,27 @@ export default function SupportView({ onBack, userPhone }: SupportViewProps) {
           </button>
           <div className="flex items-center gap-2.5">
             <div className="relative">
-              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-black text-sm">
-                <Headphones className="h-4.5 w-4.5" />
+              <div className="w-8.5 h-8.5 rounded-full bg-blue-600 flex items-center justify-center text-white font-black text-sm shadow-xs">
+                {activeTab === "chat" ? <MessageSquare className="h-4.5 w-4.5" /> : <Headphones className="h-4.5 w-4.5" />}
               </div>
-              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
+              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white animate-pulse" />
             </div>
             <div>
               <div className="flex items-center gap-1">
-                <h2 className="text-sm font-bold text-slate-900 tracking-tight">Administrateur Nutrien</h2>
+                <h2 className="text-sm font-bold text-slate-900 tracking-tight">
+                  {activeTab === "chat" ? "Chat Support Nutrien" : "Service Client Nutrien"}
+                </h2>
                 <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
               </div>
               <p className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                En ligne
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                Administrateur en ligne
               </p>
             </div>
           </div>
         </div>
 
-        {activeTab === "chat" && (
+        {activeTab === "chat" ? (
           <button
             onClick={clearChat}
             title="Effacer l'historique"
@@ -203,49 +199,31 @@ export default function SupportView({ onBack, userPhone }: SupportViewProps) {
           >
             <Trash2 className="h-4 w-4" />
           </button>
+        ) : (
+          <button
+            onClick={() => setActiveTab("chat")}
+            className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-1 cursor-pointer bg-blue-50 px-2.5 py-1 rounded-full"
+          >
+            <MessageSquare className="h-3.5 w-3.5" />
+            Chat Direct
+          </button>
         )}
       </div>
 
-      {/* Navigation Tabs - Minimalist, smooth style */}
-      <div className="flex bg-slate-100 p-1 rounded-full gap-1">
-        <button
-          onClick={() => setActiveTab("chat")}
-          className={`flex-1 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-            activeTab === "chat"
-              ? "bg-white text-blue-600 shadow-2xs"
-              : "text-slate-500 hover:text-slate-800"
-          }`}
-        >
-          <MessageSquare className="h-3.5 w-3.5" />
-          Chat Support
-        </button>
-        <button
-          onClick={() => setActiveTab("channels")}
-          className={`flex-1 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-            activeTab === "channels"
-              ? "bg-white text-blue-600 shadow-2xs"
-              : "text-slate-500 hover:text-slate-800"
-          }`}
-        >
-          <PhoneCall className="h-3.5 w-3.5" />
-          Canaux & Règles
-        </button>
-      </div>
-
-      {/* TAB 1: LIVE CHAT - COMPLETELY SMOOTH, NO OUTER FRAME/BORDER */}
+      {/* 1. CHAT SUPPORT VIEW (Pure Chat without channels/rules taking up space) */}
       {activeTab === "chat" && (
-        <div className="flex flex-col h-[540px]">
+        <div className="flex flex-col h-[520px]">
           {/* Chat Messages Scroll Container */}
           <div className="flex-1 py-2 px-1 overflow-y-auto space-y-3 scrollbar-none">
             {/* Notice / Badge */}
             <div className="flex justify-center my-1">
               <span className="bg-blue-50 text-blue-700 text-[10px] font-semibold px-3 py-1 rounded-full flex items-center gap-1">
                 <ShieldCheck className="h-3 w-3 text-blue-600" />
-                Discussion sécurisée
+                Discussion sécurisée avec l'administration
               </span>
             </div>
 
-            {conversation.messages.map((msg) => {
+            {conversation.messages.filter(m => !m.deletedForUser).map((msg) => {
               const isAdmin = msg.sender === "admin";
               return (
                 <div
@@ -385,11 +363,15 @@ export default function SupportView({ onBack, userPhone }: SupportViewProps) {
         </div>
       )}
 
-      {/* TAB 2: OFFICIAL CHANNELS & CLIENT RULES */}
+      {/* 2. CANAUX OFFICELS & RÈGLES TAB */}
       {activeTab === "channels" && (
         <div className="space-y-4 pt-1">
           {/* TOP CHANNELS CARD */}
           <div className="bg-white rounded-3xl p-5 shadow-xs border border-slate-100 space-y-4">
+            <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider text-center text-emerald-800">
+              📢 Canaux Officiels Nutrien
+            </h3>
+
             {/* Telegram */}
             <div className="flex items-center justify-between py-1.5 border-b border-slate-100/80 last:border-none">
               <div className="flex items-center gap-3">
@@ -407,7 +389,7 @@ export default function SupportView({ onBack, userPhone }: SupportViewProps) {
                 rel="noopener noreferrer"
                 className="bg-[#ff0000] hover:bg-[#e00000] text-white font-bold text-xs px-4 py-2 rounded-xl transition-all active:scale-95 cursor-pointer uppercase"
               >
-                Commencer
+                Rejoindre
               </a>
             </div>
 
@@ -428,7 +410,7 @@ export default function SupportView({ onBack, userPhone }: SupportViewProps) {
                 rel="noopener noreferrer"
                 className="bg-[#ff0000] hover:bg-[#e00000] text-white font-bold text-xs px-4 py-2 rounded-xl transition-all active:scale-95 cursor-pointer uppercase"
               >
-                Commencer
+                Rejoindre
               </a>
             </div>
 
@@ -449,7 +431,7 @@ export default function SupportView({ onBack, userPhone }: SupportViewProps) {
                 rel="noopener noreferrer"
                 className="bg-[#ff0000] hover:bg-[#e00000] text-white font-bold text-xs px-4 py-2 rounded-xl transition-all active:scale-95 cursor-pointer uppercase"
               >
-                Commencer
+                Rejoindre
               </a>
             </div>
           </div>

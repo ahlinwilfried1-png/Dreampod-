@@ -63,21 +63,21 @@ export default function VipView({ onBack, setActiveTab, userPhone }: VipViewProp
           {[
             {
               level: "VIP 0",
-              sub: "Stabilité 1",
+              sub: "Niveau 1",
               desc: `Machine de base - ${currency} 2000`,
               perks: "+90 jours d'actifs",
               color: "bg-slate-50 border-slate-100 text-slate-700",
             },
             {
               level: "VIP 1",
-              sub: "Stabilité 2",
+              sub: "Niveau 2",
               desc: `Machine intermédiaire - ${currency} 5000`,
               perks: "+90 jours d'actifs",
               color: "bg-blue-50/40 border-blue-100/60 text-blue-700",
             },
             {
               level: "VIP 2",
-              sub: "Stabilité 3",
+              sub: "Niveau 3",
               desc: `Machine avancée - ${currency} 10000`,
               perks: "+90 jours d'actifs",
               color: "bg-emerald-50/40 border-emerald-100/60 text-emerald-700",

@@ -32,7 +32,7 @@ export default function AboutView({ onBack }: AboutViewProps) {
       <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-2xs">
         <div className="relative h-48 sm:h-56 w-full bg-slate-900 overflow-hidden">
           <img 
-            src="/public/nutrien_headquarters.svg" 
+            src="/nutrien_headquarters.svg" 
             alt="Siège Social Nutrien Soluções Agrícolas" 
             referrerPolicy="no-referrer"
             className="w-full h-full object-cover object-center transform hover:scale-105 transition-transform duration-700"
@@ -115,7 +115,7 @@ export default function AboutView({ onBack }: AboutViewProps) {
         <div className="bg-white p-3.5 rounded-2xl border border-slate-200/60 shadow-2xs space-y-1.5">
           <Globe className="h-5 w-5 text-[#00a3e0]" />
           <h4 className="text-[10.5px] font-black text-slate-800 uppercase tracking-wide">Panafricain</h4>
-          <p className="text-[9px] text-slate-400 font-bold leading-relaxed">Présence active au Cameroun, Bénin, Togo, Burkina Faso, Côte d'Ivoire et Niger.</p>
+          <p className="text-[9px] text-slate-400 font-bold leading-relaxed">Présence active au Burkina Faso, Cameroun, Togo, Bénin et Côte d'Ivoire.</p>
         </div>
 
         <div className="bg-white p-3.5 rounded-2xl border border-slate-200/60 shadow-2xs space-y-1.5">

@@ -8,18 +8,11 @@ interface LoginPageProps {
 }
 
 const AFRICAN_COUNTRIES = [
-  { code: "+228", name: "Togo", flag: "🇹🇬" },
-  { code: "+225", name: "Côte d'Ivoire", flag: "🇨🇮" },
-  { code: "+229", name: "Bénin", flag: "🇧🇯" },
-  { code: "+237", name: "Cameroun", flag: "🇨🇲" },
   { code: "+226", name: "Burkina Faso", flag: "🇧🇫" },
-  { code: "+227", name: "Niger", flag: "🇳🇪" },
-  { code: "+221", name: "Sénégal", flag: "🇸🇳" },
-  { code: "+243", name: "RDC", flag: "🇨🇩" },
-  { code: "+242", name: "Congo", flag: "🇨🇬" },
-  { code: "+223", name: "Mali", flag: "🇲🇱" },
-  { code: "+224", name: "Guinée", flag: "🇬🇳" },
-  { code: "+241", name: "Gabon", flag: "🇬🇦" },
+  { code: "+237", name: "Cameroun", flag: "🇨🇲" },
+  { code: "+228", name: "Togo", flag: "🇹🇬" },
+  { code: "+229", name: "Bénin", flag: "🇧🇯" },
+  { code: "+225", name: "Côte d'Ivoire", flag: "🇨🇮" },
 ];
 
 export default function LoginPage({ onSuccess, onNavigateToRegister }: LoginPageProps) {
@@ -83,13 +76,16 @@ export default function LoginPage({ onSuccess, onNavigateToRegister }: LoginPage
             alt="Agricultural Field" 
             className="w-full h-full object-cover opacity-50 blur-[1px]"
             referrerPolicy="no-referrer"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-white via-white/50 to-transparent" />
 
           {/* Central Nutrien Ag Solutions Fertilizer Bag Display */}
           <div className="absolute top-4 left-1/2 -translate-x-1/2 h-36 w-28 z-10 drop-shadow-2xl transition-transform hover:scale-105">
             <img 
-              src="/public/nutrien_bag.svg" 
+              src="/nutrien_bag.svg" 
               alt="Nutrien Ag Solutions Fertilizer Bag" 
               className="w-full h-full object-contain"
             />
@@ -286,7 +282,7 @@ export default function LoginPage({ onSuccess, onNavigateToRegister }: LoginPage
               {/* Left Bag */}
               <div className="w-20 h-20 -rotate-12 transform">
                 <img 
-                  src="/public/nutrien_bag.svg" 
+                  src="/nutrien_bag.svg" 
                   alt="Nutrien Bag" 
                   className="w-full h-full object-contain drop-shadow-md"
                 />
@@ -294,7 +290,7 @@ export default function LoginPage({ onSuccess, onNavigateToRegister }: LoginPage
               {/* Right Bag */}
               <div className="w-22 h-22 rotate-12 transform">
                 <img 
-                  src="/public/nutrien_bag.svg" 
+                  src="/nutrien_bag.svg" 
                   alt="Nutrien Bag" 
                   className="w-full h-full object-contain drop-shadow-md"
                 />
