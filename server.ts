@@ -123,7 +123,7 @@ const supabase = (supabaseUrl && supabaseServiceKey)
 let isSupabaseHealthy = false;
 let supabaseStatus = supabase ? "disconnected" : "disconnected";
 let lastDbLoadedTime = 0;
-const DB_LOAD_CACHE_MS = 2000;
+const DB_LOAD_CACHE_MS = 200;
 let db: DatabaseSchema;
 
 if (supabase) {
@@ -856,7 +856,7 @@ async function startServer() {
   app.use(async (req, res, next) => {
     if (req.path.startsWith("/api/")) {
       try {
-        db = await loadDatabase();
+        db = await loadDatabase(true);
         processDailyRevenues(db);
       } catch (e: any) {
         console.error("Failed to dynamically reload database in request middleware:", e.message || e);
@@ -866,7 +866,10 @@ async function startServer() {
   });
 
   // Simple JWT auth simulator middleware
-  const authenticateUser = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const authenticateUser = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    try {
+      db = await loadDatabase(true);
+    } catch (e) {}
     // Automatically catch up and credit daily revenues for everyone
     processDailyRevenues(db);
 
@@ -901,8 +904,8 @@ async function startServer() {
     next();
   };
 
-  const authenticateAdmin = (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    authenticateUser(req, res, () => {
+  const authenticateAdmin = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    await authenticateUser(req, res, () => {
       if (req.user && req.user.role === "admin") {
         next();
       } else {
@@ -917,6 +920,9 @@ async function startServer() {
 
   // Auth: Register
   app.post("/api/auth/register", async (req, res) => {
+    try {
+      db = await loadDatabase(true);
+    } catch (e) {}
     const { name, phone, password, referrerCode } = req.body;
 
     if (!phone || !password) {
@@ -1035,7 +1041,10 @@ async function startServer() {
   });
 
   // Auth: Login
-  app.post("/api/auth/login", (req, res) => {
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      db = await loadDatabase(true);
+    } catch (e) {}
     const { phone, password } = req.body;
 
     if (!phone || !password) {
@@ -1799,7 +1808,7 @@ async function startServer() {
   // before serving any admin actions, so they see registrations/updates from other devices instantly.
   app.use("/api/admin", async (req, res, next) => {
     try {
-      db = await loadDatabase();
+      db = await loadDatabase(true);
     } catch (err) {
       console.warn("Error refreshing database for admin route:", err);
     }
