@@ -335,10 +335,10 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
   useEffect(() => {
     loadAdminData();
     
-    // Set up real-time automatic polling every 5 seconds to sync registrations/actions from other devices
+    // Set up real-time automatic polling every 3 seconds to sync registrations/actions from Supabase/database
     const interval = setInterval(() => {
       loadAdminData(true);
-    }, 5000);
+    }, 3000);
     
     return () => clearInterval(interval);
   }, [adminTab, searchQuery]);
@@ -891,8 +891,20 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
             <Shield id="icon-admin-logo" className="h-5 w-5 animate-pulse" />
           </div>
           <div>
-            <h2 className="text-xl font-extrabold tracking-tight text-slate-950">Panneau d'Administration</h2>
-            <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-0.5">Nutrien Control Center</p>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-extrabold tracking-tight text-slate-950">Panneau d'Administration</h2>
+              {isSupabaseHealthy ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                  Supabase Synchro
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200/80">
+                  Auto-sync Locale
+                </span>
+              )}
+            </div>
+            <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-0.5">Nutrien Control Center | Synchronisation en temps réel</p>
           </div>
         </div>
 
@@ -900,7 +912,8 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
           id="admin-btn-reload"
           onClick={loadAdminData}
           disabled={loading}
-          className="p-2.5 rounded-xl bg-slate-100 text-blue-600 hover:text-white hover:bg-blue-600 transition-all cursor-pointer active:scale-95"
+          className="p-2.5 rounded-xl bg-slate-100 text-blue-600 hover:text-white hover:bg-blue-600 transition-all cursor-pointer active:scale-95 flex items-center gap-1.5"
+          title="Rafraîchir les données maintenant"
         >
           <RefreshCw className={`h-4.5 w-4.5 ${loading ? "animate-spin" : ""}`} />
         </button>
@@ -1280,18 +1293,30 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
                       <p className="text-[10px] text-slate-500 font-mono mt-1">📞 {usr.phone} | MDP: {usr.password}</p>
                       
                       {/* Financial info */}
-                      <div className="flex gap-4 mt-2.5 text-[9.5px] text-slate-700">
+                      <div className="flex flex-wrap gap-x-3.5 gap-y-2 mt-2.5 text-[9.5px] text-slate-700 bg-slate-50/70 p-2.5 rounded-xl border border-slate-200/50">
                         <div>
-                          <span className="text-slate-400 block uppercase tracking-wider font-semibold">Solde portefeuille</span>
-                          <span className="font-extrabold mt-0.5 block text-blue-600">{usr.balance.toLocaleString()} {getCurrencySymbol(usr.phone)}</span>
+                          <span className="text-slate-400 block uppercase tracking-wider font-extrabold text-[8.5px]">Solde Actuel</span>
+                          <span className="font-black mt-0.5 block text-blue-600 text-[11px]">{usr.balance.toLocaleString()} {getCurrencySymbol(usr.phone)}</span>
                         </div>
-                        <div className="border-l border-slate-200/60 pl-3">
-                          <span className="text-slate-400 block uppercase tracking-wider font-semibold">Filleuls (1er Ordre)</span>
-                          <span className="font-bold mt-0.5 block text-slate-800">{usr.referralsN1}</span>
+                        <div className="border-l border-slate-200/80 pl-3">
+                          <span className="text-slate-400 block uppercase tracking-wider font-extrabold text-[8.5px]">Dépôts Validés</span>
+                          <span className="font-black mt-0.5 block text-emerald-600 text-[11px]">{(usr.totalDeposited || 0).toLocaleString()} F</span>
                         </div>
-                        <div className="border-l border-slate-200/60 pl-3">
-                          <span className="text-slate-400 block uppercase tracking-wider font-semibold">Com. gagnées</span>
-                          <span className="font-bold mt-0.5 block text-emerald-600">{usr.commissionEarned.toLocaleString()} F</span>
+                        <div className="border-l border-slate-200/80 pl-3">
+                          <span className="text-slate-400 block uppercase tracking-wider font-extrabold text-[8.5px]">Retraits Validés</span>
+                          <span className="font-black mt-0.5 block text-amber-600 text-[11px]">{(usr.totalWithdrawn || 0).toLocaleString()} F</span>
+                        </div>
+                        <div className="border-l border-slate-200/80 pl-3">
+                          <span className="text-slate-400 block uppercase tracking-wider font-extrabold text-[8.5px]">Investissements</span>
+                          <span className="font-black mt-0.5 block text-indigo-600 text-[11px]">{(usr.activeInvestmentsCount || 0)} Plan(s) ({(usr.totalInvested || 0).toLocaleString()} F)</span>
+                        </div>
+                        <div className="border-l border-slate-200/80 pl-3">
+                          <span className="text-slate-400 block uppercase tracking-wider font-extrabold text-[8.5px]">Filleuls N1</span>
+                          <span className="font-black mt-0.5 block text-slate-800 text-[11px]">{usr.referralsN1 || 0}</span>
+                        </div>
+                        <div className="border-l border-slate-200/80 pl-3">
+                          <span className="text-slate-400 block uppercase tracking-wider font-extrabold text-[8.5px]">Com. Gagnées</span>
+                          <span className="font-black mt-0.5 block text-purple-600 text-[11px]">{(usr.commissionEarned || 0).toLocaleString()} F</span>
                         </div>
                       </div>
 

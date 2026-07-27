@@ -132,8 +132,49 @@ if (supabase) {
   console.warn("Supabase Client NOT initialized. Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in env.");
 }
 
+async function checkAndRestoreSupabaseHealth(): Promise<boolean> {
+  if (!supabase) {
+    isSupabaseHealthy = false;
+    supabaseStatus = "disconnected";
+    return false;
+  }
+  try {
+    const { error } = await supabase.from("dreampod_state").select("id").limit(1);
+    if (!error) {
+      if (!isSupabaseHealthy) {
+        console.log("[Supabase] Connexion et table 'dreampod_state' validées avec succès !");
+      }
+      isSupabaseHealthy = true;
+      supabaseStatus = "connected";
+      return true;
+    } else {
+      const msg = error.message || "";
+      if (msg.includes("Invalid API key") || msg.includes("invalid") || msg.includes("JWT") || error.code === "PGRST301") {
+        isSupabaseHealthy = false;
+        supabaseStatus = "bad_credentials";
+      } else if (msg.includes("Could not find the table") || msg.includes("does not exist") || error.code === "PGRST205" || error.code === "42P01") {
+        isSupabaseHealthy = false;
+        supabaseStatus = "table_missing";
+      } else {
+        isSupabaseHealthy = false;
+        supabaseStatus = "error";
+      }
+      return false;
+    }
+  } catch (err: any) {
+    isSupabaseHealthy = false;
+    supabaseStatus = "error";
+    return false;
+  }
+}
+
 async function saveToSupabase(dbData: DatabaseSchema) {
-  if (!supabase || !isSupabaseHealthy) return;
+  if (!supabase) return;
+  if (!isSupabaseHealthy) {
+    await checkAndRestoreSupabaseHealth();
+  }
+  if (!isSupabaseHealthy) return;
+
   try {
     const { error } = await supabase
       .from("dreampod_state")
@@ -145,22 +186,14 @@ async function saveToSupabase(dbData: DatabaseSchema) {
 
     if (error) {
       console.warn("Error upserting database state to Supabase:", error.message);
-      if (error.message?.includes("does not exist") || error.code === "42P01") {
-        console.warn("\n==================================================");
-        console.warn("ATTENTION: La table 'dreampod_state' n'existe pas dans Supabase.");
-        console.warn("Veuillez exécuter ce script SQL dans votre SQL Editor Supabase :");
-        console.warn(`
-          CREATE TABLE public.dreampod_state (
-            id TEXT PRIMARY KEY,
-            data JSONB NOT NULL,
-            updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-          );
-          ALTER TABLE public.dreampod_state DISABLE ROW LEVEL SECURITY;
-        `);
-        console.warn("==================================================\n");
+      if (error.message?.includes("does not exist") || error.code === "42P01" || error.code === "PGRST205") {
+        isSupabaseHealthy = false;
+        supabaseStatus = "table_missing";
       }
     } else {
       console.log("Database state successfully synchronized to Supabase!");
+      isSupabaseHealthy = true;
+      supabaseStatus = "connected";
     }
   } catch (err: any) {
     console.warn("Failed to connect or save to Supabase:", err.message || err);
@@ -366,6 +399,10 @@ async function loadDatabase(force = false): Promise<DatabaseSchema> {
     return db;
   }
 
+  if (supabase && !isSupabaseHealthy) {
+    await checkAndRestoreSupabaseHealth();
+  }
+
   // 1. Try loading from Supabase first
   if (supabase && isSupabaseHealthy) {
     try {
@@ -382,37 +419,29 @@ async function loadDatabase(force = false): Promise<DatabaseSchema> {
         // Sync local backup file
         fs.writeFileSync(DB_FILE, JSON.stringify(migrated, null, 2), "utf8");
         lastDbLoadedTime = Date.now();
-        return migrated;
+        db = migrated;
+        return db;
       } else if (error) {
         if (error.code === "PGRST116") {
-          console.log("No data record found in 'dreampod_state' for key 'global_db'. It will be created on the first save.");
-          if (fs.existsSync(DB_FILE)) {
-            console.log("Found local backup database. Uploading local state to Supabase as primary global database...");
+          console.log("No data record found in 'dreampod_state' for key 'global_db'. Seeding from local backup...");
+          let seedData = db;
+          if (!seedData && fs.existsSync(DB_FILE)) {
             try {
               const localData = fs.readFileSync(DB_FILE, "utf8");
-              const parsed = JSON.parse(localData);
-              const migrated = migrateDatabase(parsed);
-              fs.writeFileSync(DB_FILE, JSON.stringify(migrated, null, 2), "utf8");
-              await saveToSupabase(migrated);
-              lastDbLoadedTime = Date.now();
-              return migrated;
-            } catch (uploadErr: any) {
-              console.error("Failed to automatically seed Supabase with local data:", uploadErr.message || uploadErr);
-            }
+              seedData = JSON.parse(localData);
+            } catch (e) {}
           }
-        } else if (error.message?.includes("does not exist") || error.code === "42P01") {
-          console.warn("\n==================================================");
-          console.warn("ATTENTION: La table 'dreampod_state' n'existe pas dans Supabase.");
-          console.warn("Veuillez exécuter ce script SQL dans votre SQL Editor Supabase :");
-          console.warn(`
-            CREATE TABLE public.dreampod_state (
-              id TEXT PRIMARY KEY,
-              data JSONB NOT NULL,
-              updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-            );
-            ALTER TABLE public.dreampod_state DISABLE ROW LEVEL SECURITY;
-          `);
-          console.warn("==================================================\n");
+          if (seedData) {
+            const migrated = migrateDatabase(seedData);
+            fs.writeFileSync(DB_FILE, JSON.stringify(migrated, null, 2), "utf8");
+            await saveToSupabase(migrated);
+            lastDbLoadedTime = Date.now();
+            db = migrated;
+            return db;
+          }
+        } else if (error.message?.includes("does not exist") || error.code === "42P01" || error.code === "PGRST205") {
+          isSupabaseHealthy = false;
+          supabaseStatus = "table_missing";
         } else {
           console.warn("Supabase load error:", error.message);
         }
@@ -1832,7 +1861,7 @@ async function startServer() {
     });
   });
 
-  // Admin: Get all users & search/filter
+  // Admin: Get all users & search/filter with complete financial telemetry
   app.get("/api/admin/users", authenticateAdmin, (req, res) => {
     const { search } = req.query;
     let filteredUsers = [...db.users];
@@ -1846,8 +1875,41 @@ async function startServer() {
       );
     }
 
-    // Return with password mapped to password property
-    const safeUsers = filteredUsers.map(({ passwordHash, ...u }) => ({ ...u, password: passwordHash }));
+    const txs = db.transactions || [];
+    const invs = db.investments || [];
+
+    // Return with password mapped to password property & full financial breakdown
+    const safeUsers = filteredUsers.map(({ passwordHash, ...u }) => {
+      const userTxs = txs.filter(t => t.userId === u.id);
+      const userInvs = invs.filter(i => i.userId === u.id);
+
+      const totalDeposited = userTxs
+        .filter(t => t.type === "deposit" && t.status === "completed")
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      const totalWithdrawn = userTxs
+        .filter(t => t.type === "withdrawal" && t.status === "completed")
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      const pendingDepositsCount = userTxs.filter(t => t.type === "deposit" && t.status === "pending").length;
+      const pendingWithdrawalsCount = userTxs.filter(t => t.type === "withdrawal" && t.status === "pending").length;
+
+      const activeInvestmentsCount = userInvs.length;
+      const totalInvested = userInvs.reduce((sum, inv) => sum + (inv.price || 0), 0);
+
+      return {
+        ...u,
+        password: passwordHash,
+        totalDeposited,
+        totalWithdrawn,
+        pendingDepositsCount,
+        pendingWithdrawalsCount,
+        activeInvestmentsCount,
+        totalInvested,
+        transactionsCount: userTxs.length
+      };
+    });
+
     res.json({ users: safeUsers });
   });
 
