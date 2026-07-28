@@ -1,0 +1,21 @@
+{
+  "short_name": "Nutrien",
+  "name": "Nutrien Ag Solutions",
+  "start_url": "/",
+  "background_color": "#ffffff",
+  "theme_color": "#ff6600",
+  "display": "standalone",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/pwa-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/pwa-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}

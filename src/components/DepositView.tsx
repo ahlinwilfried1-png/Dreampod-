@@ -69,8 +69,8 @@ export default function DepositView({ user, onRefresh, onBack }: DepositViewProp
     setSuccess("");
 
     const val = Number(depositAmount);
-    if (!val || val < 1000) {
-      setError(`Le montant minimum d'un dépôt est de 1 000 ${currency}.`);
+    if (!val || val < 3000) {
+      setError(`Le montant minimum d'un dépôt est de 3 000 ${currency}.`);
       return;
     }
 
@@ -211,7 +211,7 @@ export default function DepositView({ user, onRefresh, onBack }: DepositViewProp
                 id="deposit-amount-input"
                 type="number"
                 required
-                min="1000"
+                min="3000"
                 value={depositAmount}
                 onChange={(e) => setDepositAmount(e.target.value)}
                 className="w-full text-sm font-black text-rose-500 bg-transparent focus:outline-none font-mono"

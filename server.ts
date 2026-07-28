@@ -324,20 +324,18 @@ function migrateDatabase(parsed: any): DatabaseSchema {
     { id: "vip9", name: "VIP 9 - Plan Émeraude", price: 150000, dailyIncome: 25000, durationDays: 200, totalIncome: 5000000, level: 9, category: "activity", image: "https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=800&q=80" },
   ];
 
-  if (!parsed.products || parsed.products.length === 0) {
+  if (!parsed.products || !Array.isArray(parsed.products)) {
     parsed.products = defaultProducts;
   } else {
-    // Always sync products with updated DOOSAN rates
-    parsed.products = defaultProducts.map((defP: any) => {
-      const existing = parsed.products.find((p: any) => p.id === defP.id || (defP.id === "vip0" && (p.id === "vp0" || p.level === 0 || p.name?.toLowerCase().includes("vip 0"))));
-      if (existing) {
-        return {
-          ...defP,
-          isBlocked: existing.isBlocked ?? false,
-        };
-      }
-      return defP;
-    });
+    // Keep existing products as saved by admin with all their properties
+    parsed.products = parsed.products.map((p: any) => ({
+      ...p,
+      price: Number(p.price) || 0,
+      dailyIncome: Number(p.dailyIncome) || 0,
+      durationDays: Number(p.durationDays) || 1,
+      totalIncome: (Number(p.dailyIncome) || 0) * (Number(p.durationDays) || 1),
+      isBlocked: p.isBlocked ?? false,
+    }));
   }
 
   if (!parsed.paymentChannels || !Array.isArray(parsed.paymentChannels)) {
@@ -701,30 +699,66 @@ function processDailyRevenues(db: DatabaseSchema) {
       const actualPeriods = Math.min(periods, remainingDays);
 
       if (actualPeriods > 0) {
-        const totalCredited = actualPeriods * inv.dailyIncome;
-        inv.daysPassed += actualPeriods;
-        // set new claim time relative to old claim time to avoid temporal drift
-        inv.lastClaimAt = new Date(lastClaim.getTime() + actualPeriods * oneDayMs).toISOString();
+        const isWellbeing = inv.category === "wellbeing" || 
+                            (inv.category as string) === "bien_etre" || 
+                            inv.productName?.toLowerCase().includes("wellbeing") || 
+                            inv.productName?.toLowerCase().includes("bien-être") || 
+                            inv.productName?.toLowerCase().includes("bien être") || 
+                            inv.productName?.toLowerCase().includes("agricole") || 
+                            inv.productName?.toLowerCase().includes("lait");
 
-        const uIdx = db.users.findIndex(u => u.id === inv.userId);
-        if (uIdx !== -1) {
-          db.users[uIdx].balance += totalCredited;
-          db.users[uIdx].totalRevenue += totalCredited;
-          
-          // Generate a transaction log for this automatic drop
-          const tx: any = {
-            id: generateId("tx"),
-            userId: inv.userId,
-            userName: db.users[uIdx].name,
-            userPhone: db.users[uIdx].phone,
-            type: "bonus",
-            amount: totalCredited,
-            status: "completed",
-            date: now.toISOString(),
-            method: `Revenu journalier VIP (${actualPeriods} jour(s)) - ${inv.productName}`,
-          };
-          db.transactions.push(tx);
+        if (isWellbeing) {
+          // Wellbeing products: Income drops in full ONLY at the end of the cycle (when daysPassed reaches durationDays)
+          inv.daysPassed += actualPeriods;
+          inv.lastClaimAt = new Date(lastClaim.getTime() + actualPeriods * oneDayMs).toISOString();
+
+          if (inv.daysPassed >= inv.durationDays) {
+            const totalCredited = inv.totalIncome || (inv.dailyIncome * inv.durationDays);
+            const uIdx = db.users.findIndex(u => u.id === inv.userId);
+            if (uIdx !== -1) {
+              db.users[uIdx].balance += totalCredited;
+              db.users[uIdx].totalRevenue += totalCredited;
+
+              const tx: any = {
+                id: generateId("tx"),
+                userId: inv.userId,
+                userName: db.users[uIdx].name,
+                userPhone: db.users[uIdx].phone,
+                type: "income",
+                amount: totalCredited,
+                status: "completed",
+                date: now.toISOString(),
+                method: `Revenu de fin de cycle (Bien-être) - ${inv.productName}`,
+              };
+              db.transactions.push(tx);
+            }
+          }
           dbModified = true;
+        } else {
+          // Standard VIP products: Daily income distribution every 24h
+          const totalCredited = actualPeriods * inv.dailyIncome;
+          inv.daysPassed += actualPeriods;
+          inv.lastClaimAt = new Date(lastClaim.getTime() + actualPeriods * oneDayMs).toISOString();
+
+          const uIdx = db.users.findIndex(u => u.id === inv.userId);
+          if (uIdx !== -1) {
+            db.users[uIdx].balance += totalCredited;
+            db.users[uIdx].totalRevenue += totalCredited;
+
+            const tx: any = {
+              id: generateId("tx"),
+              userId: inv.userId,
+              userName: db.users[uIdx].name,
+              userPhone: db.users[uIdx].phone,
+              type: "income",
+              amount: totalCredited,
+              status: "completed",
+              date: now.toISOString(),
+              method: `Revenu journalier VIP (${actualPeriods} jour(s)) - ${inv.productName}`,
+            };
+            db.transactions.push(tx);
+            dbModified = true;
+          }
         }
       }
     }
@@ -1253,6 +1287,40 @@ async function startServer() {
       }
     }
 
+    // Bien-être reinvestment constraint: Must reinvest in a standard VIP product before buying another Bien-être product
+    const isWellbeingProduct =
+      product.category === "wellbeing" ||
+      (product.category as string) === "bien_etre" ||
+      product.name?.toLowerCase().includes("wellbeing") ||
+      product.name?.toLowerCase().includes("bien-être") ||
+      product.name?.toLowerCase().includes("bien être") ||
+      product.name?.toLowerCase().includes("agricole") ||
+      product.name?.toLowerCase().includes("lait");
+
+    if (isWellbeingProduct) {
+      const userInvs = (db.investments || [])
+        .filter(inv => inv.userId === userId)
+        .sort((a, b) => new Date(a.activatedAt || 0).getTime() - new Date(b.activatedAt || 0).getTime());
+
+      if (userInvs.length > 0) {
+        const lastInv = userInvs[userInvs.length - 1];
+        const lastIsWellbeing =
+          lastInv.category === "wellbeing" ||
+          (lastInv.category as string) === "bien_etre" ||
+          lastInv.productName?.toLowerCase().includes("wellbeing") ||
+          lastInv.productName?.toLowerCase().includes("bien-être") ||
+          lastInv.productName?.toLowerCase().includes("bien être") ||
+          lastInv.productName?.toLowerCase().includes("agricole") ||
+          lastInv.productName?.toLowerCase().includes("lait");
+
+        if (lastIsWellbeing) {
+          return res.status(400).json({
+            error: "Pour souscrire à un nouveau produit Bien-être, vous devez d'abord réinvestir dans un plan VIP principal."
+          });
+        }
+      }
+    }
+
     // Find user
     const uIdx = db.users.findIndex(u => u.id === userId);
     if (uIdx === -1) return res.status(404).json({ error: "Utilisateur introuvable" });
@@ -1277,6 +1345,8 @@ async function startServer() {
       price: product.price,
       dailyIncome: product.dailyIncome,
       durationDays: product.durationDays,
+      totalIncome: product.totalIncome || (product.dailyIncome * product.durationDays),
+      category: product.category || "wellbeing",
       daysPassed: 0,
       activatedAt: new Date().toISOString(),
       lastClaimAt: new Date().toISOString(),
@@ -1383,8 +1453,8 @@ async function startServer() {
     const { amount, method, simOwnerName, receiverNumber, screenshot, txRefId } = req.body;
     const userId = req.user!.id;
 
-    if (!amount || amount < 1000) {
-      return res.status(400).json({ error: "Le montant minimum de dépôt est de 1 000 FCFA." });
+    if (!amount || amount < 3000) {
+      return res.status(400).json({ error: "Le montant minimum de dépôt est de 3 000 FCFA / XAF." });
     }
 
     if (!method) {

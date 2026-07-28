@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Lock, Eye, EyeOff, ChevronDown, ArrowRight, Shield, RefreshCw, MessageCircle } from "lucide-react";
+import { Lock, Eye, EyeOff, ChevronDown, ArrowRight, Shield, RefreshCw, MessageCircle, Headset, Send } from "lucide-react";
 import { api } from "../lib/api";
+import FloatingCustomerService from "./FloatingCustomerService";
 
 interface LoginPageProps {
   onSuccess: (token: string, user: any) => void;
@@ -24,8 +25,7 @@ export default function LoginPage({ onSuccess, onNavigateToRegister }: LoginPage
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   
-  // Custom forgot password popup state
-  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [showSupportModal, setShowSupportModal] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -173,7 +173,7 @@ export default function LoginPage({ onSuccess, onNavigateToRegister }: LoginPage
                 </button>
               </div>
 
-              {/* Remember Me & Forgot Password Row */}
+              {/* Remember Me Row */}
               <div className="flex items-center justify-between text-xs pt-1 px-1">
                 <label className="flex items-center gap-2 cursor-pointer select-none">
                   <input
@@ -189,14 +189,6 @@ export default function LoginPage({ onSuccess, onNavigateToRegister }: LoginPage
                   </div>
                   <span className="font-semibold text-slate-700">Se souvenir de moi</span>
                 </label>
-
-                <button
-                  type="button"
-                  onClick={() => setShowForgotModal(true)}
-                  className="text-[#6C5CE7] font-bold hover:underline cursor-pointer"
-                >
-                  Mot de passe oublié ?
-                </button>
               </div>
 
               {/* Submit Button */}
@@ -301,37 +293,88 @@ export default function LoginPage({ onSuccess, onNavigateToRegister }: LoginPage
         </div>
       </div>
 
-      {/* Forgot Password Modal */}
-      {showForgotModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in select-none">
-          <div className="bg-white p-6 max-w-sm w-full rounded-3xl shadow-2xl border border-slate-100 relative overflow-hidden">
-            <div className="text-center">
-              <div className="inline-flex p-3 rounded-2xl bg-emerald-50 border border-emerald-100 text-[#16a34a] mb-3.5">
-                <RefreshCw className="h-6 w-6 stroke-[1.8] animate-spin" style={{ animationDuration: '6s' }} />
+      {/* Floating Draggable Customer Service Widget */}
+      <FloatingCustomerService onClick={() => setShowSupportModal(true)} />
+
+      {/* Customer Support Modal */}
+      {showSupportModal && (
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl relative overflow-hidden">
+            <div className="text-center space-y-2">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-800 text-amber-300 rounded-full flex items-center justify-center mx-auto shadow-lg border-2 border-amber-300/60 relative">
+                <Headset className="h-8 w-8" />
               </div>
-              <h3 className="text-base font-bold text-slate-900 mb-2">Récupération de mot de passe</h3>
-              <p className="text-xs text-slate-500 leading-relaxed mb-6">
-                Pour des raisons de sécurité, les réinitialisations de mot de passe sont gérées par nos agents support. Veuillez contacter notre service d'assistance client WhatsApp.
+              <div>
+                <h3 className="text-base font-black text-slate-900 tracking-tight uppercase">CUSTOMER SERVICE</h3>
+                <p className="text-xs font-bold text-amber-600 uppercase tracking-wider">Support Center</p>
+              </div>
+              <p className="text-xs font-medium text-slate-500">
+                Besoin d'aide pour votre connexion, la réinitialisation de votre mot de passe ou rejoindre la communauté ?
               </p>
-              
-              <div className="space-y-2">
-                <a
-                  href="https://wa.me/22890000000?text=Bonjour,%20j'ai%20oublie%20mon%20mot%20de%20passe%20sur%20Nutrien."
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold py-3 px-4 rounded-xl transition-all shadow-md flex items-center justify-center space-x-2 text-xs cursor-pointer"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  <span>Support WhatsApp</span>
-                </a>
-                
-                <button
-                  onClick={() => setShowForgotModal(false)}
-                  className="w-full bg-slate-50 hover:bg-slate-100 text-slate-700 py-2.5 rounded-xl text-xs font-semibold border border-slate-200 transition-colors mt-2 cursor-pointer"
-                >
-                  Fermer
-                </button>
-              </div>
+            </div>
+
+            <div className="space-y-2.5 pt-1">
+              <a
+                href="https://t.me/+nlAW_0vhdfI2Yzdk"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full bg-gradient-to-r from-sky-600 to-blue-600 text-white font-bold py-3 px-4 rounded-2xl flex items-center justify-between shadow-md hover:brightness-110 transition-all text-xs cursor-pointer group"
+              >
+                <div className="flex items-center space-x-2.5">
+                  <div className="p-1.5 bg-white/20 rounded-xl">
+                    <Send className="h-4 w-4 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <div className="font-extrabold text-white">Canal Officiel Telegram</div>
+                    <div className="text-[10px] text-sky-100 font-medium">Rejoindre la communauté</div>
+                  </div>
+                </div>
+                <ArrowRight className="h-4 w-4 text-white/80 group-hover:translate-x-1 transition-transform" />
+              </a>
+
+              <a
+                href="https://whatsapp.com/channel/0029Vb7WkWR6rsQuNY2r5i0A"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold py-3 px-4 rounded-2xl flex items-center justify-between shadow-md hover:brightness-110 transition-all text-xs cursor-pointer group"
+              >
+                <div className="flex items-center space-x-2.5">
+                  <div className="p-1.5 bg-white/20 rounded-xl">
+                    <MessageCircle className="h-4 w-4 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <div className="font-extrabold text-white">Canal Officiel WhatsApp</div>
+                    <div className="text-[10px] text-emerald-100 font-medium">Annonces & Actualités en direct</div>
+                  </div>
+                </div>
+                <ArrowRight className="h-4 w-4 text-white/80 group-hover:translate-x-1 transition-transform" />
+              </a>
+
+              <a
+                href="https://wa.me/22890000000?text=Bonjour,%20j'ai%20besoin%20d'aide%20sur%20Nutrien."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-bold py-3 px-4 rounded-2xl flex items-center justify-between shadow-md hover:brightness-110 transition-all text-xs cursor-pointer group"
+              >
+                <div className="flex items-center space-x-2.5">
+                  <div className="p-1.5 bg-white/20 rounded-xl">
+                    <Headset className="h-4 w-4 text-amber-300" />
+                  </div>
+                  <div className="text-left">
+                    <div className="font-extrabold text-white">Service Client Direct</div>
+                    <div className="text-[10px] text-blue-100 font-medium">Assistance 24/7 par un agent</div>
+                  </div>
+                </div>
+                <ArrowRight className="h-4 w-4 text-white/80 group-hover:translate-x-1 transition-transform" />
+              </a>
+
+              <button
+                type="button"
+                onClick={() => setShowSupportModal(false)}
+                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-2xl text-xs transition-colors cursor-pointer mt-2"
+              >
+                Fermer
+              </button>
             </div>
           </div>
         </div>

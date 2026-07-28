@@ -5,96 +5,104 @@ interface FloatingCustomerServiceProps {
 }
 
 export default function FloatingCustomerService({ onClick }: FloatingCustomerServiceProps) {
-  // Position state (bottom-right default)
+  // Initial position state (restored from localStorage if available, or bottom-right default)
   const [position, setPosition] = useState<{ x: number; y: number }>(() => {
+    try {
+      const saved = localStorage.getItem("cs_widget_pos");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (typeof parsed.x === "number" && typeof parsed.y === "number") {
+          return {
+            x: Math.min(Math.max(5, parsed.x), Math.max(10, window.innerWidth - 75)),
+            y: Math.min(Math.max(5, parsed.y), Math.max(10, window.innerHeight - 75))
+          };
+        }
+      }
+    } catch (e) {}
     return {
       x: Math.max(16, window.innerWidth - 90),
-      y: Math.max(100, window.innerHeight - 170)
+      y: Math.max(80, window.innerHeight - 160)
     };
   });
 
   const [isDragging, setIsDragging] = useState(false);
+  const isDraggingRef = useRef(false);
   const dragStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const posStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const positionRef = useRef<{ x: number; y: number }>(position);
   const hasMovedRef = useRef(false);
 
-  // Recalculate boundary on resize
+  // Keep positionRef in sync
+  useEffect(() => {
+    positionRef.current = position;
+  }, [position]);
+
+  // Recalculate boundary on window resize
   useEffect(() => {
     const handleResize = () => {
-      setPosition((prev) => ({
-        x: Math.min(Math.max(10, prev.x), window.innerWidth - 80),
-        y: Math.min(Math.max(10, prev.y), window.innerHeight - 80)
-      }));
+      setPosition((prev) => {
+        const newX = Math.min(Math.max(5, prev.x), Math.max(10, window.innerWidth - 75));
+        const newY = Math.min(Math.max(5, prev.y), Math.max(10, window.innerHeight - 75));
+        return { x: newX, y: newY };
+      });
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Mouse handlers
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    hasMovedRef.current = false;
-    dragStartRef.current = { x: e.clientX, y: e.clientY };
-    posStartRef.current = { ...position };
-  };
-
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!isDragging) return;
-    const dx = e.clientX - dragStartRef.current.x;
-    const dy = e.clientY - dragStartRef.current.y;
-    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
-      hasMovedRef.current = true;
-    }
-    const newX = Math.min(Math.max(10, posStartRef.current.x + dx), window.innerWidth - 80);
-    const newY = Math.min(Math.max(10, posStartRef.current.y + dy), window.innerHeight - 80);
-    setPosition({ x: newX, y: newY });
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  // Touch handlers
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (e.touches.length !== 1) return;
-    setIsDragging(true);
-    hasMovedRef.current = false;
-    dragStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    posStartRef.current = { ...position };
-  };
-
-  const handleTouchMove = (e: TouchEvent) => {
-    if (!isDragging || e.touches.length !== 1) return;
-    const dx = e.touches[0].clientX - dragStartRef.current.x;
-    const dy = e.touches[0].clientY - dragStartRef.current.y;
-    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
-      hasMovedRef.current = true;
-    }
-    const newX = Math.min(Math.max(10, posStartRef.current.x + dx), window.innerWidth - 80);
-    const newY = Math.min(Math.max(10, posStartRef.current.y + dy), window.innerHeight - 80);
-    setPosition({ x: newX, y: newY });
-  };
-
-  const handleTouchEnd = () => {
-    setIsDragging(false);
-  };
-
+  // Global Pointer Event Listeners for smooth dragging everywhere
   useEffect(() => {
-    if (isDragging) {
-      window.addEventListener("mousemove", handleMouseMove);
-      window.addEventListener("mouseup", handleMouseUp);
-      window.addEventListener("touchmove", handleTouchMove, { passive: false });
-      window.addEventListener("touchend", handleTouchEnd);
-    }
+    if (!isDragging) return;
+
+    const handleWindowPointerMove = (e: PointerEvent) => {
+      if (!isDraggingRef.current) return;
+      const dx = e.clientX - dragStartRef.current.x;
+      const dy = e.clientY - dragStartRef.current.y;
+
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+        hasMovedRef.current = true;
+      }
+
+      const newX = Math.min(Math.max(5, posStartRef.current.x + dx), Math.max(10, window.innerWidth - 75));
+      const newY = Math.min(Math.max(5, posStartRef.current.y + dy), Math.max(10, window.innerHeight - 75));
+
+      const newPos = { x: newX, y: newY };
+      positionRef.current = newPos;
+      setPosition(newPos);
+    };
+
+    const handleWindowPointerUp = () => {
+      if (!isDraggingRef.current) return;
+      isDraggingRef.current = false;
+      setIsDragging(false);
+
+      try {
+        localStorage.setItem("cs_widget_pos", JSON.stringify(positionRef.current));
+      } catch (err) {}
+    };
+
+    window.addEventListener("pointermove", handleWindowPointerMove);
+    window.addEventListener("pointerup", handleWindowPointerUp);
+    window.addEventListener("pointercancel", handleWindowPointerUp);
+
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-      window.removeEventListener("touchmove", handleTouchMove);
-      window.removeEventListener("touchend", handleTouchEnd);
+      window.removeEventListener("pointermove", handleWindowPointerMove);
+      window.removeEventListener("pointerup", handleWindowPointerUp);
+      window.removeEventListener("pointercancel", handleWindowPointerUp);
     };
   }, [isDragging]);
 
-  const handleClick = () => {
+  // Pointer Down (Mouse or Touch)
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    isDraggingRef.current = true;
+    setIsDragging(true);
+    hasMovedRef.current = false;
+    dragStartRef.current = { x: e.clientX, y: e.clientY };
+    posStartRef.current = { ...positionRef.current };
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!hasMovedRef.current) {
       onClick();
     }
@@ -108,15 +116,16 @@ export default function FloatingCustomerService({ onClick }: FloatingCustomerSer
         left: `${position.x}px`,
         top: `${position.y}px`,
         zIndex: 9999,
-        touchAction: "none"
+        touchAction: "none",
+        userSelect: "none",
+        WebkitUserSelect: "none"
       }}
-      onMouseDown={handleMouseDown}
-      onTouchStart={handleTouchStart}
+      onPointerDown={handlePointerDown}
       onClick={handleClick}
-      className={`cursor-grab active:cursor-grabbing group select-none transition-transform duration-100 ${
-        isDragging ? "scale-105 shadow-2xl" : "hover:scale-108"
+      className={`cursor-grab active:cursor-grabbing group select-none transition-transform duration-75 ${
+        isDragging ? "scale-105 shadow-2xl opacity-90" : "hover:scale-105"
       }`}
-      title="Service Client (Déplaçable)"
+      title="Service Client (Déplaçable - Maintenez et glissez)"
     >
       <div className="relative w-18 h-18 sm:w-20 sm:h-20 drop-shadow-xl filter">
         {/* Pulsing Backlight */}

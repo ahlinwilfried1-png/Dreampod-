@@ -464,7 +464,7 @@ export default function ProfileView({
               <div>
                 <h4 className="font-black text-slate-900 text-xs uppercase mb-1">2. Conditions de Dépôt</h4>
                 <p className="pl-1">
-                  • Le dépôt minimum autorisé est de <span className="font-extrabold">4 000 {currency}</span>.<br />
+                  • Le dépôt minimum autorisé est de <span className="font-extrabold">3 000 {currency}</span>.<br />
                   • Les dépôts sont instantanément vérifiés après confirmation par le réseau de paiement.
                 </p>
               </div>

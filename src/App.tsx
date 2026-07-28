@@ -34,7 +34,7 @@ import ProofsView from "./components/ProofsView";
 import AnnouncementsView from "./components/AnnouncementsView";
 import GiftView from "./components/GiftView";
 import FloatingCustomerService from "./components/FloatingCustomerService";
-import { Cpu, ShieldCheck, X, Gift, Send } from "lucide-react";
+import { Cpu, ShieldCheck, X, Gift, Send, MessageSquare } from "lucide-react";
 
 export default function App() {
   // Session States
@@ -500,16 +500,26 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Group Link */}
-              <div className="pt-2 space-y-1.5">
+              {/* Official Channels Links */}
+              <div className="pt-2 space-y-2">
                 <a 
-                  href="https://t.me/nutrien_chat"
+                  href="https://t.me/+nlAW_0vhdfI2Yzdk"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full bg-[#0088cc] hover:bg-[#0077b3] active:bg-[#006699] text-white font-black text-sm py-3.5 px-4 rounded-xl transition-all flex items-center justify-center space-x-2.5 cursor-pointer shadow-md hover:shadow-lg active:scale-98 tracking-wide"
+                  className="w-full bg-[#0088cc] hover:bg-[#0077b3] text-white font-black text-xs py-3 px-4 rounded-xl transition-all flex items-center justify-center space-x-2 cursor-pointer shadow-md active:scale-98"
                 >
-                  <Send className="h-5 w-5 animate-bounce" />
-                  <span>Rejoindre le Groupe de Discussion</span>
+                  <Send className="h-4 w-4" />
+                  <span>Rejoindre la Chaîne Telegram</span>
+                </a>
+
+                <a 
+                  href="https://whatsapp.com/channel/0029Vb7WkWR6rsQuNY2r5i0A"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-black text-xs py-3 px-4 rounded-xl transition-all flex items-center justify-center space-x-2 cursor-pointer shadow-md active:scale-98"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  <span>Rejoindre le Canal WhatsApp</span>
                 </a>
               </div>
             </div>

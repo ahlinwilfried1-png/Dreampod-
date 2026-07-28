@@ -336,22 +336,25 @@ function getLocalDb() {
     }
     const parsed = JSON.parse(raw);
     if (!parsed.users) parsed.users = defaultUsers;
-    parsed.products = defaultProducts; // Always sync latest products with images
+    if (!parsed.products || !Array.isArray(parsed.products) || parsed.products.length === 0) {
+      parsed.products = defaultProducts;
+    } else {
+      parsed.products = parsed.products.map((p: any) => ({
+        ...p,
+        price: Number(p.price) || 0,
+        dailyIncome: Number(p.dailyIncome) || 0,
+        durationDays: Number(p.durationDays) || 1,
+        totalIncome: (Number(p.dailyIncome) || 0) * (Number(p.durationDays) || 1),
+        isBlocked: p.isBlocked ?? false,
+      }));
+    }
     if (!parsed.investments) parsed.investments = defaultInvestments;
     if (!parsed.transactions) parsed.transactions = defaultTransactions;
     if (!parsed.bonusCodes) parsed.bonusCodes = defaultBonusCodes;
     if (!parsed.notifications) parsed.notifications = defaultNotifications;
     if (!parsed.forumPosts) parsed.forumPosts = defaultForumPosts;
-    if (!parsed.userReviews || parsed.userReviews.length === 0) {
+    if (!parsed.userReviews || !Array.isArray(parsed.userReviews)) {
       parsed.userReviews = defaultUserReviews;
-    } else {
-      // Ensure default certificate items exist if not present
-      defaultUserReviews.forEach((defRev) => {
-        const exists = parsed.userReviews.some((r: any) => r.id === defRev.id);
-        if (!exists) {
-          parsed.userReviews.push(defRev);
-        }
-      });
     }
     if (!parsed.paymentChannels) parsed.paymentChannels = defaultPaymentChannels;
     return parsed;
@@ -711,6 +714,38 @@ async function handleLocalRequest<T>(path: string, options: RequestInit = {}): P
       );
       if (alreadySubscribedVip0) {
         throw new Error("Vous avez déjà bénéficié de l'offre spéciale VIP 0. Ce produit est réservé à un usage unique par utilisateur.");
+      }
+    }
+
+    // Bien-être reinvestment constraint: Must reinvest in a standard VIP product before buying another Bien-être product
+    const isWellbeingProduct =
+      product.category === "wellbeing" ||
+      (product.category as string) === "bien_etre" ||
+      product.name?.toLowerCase().includes("wellbeing") ||
+      product.name?.toLowerCase().includes("bien-être") ||
+      product.name?.toLowerCase().includes("bien être") ||
+      product.name?.toLowerCase().includes("agricole") ||
+      product.name?.toLowerCase().includes("lait");
+
+    if (isWellbeingProduct) {
+      const userInvs = (db.investments || [])
+        .filter((inv: any) => inv.userId === user.id)
+        .sort((a: any, b: any) => new Date(a.activatedAt || 0).getTime() - new Date(b.activatedAt || 0).getTime());
+
+      if (userInvs.length > 0) {
+        const lastInv = userInvs[userInvs.length - 1];
+        const lastIsWellbeing =
+          lastInv.category === "wellbeing" ||
+          (lastInv.category as string) === "bien_etre" ||
+          lastInv.productName?.toLowerCase().includes("wellbeing") ||
+          lastInv.productName?.toLowerCase().includes("bien-être") ||
+          lastInv.productName?.toLowerCase().includes("bien être") ||
+          lastInv.productName?.toLowerCase().includes("agricole") ||
+          lastInv.productName?.toLowerCase().includes("lait");
+
+        if (lastIsWellbeing) {
+          throw new Error("Pour souscrire à un nouveau produit Bien-être, vous devez d'abord réinvestir dans un plan VIP principal.");
+        }
       }
     }
     if (user.balance < product.price) {
