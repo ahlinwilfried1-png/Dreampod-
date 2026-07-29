@@ -503,7 +503,7 @@ export default function App() {
               {/* Official Channels Links */}
               <div className="pt-2 space-y-2">
                 <a 
-                  href="https://t.me/+nlAW_0vhdfI2Yzdk"
+                  href="https://t.me/+usJgjaACe-1mM2Zk"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full bg-[#0088cc] hover:bg-[#0077b3] text-white font-black text-xs py-3 px-4 rounded-xl transition-all flex items-center justify-center space-x-2 cursor-pointer shadow-md active:scale-98"
@@ -513,7 +513,7 @@ export default function App() {
                 </a>
 
                 <a 
-                  href="https://whatsapp.com/channel/0029Vb7WkWR6rsQuNY2r5i0A"
+                  href="https://whatsapp.com/channel/0029Vb8YR5RInlqVFq9AOa33"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-black text-xs py-3 px-4 rounded-xl transition-all flex items-center justify-center space-x-2 cursor-pointer shadow-md active:scale-98"

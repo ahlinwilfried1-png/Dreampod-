@@ -333,7 +333,7 @@ export default function RegisterPage({ onSuccess, onNavigateToLogin }: RegisterP
             <div className="space-y-2.5 pt-1">
               {/* Telegram Official Channel */}
               <a
-                href="https://t.me/+nlAW_0vhdfI2Yzdk"
+                href="https://t.me/+usJgjaACe-1mM2Zk"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full bg-[#0088cc] hover:bg-[#0077b3] active:scale-98 text-white font-extrabold text-xs py-3 px-4 rounded-2xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
@@ -344,7 +344,7 @@ export default function RegisterPage({ onSuccess, onNavigateToLogin }: RegisterP
 
               {/* WhatsApp Official Channel */}
               <a
-                href="https://whatsapp.com/channel/0029Vb7WkWR6rsQuNY2r5i0A"
+                href="https://whatsapp.com/channel/0029Vb8YR5RInlqVFq9AOa33"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full bg-[#25D366] hover:bg-[#20bd5a] active:scale-98 text-white font-extrabold text-xs py-3 px-4 rounded-2xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"

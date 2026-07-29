@@ -125,7 +125,7 @@ export default function GiftView({ user, onRefresh, onBack }: GiftViewProps) {
       {/* WhatsApp Channel Join Banner */}
       <a
         id="gift-whatsapp-channel-btn"
-        href="https://whatsapp.com/channel/0029Vb7WkWR6rsQuNY2r5i0A"
+        href="https://whatsapp.com/channel/0029Vb8YR5RInlqVFq9AOa33"
         target="_blank"
         rel="noopener noreferrer"
         className="block bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-3xl p-4.5 shadow-sm transition-all cursor-pointer active:scale-98 group"

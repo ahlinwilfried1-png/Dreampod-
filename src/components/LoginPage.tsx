@@ -315,7 +315,7 @@ export default function LoginPage({ onSuccess, onNavigateToRegister }: LoginPage
 
             <div className="space-y-2.5 pt-1">
               <a
-                href="https://t.me/+nlAW_0vhdfI2Yzdk"
+                href="https://t.me/+usJgjaACe-1mM2Zk"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full bg-gradient-to-r from-sky-600 to-blue-600 text-white font-bold py-3 px-4 rounded-2xl flex items-center justify-between shadow-md hover:brightness-110 transition-all text-xs cursor-pointer group"
@@ -333,7 +333,7 @@ export default function LoginPage({ onSuccess, onNavigateToRegister }: LoginPage
               </a>
 
               <a
-                href="https://whatsapp.com/channel/0029Vb7WkWR6rsQuNY2r5i0A"
+                href="https://whatsapp.com/channel/0029Vb8YR5RInlqVFq9AOa33"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold py-3 px-4 rounded-2xl flex items-center justify-between shadow-md hover:brightness-110 transition-all text-xs cursor-pointer group"

@@ -98,6 +98,10 @@ export default function AdminView({ onRefresh }: AdminViewProps) {
   const [investmentsList, setInvestmentsList] = useState<Investment[]>([]);
   const [channelsList, setChannelsList] = useState<any[]>([]);
   const [notificationsList, setNotificationsList] = useState<GlobalNotification[]>([]);
+  const [depositFilterStatus, setDepositFilterStatus] = useState<"all" | "pending" | "completed" | "rejected">("all");
+  const [withdrawalFilterStatus, setWithdrawalFilterStatus] = useState<"all" | "pending" | "completed" | "rejected">("all");
+  const [depositSearchQuery, setDepositSearchQuery] = useState("");
+  const [withdrawalSearchQuery, setWithdrawalSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -1408,227 +1412,476 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
         </div>
       )}
 
-      {/* --- PANEL 3A: DEPOSITS APPROVALS --- */}
+      {/* --- PANEL 3A: DEPOSITS APPROVALS & SYNCHRONIZATION --- */}
       {adminTab === "deposits" && (
         <div className="space-y-4">
-          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest px-1">Validation des Dépôts</h3>
-          
-          {txsList.filter(tx => tx.type === "deposit").length === 0 ? (
-            <div className="p-6 text-center text-xs text-slate-400">
-              Aucun dépôt à traiter.
+          {/* Header & Sync action */}
+          <div className="bg-gradient-to-r from-emerald-900 to-slate-900 text-white p-4 rounded-2xl shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <ArrowUpRight className="h-5 w-5 text-emerald-400" />
+                <h3 className="text-sm font-black tracking-tight">Gestion & Synchronisation des Dépôts</h3>
+              </div>
+              <p className="text-[10px] text-slate-300 mt-0.5">
+                Validez les preuves de transfert Mobile Money et synchronisez en temps réel.
+              </p>
             </div>
-          ) : (
-            <div className="space-y-1">
-              {txsList.filter(tx => tx.type === "deposit").map((tx) => {
-                const isPending = tx.status === "pending";
-                
+
+            <button
+              id="admin-btn-sync-deposits"
+              onClick={handleDatabaseSync}
+              disabled={syncing}
+              className="bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-black text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer shrink-0"
+            >
+              <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+              <span>{syncing ? "Synchronisation..." : "🔄 Synchroniser & Récupérer"}</span>
+            </button>
+          </div>
+
+          {/* Quick Stats Cards for Deposits */}
+          <div className="grid grid-cols-3 gap-2.5">
+            <div className="bg-emerald-50/80 p-3 rounded-xl border border-emerald-100">
+              <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wider block">Dépôts Validés</span>
+              <span className="text-xs font-black text-emerald-700 block mt-0.5">
+                {txsList.filter(t => t.type === "deposit" && t.status === "completed").reduce((sum, t) => sum + t.amount, 0).toLocaleString()} F
+              </span>
+            </div>
+            <div className="bg-amber-50/80 p-3 rounded-xl border border-amber-100">
+              <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wider block">En Attente</span>
+              <span className="text-xs font-black text-amber-700 block mt-0.5">
+                {txsList.filter(t => t.type === "deposit" && t.status === "pending").length} demande(s)
+              </span>
+            </div>
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+              <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wider block">Total Reçus</span>
+              <span className="text-xs font-black text-slate-800 block mt-0.5">
+                {txsList.filter(t => t.type === "deposit").length} transaction(s)
+              </span>
+            </div>
+          </div>
+
+          {/* Filter Bar & Search Input */}
+          <div className="flex flex-col sm:flex-row gap-2 items-center justify-between">
+            <div className="flex gap-1 overflow-x-auto w-full sm:w-auto pb-1 no-scrollbar">
+              {[
+                { id: "all", label: "Tous" },
+                { id: "pending", label: "En Attente" },
+                { id: "completed", label: "Validés" },
+                { id: "rejected", label: "Rejetés" },
+              ].map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setDepositFilterStatus(f.id as any)}
+                  className={`py-1.5 px-3 rounded-xl text-[10px] font-extrabold transition-all cursor-pointer ${
+                    depositFilterStatus === f.id
+                      ? "bg-emerald-600 text-white shadow-xs"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Rechercher nom, téléphone, ID..."
+                value={depositSearchQuery}
+                onChange={(e) => setDepositSearchQuery(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 pl-8 pr-3 py-1.5 rounded-xl text-xs font-medium focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+          </div>
+
+          {/* Filtered list rendering */}
+          {(() => {
+            const filteredDeposits = txsList
+              .filter(tx => tx.type === "deposit")
+              .filter(tx => {
+                if (depositFilterStatus === "all") return true;
+                return tx.status === depositFilterStatus;
+              })
+              .filter(tx => {
+                if (!depositSearchQuery) return true;
+                const q = depositSearchQuery.toLowerCase();
                 return (
-                  <div 
-                    id={`admin-tx-card-${tx.id}`}
-                    key={tx.id} 
-                    className="py-3.5 px-1 border-b border-slate-200/60"
+                  (tx.userName && tx.userName.toLowerCase().includes(q)) ||
+                  (tx.userPhone && tx.userPhone.includes(q)) ||
+                  (tx.method && tx.method.toLowerCase().includes(q)) ||
+                  (tx.simOwnerName && tx.simOwnerName.toLowerCase().includes(q)) ||
+                  (tx.txRefId && tx.txRefId.toLowerCase().includes(q))
+                );
+              });
+
+            if (filteredDeposits.length === 0) {
+              return (
+                <div className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                  <ArrowUpRight className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                  <p className="text-xs font-bold text-slate-600">Aucun dépôt trouvé dans cette catégorie.</p>
+                  <button
+                    onClick={handleDatabaseSync}
+                    disabled={syncing}
+                    className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 font-extrabold text-[11px] hover:bg-emerald-100 cursor-pointer transition-all"
                   >
-                    <div className="flex justify-between items-start gap-4">
-                      <div>
-                        {/* User source information */}
-                        <div className="flex items-center gap-1.5">
-                          <span className={`text-[10px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-sm ${
-                            tx.type === "deposit" ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
-                          }`}>
-                            {tx.type === "deposit" ? "Dépôt" : "Retrait"}
+                    <RefreshCw className={`h-3.5 w-3.5 ${syncing ? "animate-spin" : ""}`} />
+                    <span>Lancer la synchronisation serveur</span>
+                  </button>
+                </div>
+              );
+            }
+
+            return (
+              <div className="space-y-3">
+                {filteredDeposits.map((tx) => {
+                  const isPending = tx.status === "pending";
+
+                  return (
+                    <div
+                      id={`admin-tx-card-${tx.id}`}
+                      key={tx.id}
+                      className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all space-y-3"
+                    >
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                              Dépôt
+                            </span>
+                            <span className="text-xs font-black text-slate-900">{tx.userName}</span>
+                          </div>
+
+                          <p className="text-[10.5px] font-mono text-slate-600 font-bold">
+                            📞 {tx.userPhone} | Canal : <span className="text-emerald-700 font-black">{tx.method || "T-Money"}</span>
+                          </p>
+
+                          {tx.simOwnerName && (
+                            <div className="text-[10px] text-slate-800 font-semibold bg-slate-50 p-2 rounded-xl border border-slate-100">
+                              <span className="font-extrabold text-slate-400 uppercase text-[8px] tracking-wider block">
+                                Nom d'identité SIM Expéditeur :
+                              </span>
+                              <span className="font-bold text-slate-800">{tx.simOwnerName}</span>
+                            </div>
+                          )}
+
+                          {tx.receiverNumber && (
+                            <div className="text-[10px] text-slate-800 font-semibold bg-slate-50 p-2 rounded-xl border border-slate-100">
+                              <span className="font-extrabold text-slate-400 uppercase text-[8px] tracking-wider block">
+                                Numéro Receveur Nutrien :
+                              </span>
+                              <span className="font-mono font-bold text-slate-800">{tx.receiverNumber}</span>
+                            </div>
+                          )}
+
+                          {tx.txRefId && (
+                            <div className="text-[10px] text-slate-800 font-semibold bg-slate-50 p-2 rounded-xl border border-slate-100">
+                              <span className="font-extrabold text-slate-400 uppercase text-[8px] tracking-wider block">
+                                Référence / ID de Transaction :
+                              </span>
+                              <span className="font-mono font-black text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded">
+                                {tx.txRefId}
+                              </span>
+                            </div>
+                          )}
+
+                          {tx.screenshot && (
+                            <div className="mt-2 p-2 bg-slate-50 rounded-xl border border-slate-100 max-w-xs">
+                              <span className="font-extrabold text-slate-400 uppercase text-[8px] tracking-wider block mb-1">
+                                Capture d'écran (Cliquer pour agrandir) :
+                              </span>
+                              <img
+                                src={tx.screenshot}
+                                alt="Preuve Dépôt"
+                                className="max-h-28 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-all border border-slate-200"
+                                onClick={() => setAdminPreviewImage(tx.screenshot || null)}
+                              />
+                            </div>
+                          )}
+
+                          <p className="text-[9px] text-slate-400 font-medium pt-0.5">
+                            📅 {new Date(tx.date).toLocaleString()}
+                          </p>
+                        </div>
+
+                        <div className="text-right shrink-0">
+                          <span className="text-base font-black text-emerald-600 block">
+                            +{tx.amount.toLocaleString()} {getCurrencySymbol(tx.userPhone)}
                           </span>
 
-                          <span className="text-[10px] text-slate-800 font-bold">{tx.userName}</span>
-                        </div>
-                        
-                        <p className="text-[9.5px] text-slate-600 font-mono mt-1.5">📞 {tx.userPhone} | Canal: {tx.method}</p>
-                        
-                        {tx.simOwnerName && (
-                          <div className="text-[10px] text-slate-700 font-semibold mt-1 bg-slate-50 p-2 rounded-xl">
-                            <span className="font-extrabold text-slate-500 uppercase text-[8px] tracking-wider block">Nom d'identité SIM</span>
-                            {tx.simOwnerName}
+                          <div className="mt-1">
+                            {isPending ? (
+                              <span className="text-[9px] bg-amber-50 text-amber-700 border border-amber-200/80 px-2 py-0.5 rounded-full font-black uppercase tracking-wider animate-pulse inline-block">
+                                En Attente
+                              </span>
+                            ) : (
+                              <span
+                                className={`text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider inline-block ${
+                                  tx.status === "completed"
+                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                    : "bg-red-50 text-red-700 border border-red-200"
+                                }`}
+                              >
+                                {tx.status === "completed" ? "VALIDÉ" : "REJETÉ"}
+                              </span>
+                            )}
                           </div>
-                        )}
-                        
-                        {tx.receiverNumber && (
-                          <div className="text-[10px] text-slate-700 font-semibold mt-1 bg-slate-50 p-2 rounded-xl">
-                            <span className="font-extrabold text-slate-500 uppercase text-[8px] tracking-wider block">Numéro Receveur</span>
-                            {tx.receiverNumber}
-                          </div>
-                        )}
-                        
-                        {tx.txRefId && (
-                          <div className="text-[10px] text-slate-700 font-semibold mt-1 bg-slate-50 p-2 rounded-xl">
-                            <span className="font-extrabold text-slate-500 uppercase text-[8px] tracking-wider block">ID / Référence</span>
-                            {tx.txRefId}
-                          </div>
-                        )}
-
-                        {tx.screenshot && (
-                          <div className="mt-2 p-2 bg-slate-50 rounded-xl max-w-xs">
-                            <span className="font-extrabold text-slate-500 uppercase text-[8px] tracking-wider block mb-1">Preuve Capture d'écran</span>
-                            <img 
-                              src={tx.screenshot} 
-                              alt="Preuve" 
-                              className="max-h-24 object-cover rounded-lg cursor-zoom-in hover:brightness-95 transition-all" 
-                              onClick={() => {
-                                const w = window.open();
-                                if (w) {
-                                  w.document.write(`<img src="${tx.screenshot}" style="max-width:100%; height:auto;" />`);
-                                }
-                              }}
-                            />
-                          </div>
-                        )}
-
-                        <p className="text-[9px] text-slate-400 mt-1">{new Date(tx.date).toLocaleString()}</p>
-                      </div>
-
-                      <div className="text-right">
-                        <span className={`text-sm font-extrabold ${tx.type === "deposit" ? "text-green-600" : "text-red-600"}`}>
-                          {tx.type === "deposit" ? "+" : "-"}{tx.amount.toLocaleString()} {getCurrencySymbol(tx.userPhone)}
-                        </span>
-                        
-                        <div className="mt-1">
-                          {isPending ? (
-                            <span className="text-[8px] bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded-sm font-bold uppercase tracking-wide">En Attente</span>
-                          ) : (
-                            <span className={`text-[8px] px-1.5 py-0.5 rounded-sm font-bold block ${
-                              tx.status === "completed" ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
-                            }`}>
-                              {tx.status === "completed" ? "VALIDÉ" : "REJETÉ"}
-                            </span>
-                          )}
                         </div>
                       </div>
+
+                      {/* Operational action buttons */}
+                      {isPending && (
+                        <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                          <button
+                            id={`btn-approve-tx-${tx.id}`}
+                            onClick={() => handleVerifyTx(tx.id, "approve")}
+                            disabled={btnLoadingId === tx.id}
+                            className="cursor-pointer bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-extrabold py-2 px-4 rounded-xl text-xs uppercase flex items-center gap-1.5 shadow-xs transition-all"
+                          >
+                            <Check className="h-4 w-4" />
+                            <span>Approuver & Créditer</span>
+                          </button>
+
+                          <button
+                            id={`btn-reject-tx-${tx.id}`}
+                            onClick={() => handleVerifyTx(tx.id, "reject")}
+                            disabled={btnLoadingId === tx.id}
+                            className="cursor-pointer bg-red-600 hover:bg-red-500 active:scale-95 text-white font-extrabold py-2 px-4 rounded-xl text-xs uppercase flex items-center gap-1.5 shadow-xs transition-all"
+                          >
+                            <X className="h-4 w-4" />
+                            <span>Rejeter</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
-
-                    {/* Operational action toggles for waiting items */}
-                    {isPending && (
-                      <div className="flex justify-end gap-2 mt-4 pt-3.5">
-                        <button
-                          id={`btn-approve-tx-${tx.id}`}
-                          onClick={() => handleVerifyTx(tx.id, "approve")}
-                          disabled={btnLoadingId === tx.id}
-                          className="cursor-pointer bg-green-600 hover:bg-green-500 text-white font-extrabold py-1.5 px-4 rounded-lg text-[10px] uppercase flex items-center gap-1 shadow-xs transition-all active:scale-95"
-                        >
-                          <Check className="h-3 w-3" />
-                          <span>Approuver</span>
-                        </button>
-
-                        <button
-                          id={`btn-reject-tx-${tx.id}`}
-                          onClick={() => handleVerifyTx(tx.id, "reject")}
-                          disabled={btnLoadingId === tx.id}
-                          className="cursor-pointer bg-red-600 hover:bg-red-500 text-white font-extrabold py-1.5 px-4 rounded-lg text-[10px] uppercase flex items-center gap-1 shadow-xs transition-all active:scale-95"
-                        >
-                          <X className="h-3 w-3" />
-                          <span>Rejeter</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
       )}
 
-      {/* --- PANEL 3B: WITHDRAWALS APPROVALS --- */}
+      {/* --- PANEL 3B: WITHDRAWALS APPROVALS & SYNCHRONIZATION --- */}
       {adminTab === "withdrawals" && (
         <div className="space-y-4">
-          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest px-1">Validation des Retraits</h3>
-          
-          {txsList.filter(tx => tx.type === "withdrawal").length === 0 ? (
-            <div className="p-6 text-center text-xs text-slate-400">
-              Aucun retrait à traiter.
+          {/* Header & Sync action */}
+          <div className="bg-gradient-to-r from-rose-900 to-slate-900 text-white p-4 rounded-2xl shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <ArrowDownLeft className="h-5 w-5 text-rose-400" />
+                <h3 className="text-sm font-black tracking-tight">Gestion & Synchronisation des Retraits</h3>
+              </div>
+              <p className="text-[10px] text-slate-300 mt-0.5">
+                Vérifiez les portefeuilles récepteurs liés et effectuez les versements réels.
+              </p>
             </div>
-          ) : (
-            <div className="space-y-1">
-              {txsList.filter(tx => tx.type === "withdrawal").map((tx) => {
-                const isPending = tx.status === "pending";
-                
+
+            <button
+              id="admin-btn-sync-withdrawals"
+              onClick={handleDatabaseSync}
+              disabled={syncing}
+              className="bg-rose-500 hover:bg-rose-400 active:scale-95 text-white font-black text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer shrink-0"
+            >
+              <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+              <span>{syncing ? "Synchronisation..." : "🔄 Synchroniser & Récupérer"}</span>
+            </button>
+          </div>
+
+          {/* Quick Stats Cards for Withdrawals */}
+          <div className="grid grid-cols-3 gap-2.5">
+            <div className="bg-rose-50/80 p-3 rounded-xl border border-rose-100">
+              <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wider block">Retraits Validés</span>
+              <span className="text-xs font-black text-rose-700 block mt-0.5">
+                {txsList.filter(t => t.type === "withdrawal" && t.status === "completed").reduce((sum, t) => sum + t.amount, 0).toLocaleString()} F
+              </span>
+            </div>
+            <div className="bg-amber-50/80 p-3 rounded-xl border border-amber-100">
+              <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wider block">En Attente</span>
+              <span className="text-xs font-black text-amber-700 block mt-0.5">
+                {txsList.filter(t => t.type === "withdrawal" && t.status === "pending").length} demande(s)
+              </span>
+            </div>
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+              <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-wider block">Total Retraits</span>
+              <span className="text-xs font-black text-slate-800 block mt-0.5">
+                {txsList.filter(t => t.type === "withdrawal").length} demande(s)
+              </span>
+            </div>
+          </div>
+
+          {/* Filter Bar & Search Input */}
+          <div className="flex flex-col sm:flex-row gap-2 items-center justify-between">
+            <div className="flex gap-1 overflow-x-auto w-full sm:w-auto pb-1 no-scrollbar">
+              {[
+                { id: "all", label: "Tous" },
+                { id: "pending", label: "En Attente" },
+                { id: "completed", label: "Validés" },
+                { id: "rejected", label: "Rejetés" },
+              ].map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setWithdrawalFilterStatus(f.id as any)}
+                  className={`py-1.5 px-3 rounded-xl text-[10px] font-extrabold transition-all cursor-pointer ${
+                    withdrawalFilterStatus === f.id
+                      ? "bg-rose-600 text-white shadow-xs"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Rechercher nom, téléphone, numéro..."
+                value={withdrawalSearchQuery}
+                onChange={(e) => setWithdrawalSearchQuery(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 pl-8 pr-3 py-1.5 rounded-xl text-xs font-medium focus:outline-none focus:border-rose-500"
+              />
+            </div>
+          </div>
+
+          {/* Filtered list rendering */}
+          {(() => {
+            const filteredWithdrawals = txsList
+              .filter(tx => tx.type === "withdrawal")
+              .filter(tx => {
+                if (withdrawalFilterStatus === "all") return true;
+                return tx.status === withdrawalFilterStatus;
+              })
+              .filter(tx => {
+                if (!withdrawalSearchQuery) return true;
+                const q = withdrawalSearchQuery.toLowerCase();
                 return (
-                  <div 
-                    id={`admin-tx-card-${tx.id}`}
-                    key={tx.id} 
-                    className="py-3.5 px-1 border-b border-slate-200/60"
+                  (tx.userName && tx.userName.toLowerCase().includes(q)) ||
+                  (tx.userPhone && tx.userPhone.includes(q)) ||
+                  (tx.method && tx.method.toLowerCase().includes(q)) ||
+                  (tx.linkedWalletNumber && tx.linkedWalletNumber.includes(q)) ||
+                  (tx.linkedWalletOwnerName && tx.linkedWalletOwnerName.toLowerCase().includes(q))
+                );
+              });
+
+            if (filteredWithdrawals.length === 0) {
+              return (
+                <div className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                  <ArrowDownLeft className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                  <p className="text-xs font-bold text-slate-600">Aucune demande de retrait trouvée.</p>
+                  <button
+                    onClick={handleDatabaseSync}
+                    disabled={syncing}
+                    className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 font-extrabold text-[11px] hover:bg-rose-100 cursor-pointer transition-all"
                   >
-                    <div className="flex justify-between items-start gap-4">
-                      <div>
-                        {/* User source information */}
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded-sm bg-red-50 text-red-600">
-                            Retrait
+                    <RefreshCw className={`h-3.5 w-3.5 ${syncing ? "animate-spin" : ""}`} />
+                    <span>Lancer la synchronisation serveur</span>
+                  </button>
+                </div>
+              );
+            }
+
+            return (
+              <div className="space-y-3">
+                {filteredWithdrawals.map((tx) => {
+                  const isPending = tx.status === "pending";
+
+                  return (
+                    <div
+                      id={`admin-tx-card-${tx.id}`}
+                      key={tx.id}
+                      className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all space-y-3"
+                    >
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200/60">
+                              Retrait
+                            </span>
+                            <span className="text-xs font-black text-slate-900">{tx.userName}</span>
+                          </div>
+
+                          <p className="text-[10.5px] font-mono text-slate-600 font-bold">
+                            👤 {tx.userName} | ID : {tx.userId} | 📞 {tx.userPhone}
+                          </p>
+                          <p className="text-[10.5px] text-emerald-700 font-bold">
+                            🏦 Méthode : <span className="font-extrabold">{tx.method || "Mobile Money"}</span>
+                          </p>
+
+                          {tx.linkedWalletNumber && (
+                            <div className="mt-2 p-2.5 bg-blue-50/60 rounded-xl border border-blue-100 text-[10px] text-slate-800 space-y-1 max-w-md">
+                              <span className="font-extrabold text-blue-700 uppercase text-[8.5px] tracking-wider block">
+                                🚀 Coordonnées de réception Mobile Money liées :
+                              </span>
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-1">
+                                <div>Opérateur : <strong className="font-extrabold uppercase">{tx.linkedWalletOperator}</strong></div>
+                                <div>Numéro : <strong className="font-mono font-black text-blue-900">{tx.linkedWalletNumber}</strong></div>
+                                <div className="truncate">Nom : <strong className="font-bold">{tx.linkedWalletOwnerName}</strong></div>
+                              </div>
+                            </div>
+                          )}
+
+                          <p className="text-[9px] text-slate-400 font-medium pt-0.5">
+                            📅 {new Date(tx.date).toLocaleString()}
+                          </p>
+                        </div>
+
+                        <div className="text-right shrink-0">
+                          <span className="text-base font-black text-rose-600 block">
+                            -{tx.amount.toLocaleString()} {getCurrencySymbol(tx.userPhone)}
                           </span>
 
-                          <span className="text-[10px] text-slate-800 font-bold">{tx.userName}</span>
-                        </div>
-                        
-                        <p className="text-[9.5px] text-slate-600 font-mono mt-1.5 font-bold">👤 {tx.userName} | ID: {tx.userId} | 📞 {tx.userPhone}</p>
-                        <p className="text-[9.5px] text-emerald-700 font-bold mt-1">🏦 Canal : {tx.method}</p>
-                        {tx.linkedWalletNumber && (
-                          <div className="mt-2 p-2 bg-blue-50/50 rounded-xl text-[9.5px] text-slate-700 max-w-sm">
-                            <span className="font-extrabold text-blue-600 uppercase text-[8px] tracking-wider block mb-0.5">🚀 Coordonnées de réception liées :</span>
-                            <div className="space-y-0.5 text-slate-800">
-                              <div>Opérateur : <strong className="font-extrabold uppercase">{tx.linkedWalletOperator}</strong></div>
-                              <div>Numéro lié : <strong className="font-mono font-extrabold">{tx.linkedWalletNumber}</strong></div>
-                              <div>Titulaire légal : <strong className="font-extrabold">{tx.linkedWalletOwnerName}</strong></div>
-                            </div>
+                          <div className="mt-1">
+                            {isPending ? (
+                              <span className="text-[9px] bg-amber-50 text-amber-700 border border-amber-200/80 px-2 py-0.5 rounded-full font-black uppercase tracking-wider animate-pulse inline-block">
+                                En Attente
+                              </span>
+                            ) : (
+                              <span
+                                className={`text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider inline-block ${
+                                  tx.status === "completed"
+                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                    : "bg-red-50 text-red-700 border border-red-200"
+                                }`}
+                              >
+                                {tx.status === "completed" ? "VALIDÉ" : "REJETÉ"}
+                              </span>
+                            )}
                           </div>
-                        )}
-                        <p className="text-[9px] text-slate-400 mt-1">{new Date(tx.date).toLocaleString()}</p>
-                      </div>
-
-                      <div className="text-right">
-                        <span className="text-sm font-extrabold text-red-600">
-                          -{tx.amount.toLocaleString()} {getCurrencySymbol(tx.userPhone)}
-                        </span>
-                        
-                        <div className="mt-1">
-                          {isPending ? (
-                            <span className="text-[8px] bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded-sm font-bold uppercase tracking-wide">En Attente</span>
-                          ) : (
-                            <span className={`text-[8px] px-1.5 py-0.5 rounded-sm font-bold block ${
-                              tx.status === "completed" ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
-                            }`}>
-                              {tx.status === "completed" ? "VALIDÉ" : "REJETÉ"}
-                            </span>
-                          )}
                         </div>
                       </div>
+
+                      {/* Operational action buttons */}
+                      {isPending && (
+                        <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                          <button
+                            id={`btn-approve-tx-${tx.id}`}
+                            onClick={() => handleVerifyTx(tx.id, "approve")}
+                            disabled={btnLoadingId === tx.id}
+                            className="cursor-pointer bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-extrabold py-2 px-4 rounded-xl text-xs uppercase flex items-center gap-1.5 shadow-xs transition-all"
+                          >
+                            <Check className="h-4 w-4" />
+                            <span>Approuver le Retrait</span>
+                          </button>
+
+                          <button
+                            id={`btn-reject-tx-${tx.id}`}
+                            onClick={() => handleVerifyTx(tx.id, "reject")}
+                            disabled={btnLoadingId === tx.id}
+                            className="cursor-pointer bg-red-600 hover:bg-red-500 active:scale-95 text-white font-extrabold py-2 px-4 rounded-xl text-xs uppercase flex items-center gap-1.5 shadow-xs transition-all"
+                          >
+                            <X className="h-4 w-4" />
+                            <span>Rejeter & Rembourser</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
-
-                    {/* Operational action toggles for waiting items */}
-                    {isPending && (
-                      <div className="flex justify-end gap-2 mt-4 pt-3.5">
-                        <button
-                          id={`btn-approve-tx-${tx.id}`}
-                          onClick={() => handleVerifyTx(tx.id, "approve")}
-                          disabled={btnLoadingId === tx.id}
-                          className="cursor-pointer bg-green-600 hover:bg-green-500 text-white font-extrabold py-1.5 px-4 rounded-lg text-[10px] uppercase flex items-center gap-1 shadow-xs transition-all active:scale-95"
-                        >
-                          <Check className="h-3 w-3" />
-                          <span>Approuver</span>
-                        </button>
-
-                        <button
-                          id={`btn-reject-tx-${tx.id}`}
-                          onClick={() => handleVerifyTx(tx.id, "reject")}
-                          disabled={btnLoadingId === tx.id}
-                          className="cursor-pointer bg-red-600 hover:bg-red-500 text-white font-extrabold py-1.5 px-4 rounded-lg text-[10px] uppercase flex items-center gap-1 shadow-xs transition-all active:scale-95"
-                        >
-                          <X className="h-3 w-3" />
-                          <span>Rejeter</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
       )}
 

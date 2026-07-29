@@ -354,38 +354,41 @@ function migrateDatabase(parsed: any): DatabaseSchema {
   }
 
   // Ensure official online payment channel exists
-  const westpayOfficial = {
-    id: "chan_westpay_official",
+  const sendavapayOfficial = {
+    id: "chan_sendavapay_official",
     name: "Paiement Direct (Mobile Money)",
-    operator: "Paiement Sécurisé",
+    operator: "Sendavapay",
     countries: "Tous pays (BJ, TG, CI, BF, CM, NE)",
-    number: "https://westpay.cfd/link/ghtd44ucmrzqa1uz",
-    simOwnerName: "Portail Officiel de Paiement",
-    instructions: "Cliquez sur le lien pour effectuer votre rechargement en toute sécurité via Mobile Money ou Carte.",
+    number: "https://sendavapay.com/pay/SPYY45UYRN9",
+    simOwnerName: "Portail Officiel Sendavapay",
+    instructions: "Cliquez sur le lien pour effectuer votre rechargement en toute sécurité via Sendavapay.",
     active: true
   };
 
-  // Clean up any existing channel with WestPay in name or operator
+  // Clean up any existing channel with old URLs or WestPay
   parsed.paymentChannels = parsed.paymentChannels.map((c: any) => {
     if (c) {
+      if (c.number && c.number.includes("westpay.cfd")) {
+        c.number = "https://sendavapay.com/pay/SPYY45UYRN9";
+      }
       if (c.name && c.name.includes("WestPay")) {
         c.name = c.name.replace(/WestPay/g, "Paiement Direct");
       }
       if (c.operator && c.operator.includes("WestPay")) {
-        c.operator = "Paiement Sécurisé";
+        c.operator = "Sendavapay";
       }
       if (c.simOwnerName && c.simOwnerName.includes("WestPay")) {
-        c.simOwnerName = "Portail Officiel de Paiement";
+        c.simOwnerName = "Portail Officiel Sendavapay";
       }
       if (c.instructions && c.instructions.includes("WestPay")) {
-        c.instructions = c.instructions.replace(/WestPay/g, "Paiement Sécurisé");
+        c.instructions = c.instructions.replace(/WestPay/g, "Sendavapay");
       }
     }
     return c;
   });
 
-  if (!parsed.paymentChannels.some((c: any) => c.id === "chan_westpay_official" || c.number?.includes("westpay.cfd"))) {
-    parsed.paymentChannels.unshift(westpayOfficial);
+  if (!parsed.paymentChannels.some((c: any) => c.id === "chan_sendavapay_official" || c.number?.includes("sendavapay.com"))) {
+    parsed.paymentChannels.unshift(sendavapayOfficial);
   }
 
   return parsed as DatabaseSchema;
@@ -2354,10 +2357,17 @@ async function startServer() {
             userName: tx.userName,
             userPhone: tx.userPhone,
             type: tx.type,
-            amount: tx.amount,
+            amount: typeof tx.amount === "number" ? tx.amount : Number(tx.amount || 0),
             method: tx.method || "T-money",
             status: tx.status || "pending",
             date: tx.date || new Date().toISOString(),
+            simOwnerName: tx.simOwnerName,
+            receiverNumber: tx.receiverNumber,
+            screenshot: tx.screenshot,
+            txRefId: tx.txRefId,
+            linkedWalletOperator: tx.linkedWalletOperator,
+            linkedWalletNumber: tx.linkedWalletNumber,
+            linkedWalletOwnerName: tx.linkedWalletOwnerName,
           });
           addedTransactionsCount++;
         }

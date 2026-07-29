@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { ArrowLeft, Smartphone, Info, ChevronRight, Headphones, CheckCircle } from "lucide-react";
+import { ArrowLeft, Smartphone, Info, ChevronRight, Headphones, CheckCircle, ExternalLink } from "lucide-react";
 import { User } from "../types";
 import { api } from "../lib/api";
 import { getCurrencySymbol } from "../lib/currency";
@@ -15,7 +15,7 @@ interface DepositViewProps {
   onBack: () => void;
 }
 
-const PAYMENT_LINK_URL = "https://westpay.cfd/link/ghtd44ucmrzqa1uz";
+const PAYMENT_LINK_URL = "https://sendavapay.com/pay/SPYY45UYRN9";
 
 const RECHARGE_PRESETS = [
   { amount: "3000" },
@@ -68,35 +68,24 @@ export default function DepositView({ user, onRefresh, onBack }: DepositViewProp
     setError("");
     setSuccess("");
 
-    const val = Number(depositAmount);
-    if (!val || val < 3000) {
-      setError(`Le montant minimum d'un dépôt est de 3 000 ${currency}.`);
-      return;
-    }
-
-    if (!userPhone.trim()) {
-      setError("Veuillez saisir votre numéro de téléphone.");
-      return;
-    }
+    const val = Number(depositAmount) || 3000;
+    const fullPhone = `${phonePrefix} ${userPhone.trim() || user.phone || ""}`;
 
     setLoading(true);
 
     try {
-      const fullPhone = `${phonePrefix} ${userPhone.trim()}`;
-      await api.deposit(val, selectedChannel === "allpay" ? "Allpay Direct" : "Goray Money", {
+      // Enregistrer le dépôt dans la base de données
+      api.deposit(val, "Sendavapay Direct", {
         receiverNumber: PAYMENT_LINK_URL,
         simOwnerName: fullPhone,
-      });
-
-      window.open(PAYMENT_LINK_URL, "_blank");
-      setSuccess(`Rechargement de ${val.toLocaleString()} ${currency} initié ! La page de paiement a été ouverte.`);
-      onRefresh();
+      }).catch(console.error);
     } catch (err: any) {
-      window.open(PAYMENT_LINK_URL, "_blank");
-      setSuccess("Redirection vers la page de paiement...");
-    } finally {
-      setLoading(false);
+      console.error("Erreur enregistrement dépôt:", err);
     }
+
+    // Ouvrir directement la page de paiement Sendavapay
+    window.open(PAYMENT_LINK_URL, "_blank");
+    window.location.href = PAYMENT_LINK_URL;
   };
 
   return (

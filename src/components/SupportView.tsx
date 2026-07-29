@@ -384,7 +384,7 @@ export default function SupportView({ onBack, userPhone, initialMode = "chat" }:
               </div>
               <a
                 id="support-telegram-btn"
-                href="https://t.me/+nlAW_0vhdfI2Yzdk"
+                href="https://t.me/+usJgjaACe-1mM2Zk"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-[#0088cc] hover:bg-[#0077b3] text-white font-bold text-xs px-4 py-2 rounded-xl transition-all active:scale-95 cursor-pointer uppercase shadow-xs flex items-center gap-1"
@@ -426,7 +426,7 @@ export default function SupportView({ onBack, userPhone, initialMode = "chat" }:
               </div>
               <a
                 id="support-whatsapp-channel-btn"
-                href="https://whatsapp.com/channel/0029Vb7WkWR6rsQuNY2r5i0A"
+                href="https://whatsapp.com/channel/0029Vb8YR5RInlqVFq9AOa33"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-[#ff6600] hover:bg-[#e65c00] text-white font-bold text-xs px-4 py-2 rounded-xl transition-all active:scale-95 cursor-pointer uppercase"
