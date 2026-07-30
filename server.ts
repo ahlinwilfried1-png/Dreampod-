@@ -1615,7 +1615,7 @@ async function startServer() {
   });
 
   // Claim hourly/daily revenue of active investments manually
-  app.post("/api/user/claim-revenues", authenticateUser, (req, res) => {
+  app.post("/api/user/claim-revenues", authenticateUser, async (req, res) => {
     const userId = req.user!.id;
     const userInvests = db.investments.filter(i => i.userId === userId);
     
@@ -1627,13 +1627,9 @@ async function startServer() {
     let totalRevenueClaimed = 0;
     
     userInvests.forEach(inv => {
-      // Allow users to claim if last claim was > 1 hour ago (or mock 20 seconds for fast interactive demo purposes so user visualizes in real-time!)
       const lastClaim = new Date(inv.lastClaimAt);
       const elapsedMs = now.getTime() - lastClaim.getTime();
       
-      // Let's allow simulated rapid income generation! For real-world, it’s 24 hours. For excellent review: let's allow claims if visual elapsed timer shows positive.
-      // We will simulate that we claim a portion of daily income, or we claim the full daily income if simulated timer completed! To make things highly interactive,
-      // let's claim the full dailyIncome (or a portion) and update claim time.
       const simulatedClaimAmount = inv.dailyIncome; // Claim full daily income
       
       inv.lastClaimAt = now.toISOString();
@@ -1661,7 +1657,7 @@ async function startServer() {
         method: "Récolte Revenus Machines VIP",
       };
       db.transactions.push(tx);
-      saveDatabase(db);
+      await saveDatabase(db);
       
       res.json({
         message: `Félicitations ! Vous avez récolté ${totalRevenueClaimed} FCFA de vos investissements actifs.`,
@@ -1674,10 +1670,9 @@ async function startServer() {
   });
 
   // Daily Check-In (Pointage)
-  app.post("/api/user/checkin", authenticateUser, (req, res) => {
+  app.post("/api/user/checkin", authenticateUser, async (req, res) => {
     const userId = req.user!.id;
     const now = new Date();
-    // Use local date string in YYYY-MM-DD or simple date matching to see if already checked in today
     const todayStr = now.toISOString().split("T")[0];
 
     const hasCheckedInToday = db.transactions.some(tx => 
@@ -1711,7 +1706,7 @@ async function startServer() {
     };
     db.transactions.push(tx);
 
-    saveDatabase(db);
+    await saveDatabase(db);
 
     res.json({
       message: `Félicitations ! Votre pointage a été validé. Un bonus de ${checkInReward} FCFA a été ajouté à votre solde.`,
@@ -1721,7 +1716,7 @@ async function startServer() {
   });
 
   // Claim Gift/Promo Code
-  app.post("/api/user/claim-bonus", authenticateUser, (req, res) => {
+  app.post("/api/user/claim-bonus", authenticateUser, async (req, res) => {
     const { code } = req.body;
     const userId = req.user!.id;
 
@@ -1768,7 +1763,7 @@ async function startServer() {
     };
     db.transactions.push(tx);
 
-    saveDatabase(db);
+    await saveDatabase(db);
 
     res.json({
       message: `Félicitations ! Code '${cleanedCode}' validé. Un montant de ${bonus.amount} FCFA a été ajouté à votre solde.`,
@@ -1778,7 +1773,7 @@ async function startServer() {
   });
 
   // Lucky Wheel Spin
-  app.post("/api/user/spin-wheel", authenticateUser, (req, res) => {
+  app.post("/api/user/spin-wheel", authenticateUser, async (req, res) => {
     const userId = req.user!.id;
 
     // Find user
@@ -1851,7 +1846,7 @@ async function startServer() {
       db.transactions.push(tx);
     }
 
-    saveDatabase(db);
+    await saveDatabase(db);
 
     res.json({
       message: selectedPrize.amount > 0 
@@ -2001,7 +1996,7 @@ async function startServer() {
   });
 
   // Admin: Block/Unblock account
-  app.post("/api/admin/user/block", authenticateAdmin, (req, res) => {
+  app.post("/api/admin/user/block", authenticateAdmin, async (req, res) => {
     const { userId, block } = req.body;
     if (!userId) {
       return res.status(400).json({ error: "ID utilisateur requis." });
@@ -2017,7 +2012,7 @@ async function startServer() {
     }
 
     db.users[uIdx].isBlocked = !!block;
-    saveDatabase(db);
+    await saveDatabase(db);
 
     res.json({ 
       message: `Compte utilisateur ${block ? 'bloqué' : 'débloqué'} avec succès.`,
@@ -2026,7 +2021,7 @@ async function startServer() {
   });
 
   // Admin: Directly add custom balance bonus to user
-  app.post("/api/admin/user/bonus", authenticateAdmin, (req, res) => {
+  app.post("/api/admin/user/bonus", authenticateAdmin, async (req, res) => {
     const { userId, amount, reason } = req.body;
     if (!userId || !amount) {
       return res.status(400).json({ error: "ID utilisateur et montant requis." });
@@ -2052,7 +2047,7 @@ async function startServer() {
       method: reason || "Bonus Administrateur",
     };
     db.transactions.push(tx);
-    saveDatabase(db);
+    await saveDatabase(db);
 
     res.json({ 
       message: `Bonus de ${numAmount} FCFA ajouté à ${db.users[uIdx].name} avec succès.`,
@@ -2148,7 +2143,7 @@ async function startServer() {
   });
 
   // Admin: Delete VIP plan product
-  app.delete("/api/admin/products/:id", authenticateAdmin, (req, res) => {
+  app.delete("/api/admin/products/:id", authenticateAdmin, async (req, res) => {
     const id = req.params.id;
     const prodIdx = db.products.findIndex(p => p.id === id);
     if (prodIdx === -1) {
@@ -2156,13 +2151,13 @@ async function startServer() {
     }
 
     const deleted = db.products.splice(prodIdx, 1)[0];
-    saveDatabase(db);
+    await saveDatabase(db);
 
     res.json({ message: `Produit ${deleted.name} supprimé avec succès.` });
   });
 
   // Admin: Update VIP plan product
-  app.put("/api/admin/products/:id", authenticateAdmin, (req, res) => {
+  app.put("/api/admin/products/:id", authenticateAdmin, async (req, res) => {
     const id = req.params.id;
     const { name, price, dailyIncome, durationDays, category, isBlocked, image } = req.body;
     const prodIdx = db.products.findIndex(p => p.id === id);
@@ -2179,12 +2174,12 @@ async function startServer() {
     if (image !== undefined) prod.image = image;
     prod.totalIncome = prod.dailyIncome * prod.durationDays;
     
-    saveDatabase(db);
+    await saveDatabase(db);
     res.json({ message: `Le plan "${prod.name}" a été mis à jour avec succès !`, product: prod });
   });
 
   // Admin: Update user details (modify things on user's account)
-  app.put("/api/admin/users/:id", authenticateAdmin, (req, res) => {
+  app.put("/api/admin/users/:id", authenticateAdmin, async (req, res) => {
     const id = req.params.id;
     const { name, phone, balance, referralCode, commissionEarned, isBlocked, password } = req.body;
     const uIdx = db.users.findIndex(u => u.id === id);
@@ -2200,12 +2195,12 @@ async function startServer() {
     if (isBlocked !== undefined) user.isBlocked = !!isBlocked;
     if (password !== undefined) user.passwordHash = password;
     
-    saveDatabase(db);
+    await saveDatabase(db);
     res.json({ message: `Le compte de "${user.name}" a été mis à jour avec succès !`, user });
   });
 
   // Admin: Delete user account
-  app.delete("/api/admin/users/:id", authenticateAdmin, (req, res) => {
+  app.delete("/api/admin/users/:id", authenticateAdmin, async (req, res) => {
     const id = req.params.id;
     if (id === "usr_admin") {
       return res.status(400).json({ error: "Impossible de supprimer le compte de l'administrateur principal." });
@@ -2222,12 +2217,12 @@ async function startServer() {
     }
     db.transactions = db.transactions.filter(t => t.userId !== id);
     
-    saveDatabase(db);
+    await saveDatabase(db);
     res.json({ message: `Le compte de "${deletedUser.name}" a été supprimé avec succès !` });
   });
 
   // Admin: Delete user's investment (paid product)
-  app.delete("/api/admin/investments/:id", authenticateAdmin, (req, res) => {
+  app.delete("/api/admin/investments/:id", authenticateAdmin, async (req, res) => {
     const id = req.params.id;
     if (!db.investments) db.investments = [];
     const invIdx = db.investments.findIndex(i => i.id === id);
@@ -2235,12 +2230,12 @@ async function startServer() {
       return res.status(404).json({ error: "Investissement introuvable." });
     }
     const deleted = db.investments.splice(invIdx, 1)[0];
-    saveDatabase(db);
+    await saveDatabase(db);
     res.json({ message: `Investissement "${deleted.productName}" a été supprimé avec succès.` });
   });
 
   // Admin: Create gift promo code
-  app.post("/api/admin/bonus-codes/generate", authenticateAdmin, (req, res) => {
+  app.post("/api/admin/bonus-codes/generate", authenticateAdmin, async (req, res) => {
     const { code, amount, maxUses } = req.body;
     if (!code || !amount) {
       return res.status(400).json({ error: "Code et montant du bonus requis." });
@@ -2263,7 +2258,7 @@ async function startServer() {
     };
 
     db.bonusCodes.push(newCode);
-    saveDatabase(db);
+    await saveDatabase(db);
 
     res.json({
       message: `Code cadeau '${upperCode}' créé avec succès !`,
@@ -2288,7 +2283,7 @@ async function startServer() {
   });
 
   // Admin: Broadcast dynamic notification
-  app.post("/api/admin/notifications/send", authenticateAdmin, (req, res) => {
+  app.post("/api/admin/notifications/send", authenticateAdmin, async (req, res) => {
     const { title, content } = req.body;
     if (!title || !content) {
       return res.status(400).json({ error: "Titre et contenu requis." });
@@ -2303,7 +2298,7 @@ async function startServer() {
     };
 
     db.notifications.unshift(newNotif); // latest first
-    saveDatabase(db);
+    await saveDatabase(db);
 
     res.json({
       message: "Notification globale diffusée avec succès !",
@@ -2312,10 +2307,10 @@ async function startServer() {
   });
 
   // Admin: Delete a notification
-  app.delete("/api/admin/notifications/:id", authenticateAdmin, (req, res) => {
+  app.delete("/api/admin/notifications/:id", authenticateAdmin, async (req, res) => {
     const { id } = req.params;
     db.notifications = (db.notifications || []).filter(n => n.id !== id);
-    saveDatabase(db);
+    await saveDatabase(db);
     res.json({ message: "Annonce supprimée avec succès." });
   });
 
