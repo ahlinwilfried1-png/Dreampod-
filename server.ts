@@ -2320,7 +2320,11 @@ async function startServer() {
   });
 
   // Admin: Synchronize local storage state with server state
-  app.post("/api/admin/sync", authenticateAdmin, (req, res) => {
+  app.post("/api/admin/sync", authenticateAdmin, async (req, res) => {
+    try {
+      db = await loadDatabase(true);
+    } catch (e) {}
+
     const { users, transactions, investments, bonusCodes, notifications, forumPosts, userReviews } = req.body;
 
     let addedUsersCount = 0;
@@ -2459,7 +2463,10 @@ async function startServer() {
 
     // Save modifications to DB
     if (addedUsersCount > 0 || addedTransactionsCount > 0 || addedInvestmentsCount > 0 || addedReviewsCount > 0 || addedForumPostsCount > 0) {
-      saveDatabase(db);
+      await saveDatabase(db);
+    } else {
+      // Force sync to Supabase to ensure cloud state is synchronized
+      await saveDatabase(db);
     }
 
     res.json({
