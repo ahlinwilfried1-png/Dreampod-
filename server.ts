@@ -396,16 +396,12 @@ function migrateDatabase(parsed: any): DatabaseSchema {
 
 async function loadDatabase(force = false): Promise<DatabaseSchema> {
   const now = Date.now();
-  if (!force && typeof db !== "undefined" && db && (now - lastDbLoadedTime < DB_LOAD_CACHE_MS)) {
+  if (!force && typeof db !== "undefined" && db && db.users && db.users.length > 0 && (now - lastDbLoadedTime < DB_LOAD_CACHE_MS)) {
     return db;
   }
 
-  if (supabase && !isSupabaseHealthy) {
-    await checkAndRestoreSupabaseHealth();
-  }
-
-  // 1. Try loading from Supabase first
-  if (supabase && isSupabaseHealthy) {
+  // 1. Try loading from Supabase first if client exists
+  if (supabase) {
     try {
       console.log("Loading database state from Supabase table 'dreampod_state'...");
       const { data, error } = await supabase
@@ -414,41 +410,31 @@ async function loadDatabase(force = false): Promise<DatabaseSchema> {
         .eq("id", "global_db")
         .single();
         
-      if (data && data.data) {
-        console.log("Successfully loaded database state from Supabase!");
+      if (data && data.data && data.data.users && Array.isArray(data.data.users)) {
+        console.log(`[Supabase Load Success] Loaded ${data.data.users.length} users from Supabase.`);
+        isSupabaseHealthy = true;
+        supabaseStatus = "connected";
         const migrated = migrateDatabase(data.data);
-        // Sync local backup file
-        fs.writeFileSync(DB_FILE, JSON.stringify(migrated, null, 2), "utf8");
+        try {
+          fs.writeFileSync(DB_FILE, JSON.stringify(migrated, null, 2), "utf8");
+        } catch (e) {}
         lastDbLoadedTime = Date.now();
         db = migrated;
         return db;
       } else if (error) {
         if (error.code === "PGRST116") {
-          console.log("No data record found in 'dreampod_state' for key 'global_db'. Seeding from local backup...");
-          let seedData = db;
-          if (!seedData && fs.existsSync(DB_FILE)) {
-            try {
-              const localData = fs.readFileSync(DB_FILE, "utf8");
-              seedData = JSON.parse(localData);
-            } catch (e) {}
-          }
-          if (seedData) {
-            const migrated = migrateDatabase(seedData);
-            fs.writeFileSync(DB_FILE, JSON.stringify(migrated, null, 2), "utf8");
-            await saveToSupabase(migrated);
-            lastDbLoadedTime = Date.now();
-            db = migrated;
-            return db;
-          }
+          console.log("[Supabase] No 'global_db' record found in 'dreampod_state'. Will seed default data...");
+          isSupabaseHealthy = true;
+          supabaseStatus = "connected";
         } else if (error.message?.includes("does not exist") || error.code === "42P01" || error.code === "PGRST205") {
           isSupabaseHealthy = false;
           supabaseStatus = "table_missing";
         } else {
-          console.warn("Supabase load error:", error.message);
+          console.warn("[Supabase Load Error]:", error.message);
         }
       }
     } catch (err: any) {
-      console.warn("Error connecting to Supabase during load:", err.message || err);
+      console.warn("[Supabase Load Exception]:", err.message || err);
     }
   }
 
@@ -658,8 +644,11 @@ async function loadDatabase(force = false): Promise<DatabaseSchema> {
       paymentChannels: initialPaymentChannels,
     };
     fs.writeFileSync(DB_FILE, JSON.stringify(dbData, null, 2), "utf8");
-    saveToSupabase(dbData);
+    if (supabase && isSupabaseHealthy) {
+      await saveToSupabase(dbData);
+    }
     lastDbLoadedTime = Date.now();
+    db = dbData;
     return dbData;
   }
 
@@ -1889,14 +1878,18 @@ async function startServer() {
   });
 
   // Admin Stats
-  app.get("/api/admin/stats", authenticateAdmin, (req, res) => {
-    const totalUsers = db.users.length;
+  app.get("/api/admin/stats", authenticateAdmin, async (req, res) => {
+    try {
+      db = await loadDatabase(true);
+    } catch (e) {}
+
+    const totalUsers = db.users ? db.users.length : 0;
     let totalInvested = 0;
     let totalDeposited = 0;
     let totalWithdrawn = 0;
     let platformRevenues = 0;
 
-    db.transactions.forEach(tx => {
+    (db.transactions || []).forEach(tx => {
       if (tx.status === "completed") {
         if (tx.type === "investment") {
           totalInvested += tx.amount;
@@ -1908,11 +1901,11 @@ async function startServer() {
       }
     });
 
-    const totalPendingDepositsAmount = db.transactions
+    const totalPendingDepositsAmount = (db.transactions || [])
       .filter(t => t.type === "deposit" && t.status === "pending")
       .reduce((sum, t) => sum + t.amount, 0);
 
-    const totalPendingWithdrawalsAmount = db.transactions
+    const totalPendingWithdrawalsAmount = (db.transactions || [])
       .filter(t => t.type === "withdrawal" && t.status === "pending")
       .reduce((sum, t) => sum + t.amount, 0);
 
@@ -1929,14 +1922,14 @@ async function startServer() {
         totalDeposited,
         totalWithdrawn,
         platformRevenues,
-        numberOfPendingWithdrawals: db.transactions.filter(t => t.type === "withdrawal" && t.status === "pending").length,
-        numberOfPendingDeposits: db.transactions.filter(t => t.type === "deposit" && t.status === "pending").length,
+        numberOfPendingWithdrawals: (db.transactions || []).filter(t => t.type === "withdrawal" && t.status === "pending").length,
+        numberOfPendingDeposits: (db.transactions || []).filter(t => t.type === "deposit" && t.status === "pending").length,
         totalPendingDepositsAmount,
         totalPendingWithdrawalsAmount,
         totalPurchasedProductsCount,
         totalPurchasedProductsAmount,
-        numberOfProducts: db.products.length,
-        numberOfBonusCodes: db.bonusCodes.length,
+        numberOfProducts: (db.products || []).length,
+        numberOfBonusCodes: (db.bonusCodes || []).length,
       },
       isSupabaseHealthy: isSupabaseHealthy,
       supabaseStatus: supabaseStatus
@@ -1944,17 +1937,29 @@ async function startServer() {
   });
 
   // Admin: Get all users & search/filter with complete financial telemetry
-  app.get("/api/admin/users", authenticateAdmin, (req, res) => {
+  app.get("/api/admin/users", authenticateAdmin, async (req, res) => {
+    try {
+      db = await loadDatabase(true);
+    } catch (e) {}
+
     const { search } = req.query;
-    let filteredUsers = [...db.users];
+    let filteredUsers = [...(db.users || [])];
 
     if (search) {
-      const q = String(search).toLowerCase();
-      filteredUsers = filteredUsers.filter(u => 
-        u.name.toLowerCase().includes(q) || 
-        u.phone.includes(q) || 
-        (u.referralCode && u.referralCode.toLowerCase().includes(q))
-      );
+      const q = String(search).toLowerCase().trim();
+      const cleanQ = q.replace(/[\s\-\(\)]/g, "");
+      filteredUsers = filteredUsers.filter(u => {
+        const uName = (u.name || "").toLowerCase();
+        const uPhone = u.phone || "";
+        const cleanPhone = uPhone.replace(/[\s\-\(\)]/g, "");
+        const uRef = (u.referralCode || "").toLowerCase();
+        return (
+          uName.includes(q) ||
+          uPhone.includes(q) ||
+          (cleanQ && cleanPhone.includes(cleanQ)) ||
+          uRef.includes(q)
+        );
+      });
     }
 
     const txs = db.transactions || [];
@@ -2056,9 +2061,12 @@ async function startServer() {
   });
 
   // Admin: Get transactions (deposits & withdrawals)
-  app.get("/api/admin/transactions", authenticateAdmin, (req, res) => {
+  app.get("/api/admin/transactions", authenticateAdmin, async (req, res) => {
+    try {
+      db = await loadDatabase(true);
+    } catch (e) {}
     // Return all transactions sorted by date
-    const txs = [...db.transactions].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const txs = [...(db.transactions || [])].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     res.json({ transactions: txs });
   });
 
@@ -2264,12 +2272,18 @@ async function startServer() {
   });
 
   // Admin: Get all bonus codes
-  app.get("/api/admin/bonus-codes", authenticateAdmin, (req, res) => {
-    res.json({ bonusCodes: db.bonusCodes });
+  app.get("/api/admin/bonus-codes", authenticateAdmin, async (req, res) => {
+    try {
+      db = await loadDatabase(true);
+    } catch (e) {}
+    res.json({ bonusCodes: db.bonusCodes || [] });
   });
 
   // Admin: Get all active user investments (paid products)
-  app.get("/api/admin/investments", authenticateAdmin, (req, res) => {
+  app.get("/api/admin/investments", authenticateAdmin, async (req, res) => {
+    try {
+      db = await loadDatabase(true);
+    } catch (e) {}
     res.json({ investments: db.investments || [] });
   });
 
