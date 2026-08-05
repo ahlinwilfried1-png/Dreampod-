@@ -53,13 +53,220 @@
       "totalRevenue": 500000,
       "referralsCount": 10,
       "commissionEarned": 50000
+    },
+    {
+      "id": "usr_admin",
+      "name": "Dreampod Admin",
+      "phone": "+22800000000",
+      "passwordHash": "admin123",
+      "balance": 1000000,
+      "dailyRevenue": 0,
+      "totalRevenue": 250000,
+      "referralCode": "ADMIN7",
+      "referralsCount": 4,
+      "referralsN1": 2,
+      "referralsN2": 1,
+      "referralsN3": 1,
+      "commissionEarned": 15000,
+      "registeredAt": "2026-08-05T13:03:02.401Z",
+      "isBlocked": false,
+      "role": "admin"
+    },
+    {
+      "id": "usr_demo",
+      "name": "Jean Kouassi",
+      "phone": "+22890123456",
+      "passwordHash": "user123",
+      "balance": 18500,
+      "dailyRevenue": 3500,
+      "totalRevenue": 15500,
+      "referralCode": "JEAN90",
+      "referrerId": "usr_admin",
+      "referralsCount": 2,
+      "referralsN1": 2,
+      "referralsN2": 0,
+      "referralsN3": 0,
+      "commissionEarned": 2500,
+      "registeredAt": "2026-07-31T13:03:02.401Z",
+      "isBlocked": false,
+      "role": "user"
     }
   ],
   "reviews": [],
-  "products": [],
-  "bonusCodes": [],
-  "forumPosts": [],
-  "investments": [],
+  "products": [
+    {
+      "id": "vip0",
+      "name": "VIP 0 - Plan Découverte",
+      "price": 1000,
+      "dailyIncome": 480,
+      "durationDays": 3,
+      "totalIncome": 1440,
+      "level": 0,
+      "category": "wellbeing",
+      "image": "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "id": "vip1",
+      "name": "VIP 1 - Plan Élite",
+      "price": 3000,
+      "dailyIncome": 400,
+      "durationDays": 200,
+      "totalIncome": 80000,
+      "level": 1,
+      "category": "stability",
+      "image": "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "id": "vip2",
+      "name": "VIP 2 - Plan Premium",
+      "price": 7000,
+      "dailyIncome": 850,
+      "durationDays": 200,
+      "totalIncome": 170000,
+      "level": 2,
+      "category": "stability",
+      "image": "https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "id": "vip3",
+      "name": "VIP 3 - Plan Gold",
+      "price": 15000,
+      "dailyIncome": 1600,
+      "durationDays": 200,
+      "totalIncome": 320000,
+      "level": 3,
+      "category": "wellbeing",
+      "image": "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "id": "vip4",
+      "name": "VIP 4 - Plan Platinum",
+      "price": 20000,
+      "dailyIncome": 2200,
+      "durationDays": 200,
+      "totalIncome": 440000,
+      "level": 4,
+      "category": "wellbeing",
+      "image": "https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "id": "vip5",
+      "name": "VIP 5 - Plan Infini",
+      "price": 30000,
+      "dailyIncome": 3600,
+      "durationDays": 200,
+      "totalIncome": 720000,
+      "level": 5,
+      "category": "activity",
+      "image": "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "id": "vip6",
+      "name": "VIP 6 - Plan Saphir",
+      "price": 50000,
+      "dailyIncome": 5600,
+      "durationDays": 200,
+      "totalIncome": 1120000,
+      "level": 6,
+      "category": "activity",
+      "image": "https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "id": "vip7",
+      "name": "VIP 7 - Plan Diamant",
+      "price": 75000,
+      "dailyIncome": 7700,
+      "durationDays": 200,
+      "totalIncome": 1540000,
+      "level": 7,
+      "category": "activity",
+      "image": "https://images.unsplash.com/photo-1586771107445-d3ca888129ff?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "id": "vip8",
+      "name": "VIP 8 - Plan Rubis",
+      "price": 100000,
+      "dailyIncome": 12500,
+      "durationDays": 200,
+      "totalIncome": 2500000,
+      "level": 8,
+      "category": "activity",
+      "image": "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "id": "vip9",
+      "name": "VIP 9 - Plan Émeraude",
+      "price": 150000,
+      "dailyIncome": 25000,
+      "durationDays": 200,
+      "totalIncome": 5000000,
+      "level": 9,
+      "category": "activity",
+      "image": "https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=800&q=80"
+    }
+  ],
+  "bonusCodes": [
+    {
+      "code": "WELCOME100",
+      "amount": 500,
+      "usedCount": 1,
+      "maxUses": 100,
+      "usedByUsers": [
+        "usr_demo"
+      ],
+      "createdAt": "2026-08-05T13:03:02.401Z"
+    },
+    {
+      "code": "SUPERBONUS",
+      "amount": 1000,
+      "usedCount": 0,
+      "maxUses": 50,
+      "usedByUsers": [],
+      "createdAt": "2026-08-05T13:03:02.401Z"
+    }
+  ],
+  "forumPosts": [
+    {
+      "id": "post_1",
+      "userId": "usr_demo",
+      "userName": "Jean Kouassi",
+      "userPhone": "+22890123456",
+      "content": "Retrait reçu en moins de 10 minutes ! Dreampod est très fiable. Merci à l'administrateur !",
+      "screenshots": [
+        "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=500&q=80",
+        "https://images.unsplash.com/photo-1563013544-824ae1d704d3?auto=format&fit=crop&w=500&q=80"
+      ],
+      "likes": 5,
+      "likedBy": [],
+      "createdAt": "2026-08-04T13:03:02.401Z"
+    }
+  ],
+  "investments": [
+    {
+      "id": "inv_1",
+      "userId": "usr_demo",
+      "productId": "vip1",
+      "productName": "VIP 1 - Plan Élite",
+      "price": 5000,
+      "dailyIncome": 1000,
+      "durationDays": 30,
+      "daysPassed": 4,
+      "activatedAt": "2026-08-01T13:03:02.401Z",
+      "lastClaimAt": "2026-08-05T13:03:02.401Z"
+    },
+    {
+      "id": "inv_2",
+      "userId": "usr_demo",
+      "productId": "vip2",
+      "productName": "VIP 2 - Plan Premium",
+      "price": 10000,
+      "dailyIncome": 2500,
+      "durationDays": 30,
+      "daysPassed": 2,
+      "activatedAt": "2026-08-03T13:03:02.401Z",
+      "lastClaimAt": "2026-08-05T13:03:02.401Z"
+    }
+  ],
   "userReviews": [
     {
       "id": "rev_1",
@@ -72,7 +279,60 @@
       "userPhone": "+22890123456"
     }
   ],
-  "transactions": [],
+  "transactions": [
+    {
+      "id": "tx_1",
+      "userId": "usr_demo",
+      "userName": "Jean Kouassi",
+      "userPhone": "+22890123456",
+      "type": "bonus",
+      "amount": 200,
+      "status": "completed",
+      "date": "2026-07-31T13:03:02.401Z"
+    },
+    {
+      "id": "tx_2",
+      "userId": "usr_demo",
+      "userName": "Jean Kouassi",
+      "userPhone": "+22890123456",
+      "type": "deposit",
+      "amount": 15000,
+      "status": "completed",
+      "date": "2026-07-31T13:03:02.401Z",
+      "method": "T-Money (+228)"
+    },
+    {
+      "id": "tx_3",
+      "userId": "usr_demo",
+      "userName": "Jean Kouassi",
+      "userPhone": "+22890123456",
+      "type": "investment",
+      "amount": 5000,
+      "status": "completed",
+      "date": "2026-08-01T13:03:02.401Z"
+    },
+    {
+      "id": "tx_4",
+      "userId": "usr_demo",
+      "userName": "Jean Kouassi",
+      "userPhone": "+22890123456",
+      "type": "investment",
+      "amount": 10000,
+      "status": "completed",
+      "date": "2026-08-03T13:03:02.401Z"
+    },
+    {
+      "id": "tx_5",
+      "userId": "usr_demo",
+      "userName": "Jean Kouassi",
+      "userPhone": "+22890123456",
+      "type": "withdrawal",
+      "amount": 3000,
+      "status": "pending",
+      "date": "2026-08-05T13:03:02.401Z",
+      "method": "Orange Money (+225)"
+    }
+  ],
   "notifications": [
     {
       "id": "notif1",

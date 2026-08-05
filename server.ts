@@ -110,8 +110,8 @@ const cleanEnvVar = (val: string | undefined): string => {
   return cleaned;
 };
 
-const supabaseUrl = cleanEnvVar(process.env.SUPABASE_URL) || "https://ajluqalpxchoshqieuyj.supabase.co";
-const supabaseServiceKey = cleanEnvVar(process.env.SUPABASE_SERVICE_ROLE_KEY) || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFqbHVxYWxweGNob3NocWlldXlqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NTM5ODY3NywiZXhwIjoyMTAwOTc0Njc3fQ.qI2moa-kqW6Hzcuslcoj_W9aezPC1DqXNNkCk-e6bW4";
+const supabaseUrl = cleanEnvVar(process.env.SUPABASE_URL) || "https://tjywckpbiwgydfijasbn.supabase.co";
+const supabaseServiceKey = cleanEnvVar(process.env.SUPABASE_SERVICE_ROLE_KEY) || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRqeXdja3BiaXdneWRmaWphc2JuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NTkyOTcwMCwiZXhwIjoyMTAxNTA1NzAwfQ.smFQFwePcEwSnX95-EwtN_uMPUz7COzsqOu_SS-T5OY";
 const supabase = (supabaseUrl && supabaseServiceKey)
   ? createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
@@ -210,7 +210,29 @@ function migrateDatabase(parsed: any): DatabaseSchema {
   if (!parsed.bonusCodes) parsed.bonusCodes = [];
   if (!parsed.notifications) parsed.notifications = [];
 
-  // Migrate: Ensure new admin2 exists in the users table
+  // Migrate: Ensure main admin usr_admin exists in users table
+  if (!parsed.users.some((u: any) => u.id === "usr_admin")) {
+    parsed.users.push({
+      id: "usr_admin",
+      name: "Dreampod Admin",
+      phone: "+22800000000",
+      passwordHash: "admin123",
+      balance: 1000000,
+      dailyRevenue: 0,
+      totalRevenue: 250000,
+      referralCode: "ADMIN7",
+      referralsCount: 4,
+      referralsN1: 2,
+      referralsN2: 1,
+      referralsN3: 1,
+      commissionEarned: 15000,
+      registeredAt: new Date().toISOString(),
+      isBlocked: false,
+      role: "admin",
+    });
+  }
+
+  // Migrate: Ensure admin2 exists in users table
   if (!parsed.users.some((u: any) => u.id === "usr_admin2")) {
     parsed.users.push({
       id: "usr_admin2",
@@ -232,7 +254,7 @@ function migrateDatabase(parsed: any): DatabaseSchema {
     });
   }
 
-  // Migrate: Ensure new admin_master exists in the users table
+  // Migrate: Ensure admin_master exists in users table
   if (!parsed.users.some((u: any) => u.id === "usr_admin_master")) {
     parsed.users.push({
       id: "usr_admin_master",
@@ -254,7 +276,7 @@ function migrateDatabase(parsed: any): DatabaseSchema {
     });
   }
 
-  // Migrate: Ensure new admin_niger exists in the users table
+  // Migrate: Ensure admin_niger exists in users table
   if (!parsed.users.some((u: any) => u.id === "usr_admin_niger")) {
     parsed.users.push({
       id: "usr_admin_niger",
@@ -276,7 +298,30 @@ function migrateDatabase(parsed: any): DatabaseSchema {
     });
   }
 
-  if (!parsed.forumPosts) {
+  // Migrate: Ensure demo user usr_demo exists in users table
+  if (!parsed.users.some((u: any) => u.id === "usr_demo")) {
+    parsed.users.push({
+      id: "usr_demo",
+      name: "Jean Kouassi",
+      phone: "+22890123456",
+      passwordHash: "user123",
+      balance: 18500,
+      dailyRevenue: 3500,
+      totalRevenue: 15500,
+      referralCode: "JEAN90",
+      referrerId: "usr_admin",
+      referralsCount: 2,
+      referralsN1: 2,
+      referralsN2: 0,
+      referralsN3: 0,
+      commissionEarned: 2500,
+      registeredAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      isBlocked: false,
+      role: "user",
+    });
+  }
+
+  if (!parsed.forumPosts || !Array.isArray(parsed.forumPosts) || parsed.forumPosts.length === 0) {
     parsed.forumPosts = [
       {
         id: "post_1",
@@ -295,7 +340,7 @@ function migrateDatabase(parsed: any): DatabaseSchema {
     ];
   }
 
-  if (!parsed.userReviews) {
+  if (!parsed.userReviews || !Array.isArray(parsed.userReviews) || parsed.userReviews.length === 0) {
     parsed.userReviews = [
       {
         id: "rev_1",
@@ -310,7 +355,7 @@ function migrateDatabase(parsed: any): DatabaseSchema {
     ];
   }
 
-  // Migrate existing products to have categories and ensure all VIP plans are always present with exact NUTRIEN rates
+  // Migrate existing products or populate default VIP plans
   const defaultProducts = [
     { id: "vip0", name: "VIP 0 - Plan Découverte", price: 1000, dailyIncome: 480, durationDays: 3, totalIncome: 1440, level: 0, category: "wellbeing", image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80" },
     { id: "vip1", name: "VIP 1 - Plan Élite", price: 3000, dailyIncome: 400, durationDays: 200, totalIncome: 80000, level: 1, category: "stability", image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80" },
@@ -324,10 +369,9 @@ function migrateDatabase(parsed: any): DatabaseSchema {
     { id: "vip9", name: "VIP 9 - Plan Émeraude", price: 150000, dailyIncome: 25000, durationDays: 200, totalIncome: 5000000, level: 9, category: "activity", image: "https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=800&q=80" },
   ];
 
-  if (!parsed.products || !Array.isArray(parsed.products)) {
+  if (!parsed.products || !Array.isArray(parsed.products) || parsed.products.length === 0) {
     parsed.products = defaultProducts;
   } else {
-    // Keep existing products as saved by admin with all their properties
     parsed.products = parsed.products.map((p: any) => ({
       ...p,
       price: Number(p.price) || 0,
@@ -338,10 +382,128 @@ function migrateDatabase(parsed: any): DatabaseSchema {
     }));
   }
 
+  if (!parsed.transactions || !Array.isArray(parsed.transactions) || parsed.transactions.length === 0) {
+    parsed.transactions = [
+      {
+        id: "tx_1",
+        userId: "usr_demo",
+        userName: "Jean Kouassi",
+        userPhone: "+22890123456",
+        type: "bonus",
+        amount: 200,
+        status: "completed",
+        date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+      {
+        id: "tx_2",
+        userId: "usr_demo",
+        userName: "Jean Kouassi",
+        userPhone: "+22890123456",
+        type: "deposit",
+        amount: 15000,
+        status: "completed",
+        date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+        method: "T-Money (+228)",
+      },
+      {
+        id: "tx_3",
+        userId: "usr_demo",
+        userName: "Jean Kouassi",
+        userPhone: "+22890123456",
+        type: "investment",
+        amount: 5000,
+        status: "completed",
+        date: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+      {
+        id: "tx_4",
+        userId: "usr_demo",
+        userName: "Jean Kouassi",
+        userPhone: "+22890123456",
+        type: "investment",
+        amount: 10000,
+        status: "completed",
+        date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+      {
+        id: "tx_5",
+        userId: "usr_demo",
+        userName: "Jean Kouassi",
+        userPhone: "+22890123456",
+        type: "withdrawal",
+        amount: 3000,
+        status: "pending",
+        date: new Date().toISOString(),
+        method: "Orange Money (+225)",
+      }
+    ];
+  }
+
+  if (!parsed.investments || !Array.isArray(parsed.investments) || parsed.investments.length === 0) {
+    parsed.investments = [
+      {
+        id: "inv_1",
+        userId: "usr_demo",
+        productId: "vip1",
+        productName: "VIP 1 - Plan Élite",
+        price: 5000,
+        dailyIncome: 1000,
+        durationDays: 30,
+        daysPassed: 4,
+        activatedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+        lastClaimAt: new Date().toISOString(),
+      },
+      {
+        id: "inv_2",
+        userId: "usr_demo",
+        productId: "vip2",
+        productName: "VIP 2 - Plan Premium",
+        price: 10000,
+        dailyIncome: 2500,
+        durationDays: 30,
+        daysPassed: 2,
+        activatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+        lastClaimAt: new Date().toISOString(),
+      }
+    ];
+  }
+
+  if (!parsed.bonusCodes || !Array.isArray(parsed.bonusCodes) || parsed.bonusCodes.length === 0) {
+    parsed.bonusCodes = [
+      {
+        code: "WELCOME100",
+        amount: 500,
+        usedCount: 1,
+        maxUses: 100,
+        usedByUsers: ["usr_demo"],
+        createdAt: new Date().toISOString(),
+      },
+      {
+        code: "SUPERBONUS",
+        amount: 1000,
+        usedCount: 0,
+        maxUses: 50,
+        usedByUsers: [],
+        createdAt: new Date().toISOString(),
+      }
+    ];
+  }
+
+  if (!parsed.notifications || !Array.isArray(parsed.notifications) || parsed.notifications.length === 0) {
+    parsed.notifications = [
+      {
+        id: "notif_1",
+        title: "Bienvenue sur Dreampod !",
+        content: "Investissez dans nos machines VIP et obtenez des revenus journaliers garantis. Retraits rapides via Mobile Money.",
+        createdAt: new Date().toISOString(),
+        authorName: "Équipe Dreampod",
+      }
+    ];
+  }
+
   if (!parsed.paymentChannels || !Array.isArray(parsed.paymentChannels)) {
     parsed.paymentChannels = [];
   } else {
-    // If we have default channels with the original hardcoded test numbers, remove them to start completely fresh
     const preconfiguredNumbers = [
       "+227 99 88 77 66",
       "+227 90 44 55 66",
@@ -365,7 +527,6 @@ function migrateDatabase(parsed: any): DatabaseSchema {
     active: true
   };
 
-  // Clean up any existing channel with old URLs or WestPay
   parsed.paymentChannels = parsed.paymentChannels.map((c: any) => {
     if (c) {
       if (c.number && c.number.includes("westpay.cfd")) {
@@ -415,6 +576,7 @@ async function loadDatabase(force = false): Promise<DatabaseSchema> {
         isSupabaseHealthy = true;
         supabaseStatus = "connected";
         const migrated = migrateDatabase(data.data);
+        await saveToSupabase(migrated);
         try {
           fs.writeFileSync(DB_FILE, JSON.stringify(migrated, null, 2), "utf8");
         } catch (e) {}
@@ -657,6 +819,9 @@ async function loadDatabase(force = false): Promise<DatabaseSchema> {
     const parsed = JSON.parse(data) as DatabaseSchema;
     const migrated = migrateDatabase(parsed);
     fs.writeFileSync(DB_FILE, JSON.stringify(migrated, null, 2), "utf8");
+    if (supabase && isSupabaseHealthy) {
+      await saveToSupabase(migrated);
+    }
     lastDbLoadedTime = Date.now();
     return migrated;
   } catch (error) {
