@@ -5,7 +5,7 @@
       "name": "Administrateur Général",
       "role": "admin",
       "phone": "+22890000000",
-      "balance": 999020,
+      "balance": 999000,
       "isBlocked": false,
       "referralsN1": 10,
       "referralsN2": 5,
@@ -14,7 +14,7 @@
       "passwordHash": "admin2026",
       "referralCode": "MASTER1",
       "registeredAt": "2026-07-23T23:00:00.000Z",
-      "totalRevenue": 1000020,
+      "totalRevenue": 1000000,
       "referralsCount": 17,
       "commissionEarned": 100000
     },
@@ -75,6 +75,18 @@
     }
   ],
   "products": [
+    {
+      "id": "vip0",
+      "name": "VIP 0 - Plan Découverte",
+      "image": "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80",
+      "level": 0,
+      "price": 1000,
+      "category": "wellbeing",
+      "isBlocked": false,
+      "dailyIncome": 480,
+      "totalIncome": 1440,
+      "durationDays": 3
+    },
     {
       "id": "vip1",
       "name": "VIP 1 - Plan Élite",
@@ -182,18 +194,6 @@
       "dailyIncome": 25000,
       "totalIncome": 5000000,
       "durationDays": 200
-    },
-    {
-      "id": "vip0",
-      "name": "VIP 0 - Plan Découverte",
-      "image": "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80",
-      "level": 0,
-      "price": 1000,
-      "category": "wellbeing",
-      "isBlocked": false,
-      "dailyIncome": 480,
-      "totalIncome": 1440,
-      "durationDays": 3
     }
   ],
   "bonusCodes": [],
@@ -272,17 +272,6 @@
       "userId": "usr_admin_master",
       "userName": "Administrateur Général",
       "userPhone": "+22890000000"
-    },
-    {
-      "id": "tx_x0anawohq",
-      "date": "2026-07-27T14:37:29.724Z",
-      "type": "bonus",
-      "amount": 20,
-      "method": "Pointage quotidien",
-      "status": "completed",
-      "userId": "usr_admin_master",
-      "userName": "Administrateur Général",
-      "userPhone": "+22890000000"
     }
   ],
   "notifications": [
@@ -306,7 +295,7 @@
       "id": "chan_westpay_official",
       "name": "Paiement Direct (Mobile Money)",
       "active": true,
-      "number": "https://westpay.cfd/link/ghtd44ucmrzqa1uz",
+      "number": "https://sendavapay.com/pay/SPYY45UYRN9",
       "operator": "Paiement Sécurisé",
       "countries": "Tous pays (BJ, TG, CI, BF, CM, NE)",
       "instructions": "Cliquez sur le lien pour effectuer votre rechargement en toute sécurité via Mobile Money ou Carte.",
