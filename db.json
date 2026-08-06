@@ -8,7 +8,7 @@
       "balance": 1000000,
       "password": "admin123",
       "isBlocked": false,
-      "referralsN1": 5,
+      "referralsN1": 6,
       "referralsN2": 3,
       "referralsN3": 2,
       "dailyRevenue": 0,
@@ -16,7 +16,7 @@
       "referralCode": "CHEF10",
       "registeredAt": "2026-07-30T09:31:39.724Z",
       "totalRevenue": 500000,
-      "referralsCount": 10,
+      "referralsCount": 11,
       "commissionEarned": 50000
     },
     {
@@ -99,6 +99,25 @@
       "totalRevenue": 15500,
       "referralsCount": 2,
       "commissionEarned": 2500
+    },
+    {
+      "id": "usr_hbjgudolk",
+      "name": "Test Phone Device",
+      "role": "user",
+      "phone": "+22899783491",
+      "balance": 200,
+      "isBlocked": false,
+      "referrerId": "usr_admin2",
+      "referralsN1": 0,
+      "referralsN2": 0,
+      "referralsN3": 0,
+      "dailyRevenue": 0,
+      "passwordHash": "password123",
+      "referralCode": "IIA66",
+      "registeredAt": "2026-08-06T14:22:34.960Z",
+      "totalRevenue": 200,
+      "referralsCount": 0,
+      "commissionEarned": 0
     }
   ],
   "reviews": [],
@@ -4010,6 +4029,17 @@
       "userId": "usr_admin_master",
       "userName": "Administrateur Général",
       "userPhone": "+22890000000"
+    },
+    {
+      "id": "tx_z15b7ncwn",
+      "date": "2026-08-06T14:22:34.960Z",
+      "type": "bonus",
+      "amount": 200,
+      "method": "Bonus d'inscription",
+      "status": "completed",
+      "userId": "usr_hbjgudolk",
+      "userName": "Test Phone Device",
+      "userPhone": "+22899783491"
     }
   ],
   "notifications": [
