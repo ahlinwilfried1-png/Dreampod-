@@ -152,8 +152,8 @@ const cleanEnvVar = (val: string | undefined): string => {
   return cleaned;
 };
 
-const supabaseUrl = cleanEnvVar(process.env.SUPABASE_URL) || "https://adhqkomzzknoinxvykss.supabase.co";
-const supabaseServiceKey = cleanEnvVar(process.env.SUPABASE_SERVICE_ROLE_KEY) || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkaHFrb216emtub2lueHZ5a3NzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjAxNjk4MywiZXhwIjoyMTAxNTkyOTgzfQ.Svlm847j1NjHlX6XjBHu33tgOtHebT1Om_ZCETiP9js";
+const supabaseUrl = cleanEnvVar(process.env.SUPABASE_URL) || "https://nkxyqqpdmikvwhuwsinl.supabase.co";
+const supabaseServiceKey = cleanEnvVar(process.env.SUPABASE_SERVICE_ROLE_KEY) || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5reHlxcXBkbWlrdndodXdzaW5sIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjAyNTExNCwiZXhwIjoyMTAxNjAxMTE0fQ.0XEuJ8-3tmcybugOwBN-8NGiQvwNt89HkVG51uXNdHk";
 const supabase = (supabaseUrl && supabaseServiceKey)
   ? createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
@@ -189,40 +189,47 @@ if (supabase) {
   console.warn("Supabase Client NOT initialized. Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in env.");
 }
 
-async function checkAndRestoreSupabaseHealth(): Promise<boolean> {
+async function verifySupabaseConnection(): Promise<{ healthy: boolean; status: string; error?: string }> {
   if (!supabase) {
-    isSupabaseHealthy = false;
-    supabaseStatus = "disconnected";
-    return false;
+    const errorMsg = "[Supabase Diagnostic] Client non initialisé (SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY manquant).";
+    console.warn(errorMsg);
+    return { healthy: false, status: "disconnected", error: errorMsg };
   }
+
   try {
-    const { error } = await supabase.from("dreampod_state").select("id").limit(1);
+    // Attempt a light SELECT query to verify connection and credentials
+    const { data, error } = await supabase.from("dreampod_state").select("id").limit(1);
+    
     if (!error) {
-      if (!isSupabaseHealthy) {
-        console.log("[Supabase] Connexion et table 'dreampod_state' validées avec succès !");
-      }
-      isSupabaseHealthy = true;
-      supabaseStatus = "connected";
-      return true;
+      console.log("[Supabase Diagnostic] Connexion vérifiée avec succès. Statut: connectée (Table dreampod_state présente).");
+      return { healthy: true, status: "connected" };
+    }
+
+    const msg = error.message || JSON.stringify(error);
+    console.error(`[Supabase Diagnostic Error] Code: ${error.code || "N/A"} | Message: ${msg}`);
+
+    if (msg.includes("Invalid API key") || msg.includes("invalid") || msg.includes("JWT") || error.code === "PGRST301") {
+      console.error("[Supabase Diagnostic] Erreur d'authentification: La clé API service_role ou l'URL est invalide.");
+      return { healthy: false, status: "bad_credentials", error: msg };
+    } else if (msg.includes("Could not find the table") || msg.includes("does not exist") || error.code === "PGRST205" || error.code === "42P01") {
+      console.warn("[Supabase Diagnostic] Table manquante: La table 'dreampod_state' n'existe pas encore dans la base de données.");
+      return { healthy: false, status: "table_missing", error: msg };
     } else {
-      const msg = error.message || "";
-      if (msg.includes("Invalid API key") || msg.includes("invalid") || msg.includes("JWT") || error.code === "PGRST301") {
-        isSupabaseHealthy = false;
-        supabaseStatus = "bad_credentials";
-      } else if (msg.includes("Could not find the table") || msg.includes("does not exist") || error.code === "PGRST205" || error.code === "42P01") {
-        isSupabaseHealthy = false;
-        supabaseStatus = "table_missing";
-      } else {
-        isSupabaseHealthy = false;
-        supabaseStatus = "error";
-      }
-      return false;
+      console.error(`[Supabase Diagnostic] Erreur réseau ou base de données: ${msg}`);
+      return { healthy: false, status: "error", error: msg };
     }
   } catch (err: any) {
-    isSupabaseHealthy = false;
-    supabaseStatus = "error";
-    return false;
+    const catchMsg = err?.message || String(err);
+    console.error(`[Supabase Diagnostic Exception] Erreur réseau/connexion inattendue: ${catchMsg}`);
+    return { healthy: false, status: "error", error: catchMsg };
   }
+}
+
+async function checkAndRestoreSupabaseHealth(): Promise<boolean> {
+  const diagnostic = await verifySupabaseConnection();
+  isSupabaseHealthy = diagnostic.healthy;
+  supabaseStatus = diagnostic.status;
+  return isSupabaseHealthy;
 }
 
 function mergeDatabaseStates(local: DatabaseSchema, remote: DatabaseSchema): DatabaseSchema {
@@ -2350,6 +2357,12 @@ async function startServer() {
       isSupabaseHealthy: isSupabaseHealthy,
       supabaseStatus: supabaseStatus
     });
+  });
+
+  // Admin Diagnostic Endpoint for Supabase Health
+  app.get("/api/admin/supabase-health", authenticateAdmin, async (req, res) => {
+    const diagnostic = await verifySupabaseConnection();
+    res.json(diagnostic);
   });
 
   // Admin: Get all users & search/filter with complete financial telemetry

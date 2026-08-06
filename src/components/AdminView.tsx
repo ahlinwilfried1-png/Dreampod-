@@ -1004,11 +1004,8 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
             <span className="text-base">⚡</span>
             <div>
               <h4 className="font-extrabold text-amber-900 text-[12px]">Configuration Supabase Nouveaux Identifiants</h4>
-              <p className="text-[11px] text-amber-800/90 mt-0.5">
-                URL : <code className="font-mono bg-white px-1.5 py-0.5 rounded border border-amber-200 text-amber-950">https://adhqkomzzknoinxvykss.supabase.co</code>
-              </p>
               <p className="text-[11px] text-amber-800/90 mt-1">
-                La connexion aux nouveaux identifiants est établie. Il ne reste qu'à créer la table <strong className="font-extrabold">dreampod_state</strong> dans votre <strong>SQL Editor Supabase</strong> :
+                La connexion à la base de données est établie. Il ne reste qu'à créer la table <strong className="font-extrabold">dreampod_state</strong> dans votre <strong>SQL Editor Supabase</strong> :
               </p>
             </div>
           </div>
@@ -1017,13 +1014,14 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
             <pre className="whitespace-pre">{`CREATE TABLE IF NOT EXISTS public.dreampod_state (
   id TEXT PRIMARY KEY,
   data JSONB NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+  updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
-ALTER TABLE public.dreampod_state DISABLE ROW LEVEL SECURITY;`}</pre>
+ALTER TABLE public.dreampod_state DISABLE ROW LEVEL SECURITY;
+GRANT ALL ON TABLE public.dreampod_state TO anon, authenticated, service_role;`}</pre>
             <button
               type="button"
               onClick={() => {
-                const sql = `CREATE TABLE IF NOT EXISTS public.dreampod_state (\n  id TEXT PRIMARY KEY,\n  data JSONB NOT NULL,\n  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL\n);\nALTER TABLE public.dreampod_state DISABLE ROW LEVEL SECURITY;`;
+                const sql = `CREATE TABLE IF NOT EXISTS public.dreampod_state (\n  id TEXT PRIMARY KEY,\n  data JSONB NOT NULL,\n  updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL\n);\nALTER TABLE public.dreampod_state DISABLE ROW LEVEL SECURITY;\nGRANT ALL ON TABLE public.dreampod_state TO anon, authenticated, service_role;`;
                 navigator.clipboard.writeText(sql);
                 setCopiedSql(true);
                 setTimeout(() => setCopiedSql(false), 3000);
