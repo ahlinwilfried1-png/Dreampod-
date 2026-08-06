@@ -34,7 +34,7 @@ export interface SupportConversation {
   messages: SupportMessage[];
 }
 
-const STORAGE_KEY = "nutrien_support_conversations_v2";
+const STORAGE_KEY = "nutrien_support_conversations_v3";
 const EVENT_NAME = "nutrien_chat_updated_event";
 
 function getCurrentUserInfo() {
@@ -96,7 +96,7 @@ export function getAllConversations(): SupportConversation[] {
       userId: currentUser.id,
       userName: currentUser.name,
       userPhone: currentUser.phone,
-      text: "Nos agents traitent toutes les demandes de dépôt, retrait et assistance technique 24h/24. N'hésitez pas à nous envoyer votre référence de transaction ou votre question !",
+      text: `🚀 INFORMATIONS OFFICIELLES NUTRIEN 🌱💰\n\n🌍 Pays concernés : Burkina Faso, Cameroun, Togo, Bénin, Côte d'Ivoire\n\n━━━━━━━━━━━━━━━\n💰 Conditions Financières\n\n📥 Dépôt minimum : 4 000 FCFA / XAF\n💸 Retrait minimum : 1 200 FCFA / XAF\n📊 Frais de retrait : 18%\n🕘 Traitement des retraits : 09h00 à 18h00 GMT\n\n━━━━━━━━━━━━━━━\n👥 Programme de Parrainage (3 Niveaux)\n🥇 Niveau 1 (Directs) : 15 %\n🥈 Niveau 2 : 2 %\n🥉 Niveau 3 : 1 %\n\n🎉 Bonus d'inscription : 200 FCFA\n🎯 Bonus de pointage : 100 FCFA/jour\n\nN'hésitez pas à nous envoyer votre référence de transaction ou votre question !`,
       time: "09:30",
       timestamp: Date.now() - 3500000,
       readByAdmin: true,
@@ -149,7 +149,7 @@ export function getConversationForUser(userId?: string): SupportConversation {
       unreadCountForUser: 0,
       messages: [
         {
-          id: `init-${Date.now()}`,
+          id: `init-1-${Date.now()}`,
           conversationId: targetId,
           sender: "admin",
           senderName: "Administrateur Nutrien",
@@ -157,6 +157,20 @@ export function getConversationForUser(userId?: string): SupportConversation {
           userName: currentUser.name,
           userPhone: currentUser.phone,
           text: "Bonjour ! Bienvenue au Service Client Nutrien. Je suis l'Administrateur de garde. Comment puis-je vous aider ?",
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          timestamp: Date.now() - 1000,
+          readByAdmin: true,
+          readByUser: true
+        },
+        {
+          id: `init-2-${Date.now()}`,
+          conversationId: targetId,
+          sender: "admin",
+          senderName: "Administrateur Nutrien",
+          userId: currentUser.id,
+          userName: currentUser.name,
+          userPhone: currentUser.phone,
+          text: `🚀 INFORMATIONS OFFICIELLES NUTRIEN 🌱💰\n\n🌍 Pays concernés : Burkina Faso, Cameroun, Togo, Bénin, Côte d'Ivoire\n\n━━━━━━━━━━━━━━━\n💰 Conditions Financières\n\n📥 Dépôt minimum : 4 000 FCFA / XAF\n💸 Retrait minimum : 1 200 FCFA / XAF\n📊 Frais de retrait : 18%\n🕘 Traitement des retraits : 09h00 à 18h00 GMT\n\n━━━━━━━━━━━━━━━\n👥 Programme de Parrainage (3 Niveaux)\n🥇 Niveau 1 (Directs) : 15 %\n🥈 Niveau 2 : 2 %\n🥉 Niveau 3 : 1 %\n\n🎉 Bonus d'inscription : 200 FCFA\n🎯 Bonus de pointage : 100 FCFA/jour\n\nN'hésitez pas à nous poser toutes vos questions !`,
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           timestamp: Date.now(),
           readByAdmin: true,

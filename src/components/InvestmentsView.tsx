@@ -42,19 +42,20 @@ export default function InvestmentsView({ investments, onBack, setActiveTab, use
   }, 0);
 
   return (
-    <div id="investments-view-container" className="space-y-4 select-none pb-6">
-      {/* Back Header */}
-      <div className="flex items-center justify-between bg-white/95 backdrop-blur-md p-3.5 rounded-2xl shadow-xs">
-        <div className="flex items-center gap-3">
+    <div id="investments-view-container" className="space-y-5 select-none pb-12 text-slate-900 max-w-xl mx-auto">
+      {/* Back Header - Frameless */}
+      <div className="flex items-center justify-between py-2">
+        <div className="flex items-center gap-2">
           <button
             id="investments-back-btn"
             onClick={onBack}
-            className="p-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-xl transition-all cursor-pointer"
+            className="p-1 -ml-1 rounded-full hover:bg-slate-200/50 text-slate-900 transition-all cursor-pointer"
+            title="Retour"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-6 w-6 text-slate-900" />
           </button>
           <div>
-            <h2 className="text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
+            <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
               <PackageCheck className="h-5 w-5 text-emerald-600" />
               Mes Commandes
             </h2>
@@ -64,30 +65,30 @@ export default function InvestmentsView({ investments, onBack, setActiveTab, use
           </div>
         </div>
 
-        <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2.5 py-1 rounded-full">
+        <span className="bg-emerald-100/80 text-emerald-800 text-[10px] font-black px-2.5 py-1 rounded-full">
           Actif
         </span>
       </div>
 
-      {/* Summary KPI banner */}
-      <div className="grid grid-cols-3 gap-2 text-center">
-        <div className="bg-white p-2.5 rounded-2xl shadow-2xs">
-          <span className="text-[9px] font-extrabold text-slate-400 uppercase block">Total Investi</span>
-          <span className="text-xs font-black text-slate-900 font-mono mt-0.5 block">{totalInvested.toLocaleString()} {currency}</span>
+      {/* Summary KPI banner - Pure text flow on background */}
+      <div className="grid grid-cols-3 gap-2 text-center py-2">
+        <div>
+          <span className="text-[10px] font-extrabold text-slate-400 uppercase block">Total Investi</span>
+          <span className="text-xs sm:text-sm font-black text-slate-900 font-mono mt-0.5 block">{totalInvested.toLocaleString()} {currency}</span>
         </div>
-        <div className="bg-emerald-50/80 p-2.5 rounded-2xl shadow-2xs">
-          <span className="text-[9px] font-extrabold text-emerald-800 uppercase block">Revenu / Jour</span>
-          <span className="text-xs font-black text-emerald-700 font-mono mt-0.5 block">+{totalDailyRevenue.toLocaleString()} {currency}</span>
+        <div>
+          <span className="text-[10px] font-extrabold text-emerald-800 uppercase block">Revenu / Jour</span>
+          <span className="text-xs sm:text-sm font-black text-emerald-600 font-mono mt-0.5 block">+{totalDailyRevenue.toLocaleString()} {currency}</span>
         </div>
-        <div className="bg-orange-50/80 p-2.5 rounded-2xl shadow-2xs">
-          <span className="text-[9px] font-extrabold text-orange-800 uppercase block">Gains Récoltés</span>
-          <span className="text-xs font-black text-orange-600 font-mono mt-0.5 block">{totalCollected.toLocaleString()} {currency}</span>
+        <div>
+          <span className="text-[10px] font-extrabold text-orange-800 uppercase block">Gains Récoltés</span>
+          <span className="text-xs sm:text-sm font-black text-orange-600 font-mono mt-0.5 block">{totalCollected.toLocaleString()} {currency}</span>
         </div>
       </div>
 
-      {/* Orders List Container */}
-      <div className="bg-white rounded-3xl p-4 shadow-sm space-y-3">
-        <h3 className="text-xs font-black text-slate-900 tracking-tight uppercase pb-1 flex items-center justify-between">
+      {/* Orders List Container - Frameless */}
+      <div className="space-y-4">
+        <h3 className="text-xs font-black text-slate-900 tracking-tight uppercase flex items-center justify-between border-b border-slate-200/80 pb-2">
           <span className="flex items-center gap-1.5">
             <ClipboardList className="h-4 w-4 text-emerald-600" />
             Produits Achetés ({investments.length})
@@ -97,7 +98,7 @@ export default function InvestmentsView({ investments, onBack, setActiveTab, use
 
         {investments.length === 0 ? (
           <div className="text-center py-12 space-y-3">
-            <div className="w-16 h-16 rounded-3xl bg-emerald-50 text-emerald-600 mx-auto flex items-center justify-center text-3xl shadow-inner">
+            <div className="w-16 h-16 rounded-3xl bg-slate-100 text-emerald-600 mx-auto flex items-center justify-center text-3xl">
               🛍️
             </div>
             <div className="space-y-1 max-w-xs mx-auto">
@@ -109,14 +110,14 @@ export default function InvestmentsView({ investments, onBack, setActiveTab, use
             <button
               id="investments-go-to-plans-btn"
               onClick={() => setActiveTab("dashboard")}
-              className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white text-xs font-black py-3 px-6 rounded-2xl cursor-pointer uppercase tracking-wider transition-all shadow-md shadow-emerald-600/20 active:scale-98 inline-flex items-center gap-2"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black py-3 px-6 rounded-2xl cursor-pointer uppercase tracking-wider transition-all active:scale-98 inline-flex items-center gap-2"
             >
               <Sparkles className="h-4 w-4" />
               <span>Voir les Offres sur l'Accueil</span>
             </button>
           </div>
         ) : (
-          <div className="space-y-3.5">
+          <div className="divide-y divide-dashed divide-slate-200/80">
             {investments.map((inv) => {
               const isWellbeing = inv.category === "wellbeing" || 
                                   inv.productName?.toLowerCase().includes("bien-être") || 
@@ -145,33 +146,33 @@ export default function InvestmentsView({ investments, onBack, setActiveTab, use
                 <div 
                   id={`investment-item-${inv.id}`} 
                   key={inv.id} 
-                  className="p-3.5 bg-slate-50/70 rounded-2xl space-y-3 transition-all"
+                  className="py-4 px-1 space-y-3"
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-100/80 flex items-center justify-center overflow-hidden shrink-0">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-2xl bg-slate-100 flex items-center justify-center overflow-hidden shrink-0">
                         <ProductImage alt={inv.productName} className="w-full h-full object-cover" />
                       </div>
                       <div>
-                        <h4 className="text-xs font-black text-slate-900 leading-tight">
+                        <h4 className="text-xs sm:text-sm font-black text-slate-900 leading-tight">
                           {inv.productName}
                         </h4>
-                        <p className="text-[10px] font-bold text-slate-500">
+                        <p className="text-[11px] font-bold text-slate-500 mt-0.5">
                           Acheté pour : <span className="text-emerald-700 font-black">{inv.price.toLocaleString()} {currency}</span>
                         </p>
                       </div>
                     </div>
 
                     {isCompleted ? (
-                      <span className="text-[9px] bg-slate-200/80 text-slate-700 py-1 px-2.5 rounded-full font-black uppercase flex items-center gap-1">
+                      <span className="text-[9px] bg-slate-200/80 text-slate-700 py-1 px-2.5 rounded-full font-black uppercase flex items-center gap-1 shrink-0">
                         Cycle Terminé ✅
                       </span>
                     ) : isWellbeing ? (
-                      <span className="text-[9px] bg-amber-100 text-amber-900 py-1 px-2.5 rounded-full font-black uppercase flex items-center gap-1">
+                      <span className="text-[9px] bg-amber-100 text-amber-900 py-1 px-2.5 rounded-full font-black uppercase flex items-center gap-1 shrink-0">
                         Fin de Cycle ⏳
                       </span>
                     ) : (
-                      <span className="text-[9px] bg-emerald-100 text-emerald-800 py-1 px-2.5 rounded-full font-black uppercase flex items-center gap-1">
+                      <span className="text-[9px] bg-emerald-100/80 text-emerald-800 py-1 px-2.5 rounded-full font-black uppercase flex items-center gap-1 shrink-0">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                         Génère ⚡
                       </span>
@@ -179,7 +180,7 @@ export default function InvestmentsView({ investments, onBack, setActiveTab, use
                   </div>
 
                   {/* 24h Cycle Progress Bar */}
-                  <div className="space-y-1 bg-emerald-50/80 p-2.5 rounded-xl">
+                  <div className="space-y-1.5 pt-1">
                     <div className="flex justify-between items-center text-[10px] font-black text-slate-700">
                       <span className="flex items-center gap-1 text-emerald-800">
                         <Clock className="h-3.5 w-3.5 text-emerald-600 animate-spin" style={{ animationDuration: "8s" }} />
@@ -193,16 +194,16 @@ export default function InvestmentsView({ investments, onBack, setActiveTab, use
                         </span>
                       )}
                     </div>
-                    <div className="w-full bg-slate-200/80 h-2.5 rounded-full overflow-hidden shadow-inner">
+                    <div className="w-full bg-slate-200/80 h-2 rounded-full overflow-hidden">
                       <div 
-                        className="bg-gradient-to-r from-emerald-500 via-green-500 to-teal-500 h-full rounded-full transition-all duration-500" 
+                        className="bg-emerald-500 h-full rounded-full transition-all duration-500" 
                         style={{ width: `${cycle24hPct}%` }}
                       />
                     </div>
                   </div>
                   
-                  {/* Stats Grid */}
-                  <div className="grid grid-cols-2 gap-2 text-[11px] bg-white p-2.5 rounded-xl font-bold shadow-2xs">
+                  {/* Stats Details directly on background */}
+                  <div className="grid grid-cols-2 gap-2 text-[11px] pt-1 font-bold">
                     <div>
                       <p className="text-[9px] text-slate-400 font-extrabold uppercase">Type de Versement :</p>
                       <p className="font-black text-emerald-600 text-xs font-mono">
@@ -214,14 +215,14 @@ export default function InvestmentsView({ investments, onBack, setActiveTab, use
                       <p className="font-black text-orange-600 text-xs font-mono">{currentGains.toLocaleString()} {currency}</p>
                     </div>
                     {isWellbeing && (
-                      <div className="col-span-2 pt-1.5 text-[10px] text-amber-800 font-medium">
+                      <div className="col-span-2 text-[10px] text-amber-800 font-medium">
                         {isCompleted
                           ? "✅ Le revenu du produit bien-être a été versé à 100%. Effectuez un nouveau rechargement pour souscrire à nouveau !"
                           : "⏳ Le revenu total sera crédité en une seule fois à l'achèvement des " + inv.durationDays + " jours."
                         }
                       </div>
                     )}
-                    <div className="col-span-2 pt-2 flex justify-between items-center text-[10px] text-slate-400 font-mono">
+                    <div className="col-span-2 pt-1 flex justify-between items-center text-[10px] text-slate-400 font-mono">
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3 w-3 text-slate-400" />
                         Date : {new Date(inv.activatedAt).toLocaleDateString("fr-FR")}

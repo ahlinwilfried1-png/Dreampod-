@@ -25,7 +25,14 @@ import {
   HelpCircle,
   TrendingUp,
   FileText,
-  CheckCircle
+  CheckCircle,
+  ChevronRight,
+  Dices,
+  ClipboardList,
+  ArrowUpRight,
+  Users,
+  Award,
+  Download
 } from "lucide-react";
 import { User, Transaction, Investment } from "../types";
 import { api } from "../lib/api";
@@ -73,7 +80,7 @@ export default function ProfileView({
       const resp = await api.checkIn();
       setAlertModal({
         title: "Pointage Validé !",
-        message: resp.message || `Pointage validé ! +20 ${currency} ajouté à votre solde.`,
+        message: resp.message || `Pointage validé ! +100 ${currency} ajouté à votre solde.`,
         type: "success",
         onClose: () => onRefresh()
       });
@@ -96,301 +103,249 @@ export default function ProfileView({
     return 1;
   })) : 0;
 
+  // Compute Statistics
+  const todayStr = new Date().toISOString().split("T")[0];
+  const todayWithdrawals = (transactions || [])
+    .filter(t => t.type === "withdrawal" && t.date?.startsWith(todayStr))
+    .reduce((sum, t) => sum + Math.abs(t.amount || 0), 0);
+
+  const totalWithdrawals = (transactions || [])
+    .filter(t => t.type === "withdrawal")
+    .reduce((sum, t) => sum + Math.abs(t.amount || 0), 0);
+
+  const dailyRev = user.dailyRevenue || 0;
+  const totalRev = user.totalRevenue || 0;
+
+  // List of Big Feature Cards
+  const menuCards = [
+    {
+      id: "card-bankcard",
+      title: "Carte bancaire",
+      icon: CreditCard,
+      iconBg: "bg-amber-100/90 text-amber-600",
+      onClick: () => setActiveTab("bankcard"),
+    },
+    {
+      id: "card-wheel",
+      title: "Tirage au sort",
+      icon: Dices,
+      iconBg: "bg-amber-100/90 text-amber-600",
+      onClick: () => setActiveTab("wheel"),
+    },
+    {
+      id: "card-gift",
+      title: "De l'argent gratuit",
+      icon: Gift,
+      iconBg: "bg-amber-100/90 text-amber-600",
+      onClick: () => setActiveTab("gift"),
+    },
+    {
+      id: "card-history",
+      title: "Facture de solde",
+      icon: ClipboardList,
+      iconBg: "bg-amber-100/90 text-amber-600",
+      onClick: () => setActiveTab("history"),
+    },
+    {
+      id: "card-deposit",
+      title: "Recharger l'enregistrement",
+      icon: Coins,
+      iconBg: "bg-amber-100/90 text-amber-600",
+      onClick: () => setActiveTab("deposit"),
+    },
+    {
+      id: "card-withdraw",
+      title: "Enregistrement des retraits",
+      icon: ArrowUpRight,
+      iconBg: "bg-amber-100/90 text-amber-600",
+      onClick: () => setActiveTab("withdraw_records"),
+    },
+    {
+      id: "card-about",
+      title: "À propos",
+      icon: Info,
+      iconBg: "bg-emerald-100/90 text-emerald-600",
+      onClick: () => setActiveTab("about"),
+    },
+    {
+      id: "card-app-download",
+      title: "Télécharger l'application APK",
+      icon: Smartphone,
+      iconBg: "bg-rose-100/90 text-rose-600",
+      onClick: () => {
+        setAlertModal({
+          title: "Fichier APK Nutrien Ag",
+          message: "Téléchargement du fichier APK de l'application Nutrien Ag...\nL'installation démarrera sur votre smartphone Android dès que le fichier est reçu.",
+          type: "info"
+        });
+      },
+    },
+    {
+      id: "card-settings",
+      title: "Modifier le mot de passe",
+      icon: Lock,
+      iconBg: "bg-slate-200 text-slate-700",
+      onClick: () => setActiveTab("settings"),
+    },
+  ];
+
+  if (user.role === "admin") {
+    menuCards.push({
+      id: "card-admin",
+      title: "Portail Administrateur",
+      icon: Shield,
+      iconBg: "bg-red-100 text-red-600",
+      onClick: () => setActiveTab("admin"),
+    });
+  }
+
   return (
-    <div className="space-y-5 text-slate-800 select-none pb-4">
+    <div className="space-y-6 text-slate-800 select-none pb-12 pt-1 max-w-md mx-auto px-1">
       
-      {/* Visual Header Account ID & Info Row */}
-      <div className="flex items-center justify-between py-2 border-b border-slate-200/60">
+      {/* User Info Strip Header - Borderless & Cardless */}
+      <div className="flex items-center justify-between py-2">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[#00a3e0] text-sm font-black relative">
-            {user.name.charAt(0).toUpperCase()}
-            <span className="absolute -bottom-1 -right-1 bg-yellow-400 text-[7px] text-amber-950 font-extrabold px-1 py-0.5 rounded-full border border-white">
+          <div className="w-10 h-10 rounded-full bg-[#ff6600]/10 flex items-center justify-center text-[#ff6600] text-sm font-bold relative">
+            {user.name ? user.name.charAt(0).toUpperCase() : "U"}
+            <span className="absolute -bottom-1 -right-1 bg-amber-400 text-[8px] text-amber-950 font-bold px-1.5 py-0.2 rounded-full">
               VIP{maxProductLevel}
             </span>
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <h4 className="text-xs sm:text-sm font-black text-slate-900 leading-tight">{user.name}</h4>
+              <h4 className="text-sm font-bold text-slate-900 leading-tight">{user.name}</h4>
               {user.role === "admin" && (
                 <span className="bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">Admin</span>
               )}
             </div>
-            <p className="text-[10px] text-slate-500 font-medium font-mono mt-0.5">{user.phone}</p>
+            <p className="text-xs text-slate-500 font-medium font-mono mt-0.5">{user.phone}</p>
           </div>
         </div>
-        <div className="bg-blue-50/60 px-2.5 py-1 rounded-xl text-[9px] text-blue-600 font-bold font-mono border border-blue-100">
-          ID: {user.id.toUpperCase().slice(0, 8)}
-        </div>
-      </div>
 
-      {/* Solde de Retrait Section */}
-      <div className="py-2 border-b border-slate-200/60 space-y-4">
-        <div className="flex justify-between items-center">
-          <div className="space-y-0.5">
-            <p className="text-slate-400 font-bold text-xs">Solde disponible</p>
-            <div className="flex items-baseline gap-1.5">
-              <h2 className="text-2xl sm:text-3xl font-black text-[#00a3e0] tracking-tight">
-                {user.balance.toLocaleString()}
-              </h2>
-              <span className="text-xs font-bold text-slate-600">{currency}</span>
-            </div>
-          </div>
-          <button 
-            id="profile-retirer-pill-btn"
-            onClick={() => setActiveTab("withdraw")}
-            className="bg-[#00a3e0] hover:bg-blue-600 active:scale-95 text-white font-black text-xs px-4 py-2 rounded-full transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
-          >
-            Retirer &gt;
-          </button>
-        </div>
-
-        {/* 3 Inline widgets: Commissions, Bonus, Revenus/jour */}
-        <div className="grid grid-cols-3 gap-2">
-          {/* Commissions Widget */}
-          <button 
-            onClick={() => setActiveTab("team")}
-            className="bg-slate-100/80 hover:bg-slate-200/80 active:scale-98 rounded-xl p-2.5 flex flex-col items-center justify-center space-y-1 text-center cursor-pointer transition-all border border-slate-200/50"
-          >
-            <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center text-amber-500">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 stroke-[2.2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </div>
-            <span className="text-[10px] font-extrabold text-slate-600 leading-tight">Commissions</span>
-          </button>
-
-          {/* Bonus Widget */}
-          <button 
-            onClick={() => {
-              const el = document.getElementById("bonus-code-input-field");
-              if (el) {
-                el.scrollIntoView({ behavior: "smooth" });
-                el.focus();
-              }
-            }}
-            className="bg-slate-100/80 hover:bg-slate-200/80 active:scale-98 rounded-xl p-2.5 flex flex-col items-center justify-center space-y-1 text-center cursor-pointer transition-all border border-slate-200/50"
-          >
-            <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-red-500">
-              <Gift className="h-4 w-4 stroke-[2.2]" />
-            </div>
-            <span className="text-[10px] font-extrabold text-slate-600 leading-tight">Bonus</span>
-          </button>
-
-          {/* Revenus/jour Widget */}
-          <button 
-            onClick={() => setShowRevenuesModal(true)}
-            className="bg-slate-100/80 hover:bg-slate-200/80 active:scale-98 rounded-xl p-2.5 flex flex-col items-center justify-center space-y-1 text-center cursor-pointer transition-all border border-slate-200/50"
-          >
-            <div className="w-8 h-8 rounded-full bg-yellow-50 flex items-center justify-center text-yellow-600">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 stroke-[2.2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <span className="text-[10px] font-extrabold text-slate-600 leading-tight">Revenus/jour</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Retrait, Activité, Pointage, Roue Grid */}
-      <div className="py-3 border-b border-slate-200/60 grid grid-cols-4 gap-1 text-center">
-        {/* Retrait */}
-        <button 
-          onClick={() => setActiveTab("withdraw")}
-          className="flex flex-col items-center justify-center space-y-1.5 hover:scale-105 transition-transform cursor-pointer group"
-        >
-          <div className="w-10 h-10 rounded-xl bg-blue-100/70 group-hover:bg-blue-100 flex items-center justify-center text-blue-600 transition-all">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4.5 w-4.5 stroke-[2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-          </div>
-          <span className="text-[10px] font-bold text-slate-700 leading-tight">Retrait</span>
-        </button>
-
-        {/* Activité */}
-        <button 
-          onClick={() => setActiveTab("investments")}
-          className="flex flex-col items-center justify-center space-y-1.5 hover:scale-105 transition-transform cursor-pointer group"
-        >
-          <div className="w-10 h-10 rounded-xl bg-emerald-100/70 group-hover:bg-emerald-100 flex items-center justify-center text-emerald-600 transition-all">
-            <Activity className="h-4.5 w-4.5 stroke-[2]" />
-          </div>
-          <span className="text-[10px] font-bold text-slate-700 leading-tight">Activité</span>
-        </button>
-
-        {/* Roue de la Fortune */}
-        <button 
-          onClick={() => setActiveTab("wheel")}
-          className="flex flex-col items-center justify-center space-y-1.5 hover:scale-105 transition-transform cursor-pointer group"
-        >
-          <div className="w-10 h-10 rounded-xl bg-amber-100/70 group-hover:bg-amber-100 flex items-center justify-center text-amber-600 transition-all text-sm">
-            🎡
-          </div>
-          <span className="text-[10px] font-bold text-slate-700 leading-tight">Roue</span>
-        </button>
-
-        {/* Pointage */}
-        <button 
-          onClick={handlePointage}
-          disabled={checkingIn}
-          className="flex flex-col items-center justify-center space-y-1.5 hover:scale-105 transition-transform cursor-pointer group disabled:opacity-60"
-        >
-          <div className="w-10 h-10 rounded-xl bg-purple-100/70 group-hover:bg-purple-100 flex items-center justify-center text-purple-600 transition-all">
-            {checkingIn ? (
-              <div className="h-4 w-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <Calendar className="h-4.5 w-4.5 stroke-[2]" />
-            )}
-          </div>
-          <span className="text-[10px] font-bold text-slate-700 leading-tight">Pointage</span>
-        </button>
-      </div>
-
-      {/* Banner Mes Produits */}
-      <button
-        onClick={() => setActiveTab("products")}
-        className="w-full rounded-2xl border border-slate-200/80 overflow-hidden shadow-2xs flex relative min-h-[76px] text-left cursor-pointer group active:scale-98 transition-all my-2"
-      >
-        {/* Left text content */}
-        <div className="w-[65%] p-3.5 flex flex-col justify-center z-10 bg-gradient-to-r from-white via-white/95 to-transparent">
-          <h3 className="text-sm font-black text-slate-900 tracking-tight">Formules d'Investissement</h3>
-          <p className="text-[10px] text-slate-500 mt-0.5 font-semibold leading-snug">
-            Souscrivez à nos offres pour générer des revenus quotidiens garantis.
-          </p>
-        </div>
-        
-        {/* Right crop-field photo decoration */}
-        <div 
-          className="absolute right-0 top-0 bottom-0 w-[42%] bg-gradient-to-l from-emerald-600 to-emerald-500 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-          style={{ 
-            backgroundImage: `url('https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&q=80&w=400')`,
-          }}
-        />
-      </button>
-
-      {/* Section Services & Informations */}
-      <div className="py-3 border-b border-slate-200/60 space-y-3">
-        <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Services & Informations</h3>
-        
-        <div className="grid grid-cols-4 gap-y-5 gap-x-1.5 text-center pt-1">
-          {/* À propos */}
-          <button 
-            onClick={() => setActiveTab("about")}
-            className="flex flex-col items-center justify-start space-y-1.5 cursor-pointer active:scale-95 transition-all group"
-          >
-            <div className="w-10 h-10 rounded-full bg-blue-100/70 text-blue-600 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-              <Info className="h-4.5 w-4.5" />
-            </div>
-            <span className="text-[10.5px] font-bold text-slate-700 tracking-tight leading-tight">À propos</span>
-          </button>
-
-          {/* Règlement */}
-          <button 
-            onClick={() => setShowRulesModal(true)}
-            className="flex flex-col items-center justify-start space-y-1.5 cursor-pointer active:scale-95 transition-all group"
-          >
-            <div className="w-10 h-10 rounded-full bg-purple-100/70 text-purple-600 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
-              <FileText className="h-4.5 w-4.5" />
-            </div>
-            <span className="text-[10.5px] font-bold text-slate-700 tracking-tight leading-tight">Règlement</span>
-          </button>
-
-          {/* Historique */}
-          <button 
-            onClick={() => setActiveTab("history")}
-            className="flex flex-col items-center justify-start space-y-1.5 cursor-pointer active:scale-95 transition-all group"
-          >
-            <div className="w-10 h-10 rounded-full bg-cyan-100/70 text-cyan-600 flex items-center justify-center group-hover:bg-cyan-100 transition-colors">
-              <History className="h-4.5 w-4.5" />
-            </div>
-            <span className="text-[10.5px] font-bold text-slate-700 tracking-tight leading-tight">Historique</span>
-          </button>
-
-          {/* Télécharger */}
-          <button 
-            onClick={() => {
-              setAlertModal({
-                title: "Fichier APK Nutrien",
-                message: "Téléchargement du fichier APK de l'application Nutrien...\nL'installation démarrera sur votre smartphone Android dès que le fichier est reçu.",
-                type: "info"
-              });
-            }}
-            className="flex flex-col items-center justify-start space-y-1.5 cursor-pointer active:scale-95 transition-all group"
-          >
-            <div className="w-10 h-10 rounded-full bg-amber-100/70 text-amber-600 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4.5 w-4.5 stroke-[2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-            </div>
-            <span className="text-[10.5px] font-bold text-slate-700 tracking-tight leading-tight">Télécharger</span>
-          </button>
-
-          {/* Lier carte */}
-          <button 
-            onClick={() => setActiveTab("bankcard")}
-            className="flex flex-col items-center justify-start space-y-1.5 cursor-pointer active:scale-95 transition-all group"
-          >
-            <div className="w-10 h-10 rounded-full bg-rose-100/70 text-rose-600 flex items-center justify-center group-hover:bg-rose-100 transition-colors">
-              <CreditCard className="h-4.5 w-4.5" />
-            </div>
-            <span className="text-[10.5px] font-bold text-slate-700 tracking-tight leading-tight">Lier carte</span>
-          </button>
-
-          {/* Modifier MDP */}
-          <button 
-            onClick={() => setActiveTab("settings")}
-            className="flex flex-col items-center justify-start space-y-1.5 cursor-pointer active:scale-95 transition-all group"
-          >
-            <div className="w-10 h-10 rounded-full bg-slate-200/80 text-slate-600 flex items-center justify-center group-hover:bg-slate-300 transition-colors">
-              <Lock className="h-4.5 w-4.5" />
-            </div>
-            <span className="text-[10.5px] font-bold text-slate-700 tracking-tight leading-tight">Modifier MDP</span>
-          </button>
-
-          {/* Cadeau */}
-          <button 
-            onClick={() => setActiveTab("gift")}
-            className="flex flex-col items-center justify-start space-y-1.5 cursor-pointer active:scale-95 transition-all group"
-          >
-            <div className="w-10 h-10 rounded-full bg-pink-100/70 text-pink-600 flex items-center justify-center group-hover:bg-pink-100 transition-colors">
-              <Gift className="h-4.5 w-4.5" />
-            </div>
-            <span className="text-[10.5px] font-bold text-slate-700 tracking-tight leading-tight">Cadeau</span>
-          </button>
-
-          {/* Certificat */}
-          <button 
-            onClick={() => setActiveTab("proofs")}
-            className="flex flex-col items-center justify-start space-y-1.5 cursor-pointer active:scale-95 transition-all group"
-          >
-            <div className="w-10 h-10 rounded-full bg-emerald-100/70 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
-              <ShieldCheck className="h-4.5 w-4.5" />
-            </div>
-            <span className="text-[10.5px] font-bold text-slate-700 tracking-tight leading-tight">Certificat</span>
-          </button>
-        </div>
-
-        {/* Dynamic Admin Portal shortcut if user is administrator */}
-        {user.role === "admin" && (
-          <div className="pt-2">
-            <button 
-              onClick={() => setActiveTab("admin")}
-              className="w-full bg-red-50 hover:bg-red-100/80 active:scale-98 text-red-600 font-black text-xs py-2 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer border border-red-200/60"
-            >
-              <Shield className="h-4 w-4" />
-              <span>Accéder au Portail Admin</span>
-            </button>
-          </div>
-        )}
-      </div>
-
-
-      {/* Déconnexion button */}
-      <div className="pt-2">
         <button
-          onClick={onLogout}
-          className="w-full bg-slate-100/80 border border-slate-200/80 hover:bg-red-50 active:scale-98 rounded-xl py-3 text-center font-black text-[#00a3e0] hover:text-red-500 transition-all cursor-pointer flex items-center justify-center gap-1"
+          onClick={() => setActiveTab("withdraw")}
+          className="bg-red-600 hover:bg-red-700 active:scale-95 text-white font-bold text-xs px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1"
         >
-          <span>(!) Déconnexion</span>
+          <span>Retirer</span>
+          <span>&gt;</span>
+        </button>
+      </div>
+
+      {/* Main Top Wallet Area matching reference image exact borderless layout */}
+      <div className="py-2 space-y-4">
+        {/* Card Title Header Row */}
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-red-600 flex items-center justify-center text-white shrink-0">
+            <Wallet className="h-5 w-5 stroke-[2]" />
+          </div>
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+            Mon portefeuille
+          </h2>
+        </div>
+
+        {/* Balance Row */}
+        <div className="pt-1">
+          <span className="text-slate-500 font-medium text-sm sm:text-base">Équilibre: </span>
+          <span className="text-slate-900 font-bold text-3xl sm:text-4xl tracking-tight ml-2">
+            {user.balance.toLocaleString()}
+          </span>
+        </div>
+
+        {/* 4 Statistics Grid (2 Columns x 2 Rows) with Icons */}
+        <div className="grid grid-cols-2 gap-3 text-center pt-3">
+          {/* Item 1 */}
+          <div className="flex flex-col items-center justify-center p-3 bg-slate-50/80 rounded-2xl space-y-1.5">
+            <div className="w-9 h-9 rounded-xl bg-emerald-100/90 text-emerald-600 flex items-center justify-center shrink-0">
+              <Coins className="h-4.5 w-4.5 stroke-[2]" />
+            </div>
+            <span className="text-slate-900 font-bold text-base sm:text-lg leading-tight font-mono">
+              {dailyRev.toLocaleString()}
+            </span>
+            <span className="text-[11px] text-slate-500 font-medium leading-snug px-1">
+              Revenu aujourd'hui(XAF)
+            </span>
+          </div>
+
+          {/* Item 2 */}
+          <div className="flex flex-col items-center justify-center p-3 bg-slate-50/80 rounded-2xl space-y-1.5">
+            <div className="w-9 h-9 rounded-xl bg-blue-100/90 text-blue-600 flex items-center justify-center shrink-0">
+              <TrendingUp className="h-4.5 w-4.5 stroke-[2]" />
+            </div>
+            <span className="text-slate-900 font-bold text-base sm:text-lg leading-tight font-mono">
+              {totalRev.toLocaleString()}
+            </span>
+            <span className="text-[11px] text-slate-500 font-medium leading-snug px-1">
+              Revenu cumulé(XAF)
+            </span>
+          </div>
+
+          {/* Item 3 */}
+          <div className="flex flex-col items-center justify-center p-3 bg-slate-50/80 rounded-2xl space-y-1.5">
+            <div className="w-9 h-9 rounded-xl bg-rose-100/90 text-rose-600 flex items-center justify-center shrink-0">
+              <ArrowUpRight className="h-4.5 w-4.5 stroke-[2]" />
+            </div>
+            <span className="text-slate-900 font-bold text-base sm:text-lg leading-tight font-mono">
+              {todayWithdrawals.toLocaleString()}
+            </span>
+            <span className="text-[11px] text-slate-500 font-medium leading-snug px-1">
+              Retirer aujourd'hui(XAF)
+            </span>
+          </div>
+
+          {/* Item 4 */}
+          <div className="flex flex-col items-center justify-center p-3 bg-slate-50/80 rounded-2xl space-y-1.5">
+            <div className="w-9 h-9 rounded-xl bg-amber-100/90 text-amber-600 flex items-center justify-center shrink-0">
+              <History className="h-4.5 w-4.5 stroke-[2]" />
+            </div>
+            <span className="text-slate-900 font-bold text-base sm:text-lg leading-tight font-mono">
+              {totalWithdrawals.toLocaleString()}
+            </span>
+            <span className="text-[11px] text-slate-500 font-medium leading-snug px-1">
+              Retraits totaux(XAF)
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Feature Actions List - Fully Borderless and Cardless */}
+      <div className="space-y-1 pt-2">
+        {menuCards.map((card) => {
+          const IconComp = card.icon;
+          return (
+            <button
+              id={card.id}
+              key={card.id}
+              onClick={card.onClick}
+              className="w-full py-3.5 px-2 flex items-center justify-between cursor-pointer hover:bg-slate-100/50 rounded-2xl transition-all group active:opacity-75"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className={`w-10 h-10 rounded-2xl ${card.iconBg} flex items-center justify-center shrink-0 transition-transform group-hover:scale-105`}>
+                  <IconComp className="h-5 w-5 stroke-[2]" />
+                </div>
+                <span className="text-sm sm:text-base font-bold text-slate-800 tracking-tight text-left">
+                  {card.title}
+                </span>
+              </div>
+              <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-slate-600 transition-colors shrink-0" />
+            </button>
+          );
+        })}
+
+        {/* Déconnexion */}
+        <button
+          id="card-logout"
+          onClick={onLogout}
+          className="w-full py-3.5 px-2 flex items-center justify-between cursor-pointer hover:bg-rose-50/50 rounded-2xl transition-all group mt-4 active:opacity-75"
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
+              <LogOut className="h-5 w-5 stroke-[2]" />
+            </div>
+            <span className="text-sm sm:text-base font-bold text-rose-600 tracking-tight text-left">
+              Se déconnecter
+            </span>
+          </div>
+          <ChevronRight className="h-5 w-5 text-rose-400 group-hover:text-rose-600 transition-colors shrink-0" />
         </button>
       </div>
 
@@ -438,14 +393,14 @@ export default function ProfileView({
       )}
 
 
-      {/* 📕 MODAL: RÈGLEMENT (DREAMPOD RULES) */}
+      {/* 📕 MODAL: RÈGLEMENT */}
       {showRulesModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
           <div className="bg-white p-6 max-w-sm w-full shadow-2xl relative overflow-hidden rounded-3xl border border-slate-100 text-slate-800 flex flex-col max-h-[85vh]">
             <div className="border-b border-slate-100 pb-3 mb-4 flex items-center justify-between flex-shrink-0">
               <h3 className="text-xs font-black uppercase text-slate-900 flex items-center gap-1.5">
                 <FileText className="text-purple-600 h-4 w-4" />
-                Règlement de Nutrien
+                Règlement de Nutrien Ag
               </h3>
               <button onClick={() => setShowRulesModal(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="h-5 w-5" />
@@ -456,15 +411,15 @@ export default function ProfileView({
               <div>
                 <h4 className="font-black text-slate-900 text-xs uppercase mb-1">1. Conditions de Retrait</h4>
                 <p className="pl-1">
-                  • Le retrait minimum autorisé est de <span className="font-extrabold">1 000 {currency}</span>.<br />
-                  • Des frais de service de <span className="text-red-500 font-extrabold">14%</span> s'appliquent sur chaque opération de retrait pour couvrir la passerelle Mobile Money.
+                  • Le retrait minimum autorisé est de <span className="font-extrabold">1 200 {currency}</span>.<br />
+                  • Des frais de service de <span className="text-red-500 font-extrabold">18%</span> s'appliquent sur chaque opération de retrait pour couvrir la passerelle Mobile Money.
                 </p>
               </div>
 
               <div>
                 <h4 className="font-black text-slate-900 text-xs uppercase mb-1">2. Conditions de Dépôt</h4>
                 <p className="pl-1">
-                  • Le dépôt minimum autorisé est de <span className="font-extrabold">3 000 {currency}</span>.<br />
+                  • Le dépôt minimum autorisé est de <span className="font-extrabold">4 000 {currency}</span>.<br />
                   • Les dépôts sont instantanément vérifiés après confirmation par le réseau de paiement.
                 </p>
               </div>
@@ -472,7 +427,7 @@ export default function ProfileView({
               <div>
                 <h4 className="font-black text-slate-900 text-xs uppercase mb-1">3. Pointage Quotidien</h4>
                 <p className="pl-1">
-                  • Effectuez votre pointage tous les jours pour recevoir un bonus d'assiduité de <span className="text-emerald-600 font-extrabold">20 {currency}</span>.<br />
+                  • Effectuez votre pointage tous les jours pour recevoir un bonus d'assiduité de <span className="text-emerald-600 font-extrabold">100 {currency}</span>.<br />
                   • Les gains de pointage sont ajoutés directement à votre solde de retrait.
                 </p>
               </div>
@@ -481,9 +436,9 @@ export default function ProfileView({
                 <h4 className="font-black text-slate-900 text-xs uppercase mb-1">4. Commission de Parrainage</h4>
                 <p className="pl-1">
                   Bénéficiez de commissions lucratives sur les investissements de vos filleuls sur 3 niveaux :<br />
-                  • <span className="font-black">Niveau 1 (Direct) :</span> <span className="text-[#00a3e0] font-black">20 %</span><br />
-                  • <span className="font-black">Niveau 2 :</span> <span className="text-[#00a3e0] font-black">3 %</span><br />
-                  • <span className="font-black">Niveau 3 :</span> <span className="text-[#00a3e0] font-black">1 %</span>
+                  • <span className="font-black">Niveau 1 (Direct) :</span> <span className="text-[#ff6600] font-black">15 %</span><br />
+                  • <span className="font-black">Niveau 2 :</span> <span className="text-[#ff6600] font-black">2 %</span><br />
+                  • <span className="font-black">Niveau 3 :</span> <span className="text-[#ff6600] font-black">1 %</span>
                 </p>
               </div>
             </div>
@@ -500,7 +455,7 @@ export default function ProfileView({
         </div>
       )}
 
-      {/* Frameless Floating Message Banner (No modal box frame) */}
+      {/* Floating Alert Message Banner */}
       {alertModal && (
         <div 
           onClick={() => {

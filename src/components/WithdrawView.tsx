@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from "react";
-import { ArrowLeft, Plus, CheckCircle, AlertTriangle, Headphones, Lock } from "lucide-react";
+import { ArrowLeft, Plus, CheckCircle, AlertTriangle, Headphones, Lock, Clock } from "lucide-react";
 import { User, Investment, Transaction } from "../types";
 import { api } from "../lib/api";
 import { getCurrencySymbol } from "../lib/currency";
@@ -16,9 +16,10 @@ interface WithdrawViewProps {
   onRefresh: () => void;
   onBack: () => void;
   onNavigateToBankCard: () => void;
+  onNavigateToRecords?: () => void;
 }
 
-export default function WithdrawView({ user, investments, transactions = [], onRefresh, onBack, onNavigateToBankCard }: WithdrawViewProps) {
+export default function WithdrawView({ user, investments, transactions = [], onRefresh, onBack, onNavigateToBankCard, onNavigateToRecords }: WithdrawViewProps) {
   const currency = getCurrencySymbol(user.phone);
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [withdrawalCode, setWithdrawalCode] = useState("");
@@ -39,24 +40,24 @@ export default function WithdrawView({ user, investments, transactions = [], onR
     : 0;
 
   const rawVal = Number(withdrawAmount) || 0;
-  const feeAmount = Math.round(rawVal * 0.14);
+  const feeAmount = Math.round(rawVal * 0.18);
   const netAmount = Math.max(0, rawVal - feeAmount);
 
-  const getNiameyHour = () => {
+  const getGMTHour = () => {
     try {
       const formatter = new Intl.DateTimeFormat("en-US", {
-        timeZone: "Africa/Niamey",
+        timeZone: "UTC",
         hour: "numeric",
         hour12: false,
       });
       return parseInt(formatter.format(new Date()), 10);
     } catch (e) {
-      return new Date().getHours();
+      return new Date().getUTCHours();
     }
   };
 
-  const currentNiameyHour = getNiameyHour();
-  const isWithdrawTimeAllowed = user.role === "admin" || (currentNiameyHour >= 8 && currentNiameyHour < 17);
+  const currentGMTHour = getGMTHour();
+  const isWithdrawTimeAllowed = user.role === "admin" || (currentGMTHour >= 9 && currentGMTHour < 18);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,7 +65,7 @@ export default function WithdrawView({ user, investments, transactions = [], onR
     setSuccess("");
 
     if (!isWithdrawTimeAllowed) {
-      setError("Les retraits sont fermés. Vous pouvez soumettre vos demandes uniquement de 08:00 à 17:00.");
+      setError("Les retraits sont actuellement fermés. Veuillez revenir pendant les heures d'ouverture des retraits.");
       return;
     }
 
@@ -74,7 +75,7 @@ export default function WithdrawView({ user, investments, transactions = [], onR
     }
 
     if (!hasActiveProduct && user.role !== "admin") {
-      setError("Action impossible : Aucun retrait autorisé sans au moins un produit d'investissement actif.");
+      setError("Vous devez d'abord acheter un produit avant de pouvoir effectuer un retrait.");
       return;
     }
 
@@ -84,8 +85,8 @@ export default function WithdrawView({ user, investments, transactions = [], onR
     }
 
     const val = Number(withdrawAmount);
-    if (!val || val < 1000) {
-      setError(`Le montant minimum de retrait est de 1 000 ${currency}.`);
+    if (!val || val < 1200) {
+      setError(`Le montant minimum de retrait est de 1 200 ${currency}.`);
       return;
     }
 
@@ -128,7 +129,7 @@ export default function WithdrawView({ user, investments, transactions = [], onR
         </button>
         <h2 className="text-base font-bold text-slate-900 tracking-tight">Retirer</h2>
         <button
-          onClick={onNavigateToBankCard}
+          onClick={onNavigateToRecords || onNavigateToBankCard}
           className="text-xs font-semibold text-slate-800 hover:text-amber-600 transition-all cursor-pointer"
         >
           Enregistrer
@@ -176,7 +177,7 @@ export default function WithdrawView({ user, investments, transactions = [], onR
 
         {/* Minimum withdrawal amount indicator */}
         <div className="text-center text-xs font-bold text-slate-800 pt-1">
-          Montant minimum de retrait: <span className="text-amber-500 font-extrabold">1,000{currency}</span>
+          Montant minimum de retrait: <span className="text-amber-500 font-extrabold">1 200 {currency}</span>
         </div>
       </div>
 
@@ -187,8 +188,16 @@ export default function WithdrawView({ user, investments, transactions = [], onR
         {/* Form container */}
         <form onSubmit={handleSubmit} className="space-y-4">
           
+          {/* Time restriction alert banner */}
+          {!isWithdrawTimeAllowed && (
+            <div className="bg-rose-50 border border-rose-200 text-rose-800 text-xs p-3.5 rounded-2xl font-bold flex items-start gap-2.5 shadow-2xs">
+              <Clock className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+              <span>Les retraits sont actuellement fermés. Veuillez revenir pendant les heures d'ouverture des retraits.</span>
+            </div>
+          )}
+
           {/* Amount input field with left prefix matching image */}
-          <div className="flex items-center bg-white border border-slate-200/90 rounded-2xl p-3 shadow-2xs focus-within:border-amber-400 transition-all">
+          <div className={`flex items-center bg-white border border-slate-200/90 rounded-2xl p-3 shadow-2xs focus-within:border-amber-400 transition-all ${!isWithdrawTimeAllowed ? 'opacity-60 bg-slate-50' : ''}`}>
             <span className="text-xs font-black text-slate-900 px-2 border-r border-slate-200 mr-2 font-mono">
               {currency}
             </span>
@@ -196,16 +205,17 @@ export default function WithdrawView({ user, investments, transactions = [], onR
               id="withdraw-amount-input"
               type="number"
               required
-              min="1000"
+              min="1200"
+              disabled={!isWithdrawTimeAllowed}
               placeholder="Entrez le montant du retrait"
               value={withdrawAmount}
               onChange={(e) => setWithdrawAmount(e.target.value)}
-              className="w-full bg-transparent text-xs text-slate-800 font-bold placeholder-slate-400 focus:outline-none"
+              className="w-full bg-transparent text-xs text-slate-800 font-bold placeholder-slate-400 focus:outline-none disabled:cursor-not-allowed"
             />
           </div>
 
           {/* Secret PIN / Withdrawal Code Input */}
-          <div className="flex items-center bg-white border border-slate-200/90 rounded-2xl p-3 shadow-2xs focus-within:border-amber-400 transition-all">
+          <div className={`flex items-center bg-white border border-slate-200/90 rounded-2xl p-3 shadow-2xs focus-within:border-amber-400 transition-all ${!isWithdrawTimeAllowed ? 'opacity-60 bg-slate-50' : ''}`}>
             <span className="text-xs font-black text-slate-900 px-2 border-r border-slate-200 mr-2 flex items-center gap-1">
               <Lock className="h-3.5 w-3.5 text-slate-500" />
               PIN
@@ -214,18 +224,19 @@ export default function WithdrawView({ user, investments, transactions = [], onR
               id="withdraw-code-input"
               type="password"
               required
+              disabled={!isWithdrawTimeAllowed}
               placeholder="Saisissez votre code PIN de retrait"
               value={withdrawalCode}
               onChange={(e) => setWithdrawalCode(e.target.value)}
-              className="w-full bg-transparent text-xs text-slate-800 font-bold placeholder-slate-400 focus:outline-none"
+              className="w-full bg-transparent text-xs text-slate-800 font-bold placeholder-slate-400 focus:outline-none disabled:cursor-not-allowed"
             />
           </div>
 
-          {/* Live 14% Fee & Net calculated card */}
+          {/* Live 18% Fee & Net calculated card */}
           {rawVal > 0 && (
             <div className="p-3 bg-amber-50/70 border border-amber-200/70 rounded-2xl space-y-1 text-xs font-medium text-slate-700">
               <div className="flex justify-between">
-                <span>Frais de retrait (14%) :</span>
+                <span>Frais de retrait (18%) :</span>
                 <span className="font-bold text-rose-600">-{feeAmount.toLocaleString()} {currency}</span>
               </div>
               <div className="flex justify-between font-black text-slate-900 border-t border-amber-200/50 pt-1">
@@ -239,7 +250,7 @@ export default function WithdrawView({ user, investments, transactions = [], onR
           {!hasActiveProduct && user.role !== "admin" && (
             <div className="bg-amber-50 border border-amber-200 text-amber-900 text-xs p-3.5 rounded-2xl font-semibold flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-              <span>Vous devez posséder au moins un produit d'investissement actif pour retirer.</span>
+              <span>Vous devez d'abord acheter un produit avant de pouvoir effectuer un retrait.</span>
             </div>
           )}
 
@@ -268,10 +279,15 @@ export default function WithdrawView({ user, investments, transactions = [], onR
           <button
             id="withdraw-submit-btn"
             type="submit"
-            disabled={loading || (!hasActiveProduct && user.role !== "admin") || (todayWithdrawalsCount >= 2 && user.role !== "admin")}
+            disabled={loading || !isWithdrawTimeAllowed || (!hasActiveProduct && user.role !== "admin") || (todayWithdrawalsCount >= 2 && user.role !== "admin")}
             className="w-full bg-gradient-to-r from-amber-400 via-amber-500 to-orange-400 hover:opacity-95 text-slate-950 font-extrabold text-sm py-3.5 rounded-full shadow-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed active:scale-98"
           >
-            {loading ? "Chargement..." : "Retrait"}
+            {loading 
+              ? "Chargement..." 
+              : !isWithdrawTimeAllowed 
+                ? "Heure de retrait écoulée" 
+                : "Retrait"
+            }
           </button>
         </form>
       </div>
@@ -280,17 +296,17 @@ export default function WithdrawView({ user, investments, transactions = [], onR
       <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-xs space-y-4 text-xs text-slate-700 font-medium leading-relaxed">
         
         <p>
-          Règles de retrait : Le montant minimum de retrait est de 1 000 {currency}, limité à deux retraits par jour.
+          Règles de retrait : Le montant minimum de retrait est de 1 200 {currency}, limité à deux retraits par jour.
         </p>
 
         <p>
-          Heures de traitement des retraits : De 8h00 à 17h00
+          Heures de traitement des retraits : De 9h00 à 18h00 GMT
         </p>
 
         {/* Paragraph with Customer Support Badge */}
         <div className="relative pr-14">
           <p>
-            Afin de garantir un traitement efficace de vos transactions, le montant minimum de retrait est fixé à 1 000 {currency}.
+            Afin de garantir un traitement efficace de vos transactions, le montant minimum de retrait est fixé à 1 200 {currency}.
           </p>
           
           {/* Circular Support Center Badge on bottom right of paragraph */}

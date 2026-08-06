@@ -55,11 +55,22 @@ export default function ProofsView({ onBack, userPhone }: ProofsViewProps) {
 
   useEffect(() => {
     loadProofs(true);
-    // Poll every 8 seconds to ensure newly published proofs/certificates are visible live across all user accounts
+
+    const handleRealtimeUpdate = () => {
+      loadProofs(false);
+    };
+
+    window.addEventListener("nutrien_realtime_update", handleRealtimeUpdate);
+
+    // Poll every 8 seconds as safety fallback
     const interval = setInterval(() => {
       loadProofs(false);
     }, 8000);
-    return () => clearInterval(interval);
+
+    return () => {
+      window.removeEventListener("nutrien_realtime_update", handleRealtimeUpdate);
+      clearInterval(interval);
+    };
   }, []);
 
   const compressAndSetImage = (file: File) => {

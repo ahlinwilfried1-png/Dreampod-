@@ -166,6 +166,7 @@ export default function AdminView({ onRefresh }: AdminViewProps) {
   // Notice Broadcaster State
   const [notifyTitle, setNotifyTitle] = useState("");
   const [notifyBody, setNotifyBody] = useState("");
+  const [notifyImage, setNotifyImage] = useState("");
 
   // Database Mode and Synchronization State
   const [isLocalFallback, setIsLocalFallback] = useState(getUseLocalFallback());
@@ -518,6 +519,7 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
             message: response.message || "Le plan VIP a été retiré.",
           });
           loadAdminData();
+          onRefresh();
         } catch (err: any) {
           setAlertState({
             title: "Erreur",
@@ -579,10 +581,12 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
     try {
       const response = await api.admin.sendNotification(
         notifyTitle.trim(),
-        notifyBody.trim()
+        notifyBody.trim(),
+        notifyImage.trim() || undefined
       );
       setNotifyTitle("");
       setNotifyBody("");
+      setNotifyImage("");
       setAlertState({
         title: "Annonce diffusée",
         message: response.message || "Annonce diffusée !",
@@ -2194,6 +2198,19 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
               />
             </div>
 
+            {/* Image URL (Optional) */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider px-0.5">Lien d'image de l'annonce (Optionnel)</label>
+              <input
+                id="admin-notif-image"
+                type="url"
+                placeholder="Ex: https://images.unsplash.com/... (Optionnel)"
+                value={notifyImage}
+                onChange={(e) => setNotifyImage(e.target.value)}
+                className="w-full bg-slate-50 py-2.5 px-3 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-blue-500 focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+
             {/* Contents info */}
             <div className="space-y-1.5">
               <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider px-0.5">Message complet de la notification</label>
@@ -2775,6 +2792,13 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
 
                   {/* Quick Response Templates */}
                   <div className="px-3 py-1.5 bg-slate-100 flex gap-1.5 overflow-x-auto no-scrollbar">
+                    <button
+                      type="button"
+                      onClick={() => setAdminChatInput("📢 CONDITIONS OFFICIELLES NUTRIEN\n\n📥 Dépôt minimum : 4 000 FCFA / XAF\n💸 Retrait minimum : 1 200 FCFA / XAF\n📊 Frais de retrait : 18%\n🕘 Horaires retraits : 09h00 à 18h00 GMT\n\n👥 Programme de Parrainage :\n🥇 Niveau 1 (Directs) : 15 %\n🥈 Niveau 2 : 2 %\n🥉 Niveau 3 : 1 %")}
+                      className="px-2.5 py-1 bg-white hover:bg-purple-50 text-slate-700 hover:text-purple-700 text-[9.5px] font-bold rounded-lg whitespace-nowrap cursor-pointer shadow-2xs"
+                    >
+                      📢 Conditions & Parrainage
+                    </button>
                     <button
                       type="button"
                       onClick={() => setAdminChatInput("Bonjour ! Votre demande a été traitée avec succès par l'administration.")}

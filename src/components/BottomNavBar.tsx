@@ -27,11 +27,11 @@ export default function BottomNavBar({ activeTab, setActiveTab, isAdmin }: Botto
   }, []);
 
   const tabs = [
-    { id: "dashboard", label: "Accueil", icon: LayoutDashboard },
-    { id: "products", label: "Commandes", icon: ClipboardList },
-    { id: "support", label: "Chat", icon: MessageCircle, badge: unreadCount },
+    { id: "dashboard", label: "Maison", icon: LayoutDashboard },
+    { id: "products", label: "Commande", icon: ClipboardList },
     { id: "team", label: "Équipe", icon: Trophy },
-    { id: "profile", label: "Mon compte", icon: User },
+    { id: "support", label: "Chat", icon: MessageCircle, badge: unreadCount },
+    { id: "profile", label: "Portefeuille", icon: User },
   ];
 
   return (

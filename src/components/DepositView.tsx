@@ -18,7 +18,7 @@ interface DepositViewProps {
 const PAYMENT_LINK_URL = "https://sendavapay.com/pay/SPYY45UYRN9";
 
 const RECHARGE_PRESETS = [
-  { amount: "3000" },
+  { amount: "4000" },
   { amount: "7000" },
   { amount: "15000" },
   { amount: "20000" },
@@ -39,7 +39,7 @@ const COUNTRY_CODES = [
 
 export default function DepositView({ user, onRefresh, onBack }: DepositViewProps) {
   const currency = getCurrencySymbol(user.phone);
-  const [depositAmount, setDepositAmount] = useState("3000");
+  const [depositAmount, setDepositAmount] = useState("4000");
   const [phonePrefix, setPhonePrefix] = useState("+237");
   const [userPhone, setUserPhone] = useState(() => {
     if (user.phone && user.phone.length > 4) {
@@ -68,7 +68,7 @@ export default function DepositView({ user, onRefresh, onBack }: DepositViewProp
     setError("");
     setSuccess("");
 
-    const val = Number(depositAmount) || 3000;
+    const val = Number(depositAmount) || 4000;
     const fullPhone = `${phonePrefix} ${userPhone.trim() || user.phone || ""}`;
 
     setLoading(true);
@@ -200,7 +200,7 @@ export default function DepositView({ user, onRefresh, onBack }: DepositViewProp
                 id="deposit-amount-input"
                 type="number"
                 required
-                min="3000"
+                min="4000"
                 value={depositAmount}
                 onChange={(e) => setDepositAmount(e.target.value)}
                 className="w-full text-sm font-black text-rose-500 bg-transparent focus:outline-none font-mono"

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Megaphone, Bell, RefreshCw, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Bell, RefreshCw, Megaphone } from "lucide-react";
 import { GlobalNotification } from "../types";
 import { api } from "../lib/api";
 
@@ -10,20 +10,35 @@ interface AnnouncementsViewProps {
 
 export default function AnnouncementsView({ onBack, userPhone }: AnnouncementsViewProps) {
   const [announcements, setAnnouncements] = useState<GlobalNotification[]>([]);
+  const [selectedNotif, setSelectedNotif] = useState<GlobalNotification | null>(null);
+  const [readIds, setReadIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  const storageKey = userPhone ? `nutrien_read_notif_ids_${userPhone}` : "nutrien_read_notif_ids";
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        setReadIds(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.warn("Erreur lecture read_ids:", e);
+    }
+  }, [storageKey]);
 
   const fetchAnnouncements = async () => {
     try {
       const res = await api.getNotifications();
       const list = res.notifications || [];
-      setAnnouncements(list);
-
-      if (list.length > 0) {
-        const storageKey = userPhone ? `nutrien_read_notif_ids_${userPhone}` : "nutrien_read_notif_ids";
-        const allIds = list.map(n => n.id);
-        localStorage.setItem(storageKey, JSON.stringify(allIds));
-      }
+      // Sort newest first
+      const sorted = [...list].sort((a, b) => {
+        const timeA = a.date ? new Date(a.date).getTime() : 0;
+        const timeB = b.date ? new Date(b.date).getTime() : 0;
+        return timeB - timeA;
+      });
+      setAnnouncements(sorted);
     } catch (err) {
       console.warn("Erreur chargement annonces:", err);
     } finally {
@@ -34,6 +49,13 @@ export default function AnnouncementsView({ onBack, userPhone }: AnnouncementsVi
 
   useEffect(() => {
     fetchAnnouncements();
+
+    const handleRealtimeUpdate = () => {
+      fetchAnnouncements();
+    };
+
+    window.addEventListener("nutrien_realtime_update", handleRealtimeUpdate);
+    return () => window.removeEventListener("nutrien_realtime_update", handleRealtimeUpdate);
   }, []);
 
   const handleRefresh = () => {
@@ -41,97 +63,169 @@ export default function AnnouncementsView({ onBack, userPhone }: AnnouncementsVi
     fetchAnnouncements();
   };
 
-  return (
-    <div className="space-y-4 text-slate-800 pb-20 max-w-2xl mx-auto animate-fade-in">
-      {/* Navigation Top Bar */}
-      <div className="flex items-center justify-between bg-white/95 backdrop-blur-md p-3.5 rounded-2xl shadow-xs border border-slate-100">
-        <div className="flex items-center gap-3">
+  const handleSelectAnnouncement = (notif: GlobalNotification) => {
+    // Mark as read
+    if (!readIds.includes(notif.id)) {
+      const updated = [...readIds, notif.id];
+      setReadIds(updated);
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(updated));
+      } catch (e) {
+        console.warn("Erreur sauvegarde read_ids:", e);
+      }
+    }
+    setSelectedNotif(notif);
+  };
+
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return "2026-08-02 08:33:32";
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      const hours = String(d.getHours()).padStart(2, "0");
+      const minutes = String(d.getMinutes()).padStart(2, "0");
+      const seconds = String(d.getSeconds()).padStart(2, "0");
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
+  // Detail View Mode
+  if (selectedNotif) {
+    const paragraphs = selectedNotif.content
+      ? selectedNotif.content.split(/\n\s*\n/).filter(p => p.trim().length > 0)
+      : [];
+
+    return (
+      <div id="announcement-detail-view" className="space-y-6 max-w-xl mx-auto pb-16 text-slate-900">
+        {/* Header */}
+        <div className="flex items-center justify-between py-2">
           <button
-            onClick={onBack}
-            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all cursor-pointer"
-            title="Retour"
+            id="announcement-detail-back-btn"
+            onClick={() => setSelectedNotif(null)}
+            className="p-1.5 -ml-1.5 rounded-full hover:bg-slate-200/50 text-slate-900 transition-all cursor-pointer flex items-center gap-1 font-bold text-xs"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <ChevronLeft className="h-6 w-6 text-slate-900" />
           </button>
-          <div>
-            <h2 className="text-sm font-black text-slate-900 uppercase tracking-tight flex items-center gap-2">
-              <Megaphone className="h-4 w-4 text-blue-600" />
-              Annonces & Messages
-            </h2>
-            <p className="text-[10px] text-slate-500 font-semibold">
-              Informations officielles de Nutrien Ag Solutions
-            </p>
-          </div>
+          <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">Détail</h1>
+          <div className="w-8" />
         </div>
 
+        {/* Content Flow directly on background - No card boxes, no borders, no shadows */}
+        <div className="space-y-5">
+          {selectedNotif.image && (
+            <div className="overflow-hidden rounded-2xl mb-4">
+              <img
+                src={selectedNotif.image}
+                alt={selectedNotif.title}
+                className="w-full h-auto max-h-80 object-cover rounded-2xl"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+          )}
+
+          {/* Title & Date */}
+          <div className="space-y-2">
+            <h2 className="text-lg sm:text-xl font-black text-slate-900 leading-snug">
+              {selectedNotif.title}
+            </h2>
+            <div className="flex items-center gap-1.5 text-xs text-slate-400 font-mono">
+              <Clock className="h-3.5 w-3.5 text-slate-400" />
+              <span>{formatDate(selectedNotif.date)}</span>
+            </div>
+          </div>
+
+          {/* Body Paragraphs naturally sitting on background */}
+          <div className="space-y-5 text-sm sm:text-base text-slate-900 font-medium leading-relaxed pt-2">
+            {paragraphs.length > 0 ? (
+              paragraphs.map((para, idx) => (
+                <p key={idx} className="whitespace-pre-line text-slate-900">
+                  {para.trim()}
+                </p>
+              ))
+            ) : (
+              <p className="whitespace-pre-line text-slate-900">{selectedNotif.content}</p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // List View Mode
+  return (
+    <div id="announcements-list-view" className="space-y-4 max-w-xl mx-auto pb-16 text-slate-900">
+      {/* Top Header matching reference image */}
+      <div className="flex items-center justify-between py-2">
+        <button
+          id="announcements-back-btn"
+          onClick={onBack}
+          className="p-1 -ml-1 rounded-full hover:bg-slate-200/50 text-slate-900 transition-all cursor-pointer"
+          title="Retour"
+        >
+          <ChevronLeft className="h-7 w-7 text-slate-900" />
+        </button>
+        <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">Message</h1>
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="p-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all cursor-pointer"
+          className="p-1.5 rounded-full text-slate-600 hover:bg-slate-200/50 transition-all cursor-pointer"
           title="Actualiser"
         >
-          <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+          <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin text-blue-600" : ""}`} />
         </button>
       </div>
 
-      {/* Main Content Area */}
+      {/* Main Container - Borderless & Frameless */}
       {loading ? (
-        <div className="bg-white rounded-3xl p-8 text-center space-y-3 shadow-xs">
-          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs font-extrabold text-slate-600">Chargement des annonces...</p>
+        <div className="py-12 text-center space-y-3">
+          <div className="w-8 h-8 border-3 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-xs font-bold text-slate-500">Chargement des messages...</p>
         </div>
       ) : announcements.length === 0 ? (
-        <div className="bg-white rounded-3xl p-8 text-center space-y-3 shadow-xs">
-          <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 mx-auto">
+        <div className="py-12 text-center space-y-3">
+          <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 mx-auto">
             <Bell className="h-6 w-6" />
           </div>
-          <h3 className="text-sm font-black text-slate-800">Aucune annonce pour le moment</h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            Toutes les nouveautés, promotions et mises à jour importantes de la plateforme seront publiées ici.
+          <h3 className="text-sm font-bold text-slate-800">Aucun message pour le moment</h3>
+          <p className="text-xs text-slate-500 max-w-xs mx-auto">
+            Les annonces et messages diffusés par l'administration s'afficheront ici.
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {announcements.map((notif, index) => (
-            <div
-              key={notif.id || index}
-              className="bg-white rounded-3xl p-4 sm:p-5 shadow-xs border border-slate-100 space-y-3 relative overflow-hidden transition-all hover:shadow-md"
-            >
-              {/* Top accent line */}
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 to-indigo-500" />
+        <div className="space-y-1 pt-1">
+          {announcements.map((notif) => {
+            const isUnread = !readIds.includes(notif.id);
 
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                    <Megaphone className="h-4.5 w-4.5" />
-                  </div>
-                  <div>
-                    <h3 className="text-xs sm:text-sm font-black text-slate-900 leading-tight">
+            return (
+              <div
+                key={notif.id}
+                id={`announcement-item-${notif.id}`}
+                onClick={() => handleSelectAnnouncement(notif)}
+                className="group flex items-center justify-between py-3.5 px-3 hover:bg-slate-200/40 rounded-2xl transition-all cursor-pointer"
+              >
+                <div className="space-y-1 pr-3 flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    {isUnread && (
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#ef4444] shrink-0 inline-block" />
+                    )}
+                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug truncate">
                       {notif.title}
                     </h3>
-                    <p className="text-[10px] text-slate-400 font-bold mt-0.5">
-                      {notif.date ? new Date(notif.date).toLocaleDateString("fr-FR", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit"
-                      }) : "Annonce Officielle"}
-                    </p>
+                  </div>
+                  <div className="text-[11px] text-slate-400 font-mono pl-0.5">
+                    {formatDate(notif.date)}
                   </div>
                 </div>
 
-                <span className="inline-flex items-center gap-1 text-[9px] font-black px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 shrink-0">
-                  <CheckCircle2 className="h-3 w-3 text-blue-600" />
-                  Officiel
-                </span>
+                <ChevronRight className="h-4 w-4 text-slate-400 shrink-0 group-hover:translate-x-0.5 transition-transform" />
               </div>
-
-              <div className="bg-slate-50 rounded-2xl p-3.5 text-xs text-slate-700 font-medium leading-relaxed whitespace-pre-line border border-slate-100">
-                {notif.content}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

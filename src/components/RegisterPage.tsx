@@ -52,12 +52,23 @@ export default function RegisterPage({ onSuccess, onNavigateToLogin }: RegisterP
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Prefill referrer code from URL or sessionStorage if present
+  // Prefill referrer code from URL, sessionStorage, or localStorage if present
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const ref = params.get("ref") || sessionStorage.getItem("nutrien_referral_code");
+    const ref = params.get("ref") || 
+                params.get("invitation") || 
+                params.get("code") || 
+                params.get("invite") || 
+                params.get("referrer") || 
+                sessionStorage.getItem("nutrien_referral_code") || 
+                localStorage.getItem("nutrien_referral_code");
     if (ref) {
-      setReferrerCode(ref);
+      const cleanRef = ref.trim().toUpperCase();
+      setReferrerCode(cleanRef);
+      try {
+        sessionStorage.setItem("nutrien_referral_code", cleanRef);
+        localStorage.setItem("nutrien_referral_code", cleanRef);
+      } catch (e) {}
     }
   }, []);
 
@@ -240,15 +251,20 @@ export default function RegisterPage({ onSuccess, onNavigateToLogin }: RegisterP
             </div>
 
             {/* Field 4: Referral / Invitation Code */}
-            <div className="flex items-center bg-slate-50 rounded-2xl px-3.5 py-3.5 focus-within:bg-slate-100 transition-all">
-              <Ticket className="h-5 w-5 text-amber-500 mr-3 shrink-0" />
-              <input
-                type="text"
-                placeholder="MASTER1"
-                value={referrerCode}
-                onChange={(e) => setReferrerCode(e.target.value)}
-                className="w-full bg-transparent text-sm font-black text-slate-900 placeholder-slate-400 focus:outline-none tracking-wider uppercase"
-              />
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-slate-600 px-1 block">
+                Code de parrainage / invitation
+              </label>
+              <div className="flex items-center bg-slate-50 rounded-2xl px-3.5 py-3.5 focus-within:bg-slate-100 transition-all border border-slate-200/60">
+                <Ticket className="h-5 w-5 text-amber-500 mr-3 shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Ex: MASTER1"
+                  value={referrerCode}
+                  onChange={(e) => setReferrerCode(e.target.value.toUpperCase())}
+                  className="w-full bg-transparent text-sm font-black text-slate-900 placeholder-slate-400 focus:outline-none tracking-wider uppercase font-mono"
+                />
+              </div>
             </div>
 
             {/* Checkboxes */}

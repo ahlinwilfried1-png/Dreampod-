@@ -92,6 +92,7 @@ export interface GlobalNotification {
   id: string;
   title: string;
   content: string;
+  image?: string;
   date: string;
   active: boolean;
 }

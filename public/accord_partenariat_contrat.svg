@@ -1,0 +1,360 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 810" width="100%" height="100%">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="headerBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="50%" stop-color="#f4fbf7"/>
+      <stop offset="100%" stop-color="#e8f5ed"/>
+    </linearGradient>
+
+    <linearGradient id="greenBannerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#05471b"/>
+      <stop offset="30%" stop-color="#0f6e2e"/>
+      <stop offset="70%" stop-color="#0f6e2e"/>
+      <stop offset="100%" stop-color="#05471b"/>
+    </linearGradient>
+
+    <linearGradient id="pillGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#043815"/>
+      <stop offset="100%" stop-color="#0a5223"/>
+    </linearGradient>
+
+    <linearGradient id="goldTextGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#b45309"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#000000" flood-opacity="0.1"/>
+    </filter>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="1200" height="810" fill="url(#headerBg)"/>
+
+  <!-- World Map Decorative Background Pattern -->
+  <path d="M200 120 Q350 100 500 130 T800 110 T1000 140 M150 200 Q400 180 650 210 T950 190 M250 260 Q450 240 700 270 T1050 250" fill="none" stroke="#10b981" stroke-width="1" stroke-dasharray="4,6" opacity="0.15"/>
+
+  <!-- Top Left Farm Landscape Image Simulation -->
+  <g transform="translate(0, 0)">
+    <polygon points="0,0 220,0 160,280 0,280" fill="#2d6a4f" opacity="0.8"/>
+    <!-- Farm rows -->
+    <path d="M0 280 L160 280 L220 0 L0 0 Z" fill="#1b4332"/>
+    <path d="M10 280 L120 180 L80 0" stroke="#74c69d" stroke-width="4" fill="none" opacity="0.4"/>
+    <path d="M40 280 L140 180 L110 0" stroke="#74c69d" stroke-width="6" fill="none" opacity="0.5"/>
+    <path d="M70 280 L160 180 L140 0" stroke="#52b788" stroke-width="8" fill="none" opacity="0.6"/>
+    <path d="M100 280 L180 180 L170 0" stroke="#40916c" stroke-width="10" fill="none" opacity="0.7"/>
+    <!-- Sun rays overlay -->
+    <polygon points="0,0 230,0 170,290 0,290" fill="url(#headerBg)" opacity="0.15"/>
+    <!-- Green Accent Diagonal Border -->
+    <polygon points="215,0 232,0 172,290 155,290" fill="#00a84e"/>
+  </g>
+
+  <!-- Top Right Greenhouse / Tech Farm Image Simulation -->
+  <g transform="translate(970, 0)">
+    <polygon points="60,0 230,0 230,280 0,280" fill="#1d3557"/>
+    <!-- Glasshouse structure lines -->
+    <path d="M60 0 L230 0 L230 280 L0 280 Z" fill="#2a9d8f" opacity="0.85"/>
+    <line x1="60" y1="0" x2="30" y2="280" stroke="#ffffff" stroke-width="3" opacity="0.6"/>
+    <line x1="120" y1="0" x2="100" y2="280" stroke="#ffffff" stroke-width="2" opacity="0.4"/>
+    <line x1="180" y1="0" x2="170" y2="280" stroke="#ffffff" stroke-width="2" opacity="0.4"/>
+    <line x1="0" y1="100" x2="230" y2="100" stroke="#ffffff" stroke-width="2" opacity="0.3"/>
+    <line x1="0" y1="180" x2="230" y2="180" stroke="#ffffff" stroke-width="2" opacity="0.3"/>
+    <!-- Greenplants rows -->
+    <rect x="20" y="200" width="190" height="30" rx="5" fill="#52b788"/>
+    <rect x="40" y="240" width="190" height="30" rx="5" fill="#40916c"/>
+    <!-- Green Accent Diagonal Border -->
+    <polygon points="43,0 60,0 0,290 -17,290" fill="#00a84e"/>
+  </g>
+
+  <!-- HEADER BRANDING -->
+  <g transform="translate(600, 75)" text-anchor="middle">
+    <!-- Nutrien Logo Icon -->
+    <g transform="translate(-130, -50) scale(0.95)">
+      <!-- Leaf 1 -->
+      <path d="M45 10 C30 25 20 45 35 60 C50 75 75 50 65 20 C60 10 50 5 45 10 Z" fill="#7ac142"/>
+      <!-- Leaf 2 -->
+      <path d="M15 35 C5 45 0 60 15 70 C30 80 45 60 35 40 C28 30 20 30 15 35 Z" fill="#00a84e"/>
+      <!-- Leaf 3 -->
+      <path d="M60 40 C55 50 55 65 70 70 C80 75 85 55 75 42 C68 35 62 38 60 40 Z" fill="#1b4332"/>
+    </g>
+    <text x="15" y="-12" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="900" font-size="42" fill="#05471b" letter-spacing="2">NUTRIEN</text>
+    <text x="15" y="16" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="800" font-size="20" fill="#0f6e2e" letter-spacing="8">AGRICULTURE</text>
+  </g>
+
+  <!-- MAIN CONTRACT TITLE -->
+  <g transform="translate(600, 142)" text-anchor="middle">
+    <text y="0" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="900" font-size="34" fill="#0a3818" letter-spacing="1">ACCORD DE PARTENARIAT INTERNATIONAL</text>
+    <text y="32" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="800" font-size="18" fill="#0f6e2e" letter-spacing="3">SIGNATURE DE CONTRAT DE COLLABORATION</text>
+    
+    <!-- Small Leaf icon below title -->
+    <path d="M-6 44 C-12 50 -14 58 -8 62 C-2 66 6 58 2 48 Z" fill="#00a84e"/>
+    <path d="M4 48 C2 52 4 58 9 60 C14 62 16 54 12 49 Z" fill="#7ac142"/>
+  </g>
+
+  <!-- INTRO DECLARATION SUBTEXT -->
+  <g transform="translate(600, 222)" text-anchor="middle">
+    <text y="0" font-family="sans-serif" font-weight="600" font-size="15" fill="#2d3748">
+      Nous, soussignés, confirmons par la présente la signature d'un accord de partenariat stratégique
+    </text>
+    <text y="24" font-family="sans-serif" font-weight="600" font-size="15" fill="#2d3748">
+      en vue de promouvoir le <tspan font-weight="800" fill="#05471b">développement durable de l'agriculture</tspan> à l'échelle mondiale.
+    </text>
+  </g>
+
+  <!-- ENGAGED PARTNERS BADGE -->
+  <g transform="translate(600, 282)">
+    <rect x="-270" y="-18" width="540" height="36" rx="18" fill="url(#pillGrad)"/>
+    <text x="0" y="5" text-anchor="middle" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="900" font-size="14" fill="#ffffff" letter-spacing="2">
+      PARTENAIRES ENGAGÉS POUR UNE AGRICULTURE DURABLE
+    </text>
+  </g>
+
+  <!-- PARTNERS LOGOS CARD BOX -->
+  <g transform="translate(25, 315)">
+    <!-- White Card background -->
+    <rect width="1150" height="135" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" filter="url(#shadow)"/>
+
+    <!-- 1. NUTRIEN TOGO -->
+    <g transform="translate(15, 15)">
+      <rect width="170" height="105" rx="8" fill="#f8fafc"/>
+      <!-- Nutrien Mini logo -->
+      <path d="M45 25 C35 35 30 48 40 58 C50 68 65 50 58 30 Z" fill="#7ac142"/>
+      <path d="M25 40 C18 48 15 58 25 65 C35 72 45 58 38 45 Z" fill="#00a84e"/>
+      <text x="70" y="44" font-family="sans-serif" font-weight="900" font-size="16" fill="#05471b">NUTRIEN</text>
+      <text x="70" y="58" font-family="sans-serif" font-weight="800" font-size="9" fill="#0f6e2e" letter-spacing="1">AGRICULTURE</text>
+      <!-- Flag Togo -->
+      <g transform="translate(45, 74)">
+        <rect width="24" height="14" rx="2" fill="#006a4e"/>
+        <rect y="2.8" width="24" height="2.8" fill="#ffce00"/>
+        <rect y="8.4" width="24" height="2.8" fill="#ffce00"/>
+        <rect width="9" height="8.4" fill="#d21034"/>
+        <polygon points="4.5,1.5 5.5,4.5 2,2.5 7,2.5 3.5,4.5" fill="#ffffff"/>
+      </g>
+      <text x="76" y="81" font-family="sans-serif" font-weight="800" font-size="10" fill="#1e293b">TOGO</text>
+      <text x="76" y="93" font-family="sans-serif" font-weight="600" font-size="9" fill="#64748b">Siège Social</text>
+    </g>
+
+    <!-- Vertical Separator 1 -->
+    <line x1="205" y1="25" x2="205" y2="110" stroke="#cbd5e1" stroke-width="1"/>
+
+    <!-- 2. CORTEVA USA -->
+    <g transform="translate(215, 15)">
+      <rect width="170" height="105" rx="8" fill="#f8fafc"/>
+      <!-- Corteva logo icon -->
+      <g transform="translate(65, 15)">
+        <path d="M20 5 C10 5 0 15 0 25 C0 35 10 40 20 40 C30 40 40 30 40 20 L20 20 Z" fill="#0056b3"/>
+        <path d="M10 15 L30 15 L20 30 Z" fill="#0099ff"/>
+      </g>
+      <text x="85" y="60" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="15" fill="#002b49">CORTEVA</text>
+      <text x="85" y="70" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="8" fill="#475569">agriscience</text>
+      <!-- USA Flag -->
+      <g transform="translate(45, 78)">
+        <rect width="22" height="13" rx="2" fill="#bb133e"/>
+        <rect y="2" width="22" height="2" fill="#ffffff"/>
+        <rect y="6" width="22" height="2" fill="#ffffff"/>
+        <rect y="10" width="22" height="2" fill="#ffffff"/>
+        <rect width="10" height="7" fill="#002147"/>
+      </g>
+      <text x="73" y="84" font-family="sans-serif" font-weight="800" font-size="9" fill="#1e293b">CORTEVA AGRISCIENCE</text>
+      <text x="73" y="95" font-family="sans-serif" font-weight="800" font-size="9" fill="#002b49">ÉTATS-UNIS</text>
+    </g>
+
+    <!-- Vertical Separator 2 -->
+    <line x1="395" y1="25" x2="395" y2="110" stroke="#cbd5e1" stroke-width="1"/>
+
+    <!-- 3. BAYER GERMANY -->
+    <g transform="translate(405, 15)">
+      <rect width="170" height="105" rx="8" fill="#f8fafc"/>
+      <!-- Bayer Cross circle logo -->
+      <circle cx="85" cy="35" r="20" fill="none" stroke="#0091df" stroke-width="3"/>
+      <text x="85" y="32" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="9" fill="#0091df">BAYER</text>
+      <text x="85" y="42" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="9" fill="#89d000">BAYER</text>
+      <!-- Germany Flag -->
+      <g transform="translate(45, 78)">
+        <rect width="22" height="13" rx="2" fill="#000000"/>
+        <rect y="4.3" width="22" height="4.3" fill="#dd0000"/>
+        <rect y="8.6" width="22" height="4.4" fill="#ffcc00"/>
+      </g>
+      <text x="73" y="85" font-family="sans-serif" font-weight="800" font-size="10" fill="#1e293b">BAYER AG</text>
+      <text x="73" y="96" font-family="sans-serif" font-weight="800" font-size="9" fill="#64748b">ALLEMAGNE</text>
+    </g>
+
+    <!-- Vertical Separator 3 -->
+    <line x1="585" y1="25" x2="585" y2="110" stroke="#cbd5e1" stroke-width="1"/>
+
+    <!-- 4. SYNGENTA SWITZERLAND -->
+    <g transform="translate(595, 15)">
+      <rect width="170" height="105" rx="8" fill="#f8fafc"/>
+      <text x="85" y="42" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="20" fill="#5c2d91">syngenta</text>
+      <!-- Switzerland flag -->
+      <g transform="translate(50, 78)">
+        <rect width="16" height="14" rx="2" fill="#d52b1e"/>
+        <rect x="6.5" y="3" width="3" height="8" fill="#ffffff"/>
+        <rect x="4" y="5.5" width="8" height="3" fill="#ffffff"/>
+      </g>
+      <text x="72" y="85" font-family="sans-serif" font-weight="800" font-size="10" fill="#1e293b">SYNGENTA</text>
+      <text x="72" y="96" font-family="sans-serif" font-weight="800" font-size="9" fill="#64748b">SUISSE</text>
+    </g>
+
+    <!-- Vertical Separator 4 -->
+    <line x1="775" y1="25" x2="775" y2="110" stroke="#cbd5e1" stroke-width="1"/>
+
+    <!-- 5. YARA NORWAY -->
+    <g transform="translate(785, 15)">
+      <rect width="170" height="105" rx="8" fill="#f8fafc"/>
+      <rect x="65" y="12" width="40" height="35" rx="4" fill="#00205b"/>
+      <path d="M72 32 C78 22 92 22 98 32 Z" fill="none" stroke="#ffffff" stroke-width="2"/>
+      <text x="85" y="43" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="10" fill="#ffffff">YARA</text>
+      <!-- Norway flag -->
+      <g transform="translate(42, 78)">
+        <rect width="22" height="13" rx="2" fill="#ba0c2f"/>
+        <rect x="6" y="0" width="4" height="13" fill="#ffffff"/>
+        <rect x="0" y="4.5" width="22" height="4" fill="#ffffff"/>
+        <rect x="7" y="0" width="2" height="13" fill="#00205b"/>
+        <rect x="0" y="5.5" width="22" height="2" fill="#00205b"/>
+      </g>
+      <text x="70" y="84" font-family="sans-serif" font-weight="800" font-size="9" fill="#1e293b">YARA INTERNATIONAL</text>
+      <text x="70" y="95" font-family="sans-serif" font-weight="800" font-size="9" fill="#64748b">NORVÈGE</text>
+    </g>
+
+    <!-- Vertical Separator 5 -->
+    <line x1="965" y1="25" x2="965" y2="110" stroke="#cbd5e1" stroke-width="1"/>
+
+    <!-- 6. FMC USA -->
+    <g transform="translate(975, 15)">
+      <rect width="160" height="105" rx="8" fill="#f8fafc"/>
+      <text x="80" y="45" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="28" fill="#ff0000">FMC</text>
+      <!-- USA Flag -->
+      <g transform="translate(40, 78)">
+        <rect width="22" height="13" rx="2" fill="#bb133e"/>
+        <rect y="2" width="22" height="2" fill="#ffffff"/>
+        <rect y="6" width="22" height="2" fill="#ffffff"/>
+        <rect y="10" width="22" height="2" fill="#ffffff"/>
+        <rect width="10" height="7" fill="#002147"/>
+      </g>
+      <text x="68" y="84" font-family="sans-serif" font-weight="800" font-size="9" fill="#1e293b">FMC CORPORATION</text>
+      <text x="68" y="95" font-family="sans-serif" font-weight="800" font-size="9" fill="#002147">ÉTATS-UNIS</text>
+    </g>
+  </g>
+
+  <!-- MID STATEMENT -->
+  <text x="600" y="480" text-anchor="middle" font-family="sans-serif" font-weight="600" font-size="14" fill="#334155">
+    Ce partenariat vise à combiner nos expertises et nos ressources pour relever ensemble
+  </text>
+  <text x="600" y="500" text-anchor="middle" font-family="sans-serif" font-weight="600" font-size="14" fill="#334155">
+    les défis mondiaux de la sécurité alimentaire et de l'innovation agricole.
+  </text>
+
+  <!-- SIGNATURES SECTION BADGE -->
+  <g transform="translate(600, 532)">
+    <rect x="-210" y="-16" width="420" height="32" rx="16" fill="url(#pillGrad)"/>
+    <text x="0" y="5" text-anchor="middle" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="900" font-size="13" fill="#ffffff" letter-spacing="2">
+      SIGNATURES DES DIRECTEURS GÉNÉRAUX
+    </text>
+  </g>
+
+  <!-- SIGNATURES CARD BOX -->
+  <g transform="translate(25, 555)">
+    <!-- Card outer container -->
+    <rect width="1150" height="200" rx="16" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" filter="url(#shadow)"/>
+
+    <!-- 1. Nutrien Director Signature -->
+    <g transform="translate(15, 15)">
+      <!-- Signature script stroke path -->
+      <path d="M20 50 Q35 15 50 45 T80 30 T120 55 T150 25 T170 45" fill="none" stroke="#003366" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="20" y1="72" x2="170" y2="72" stroke="#94a3b8" stroke-width="1"/>
+      <text x="95" y="88" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="12" fill="#0f172a">M. Koffi A. ESSOWE</text>
+      <text x="95" y="103" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="10" fill="#64748b">Directeur Général</text>
+      <text x="95" y="117" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="10" fill="#05471b">NUTRIEN AGRICULTURE</text>
+      <!-- Circular Official Stamp -->
+      <circle cx="95" cy="150" r="22" fill="#f0fdf4" stroke="#05471b" stroke-width="2" stroke-dasharray="3,2"/>
+      <circle cx="95" cy="150" r="17" fill="none" stroke="#00a84e" stroke-width="1"/>
+      <text x="95" y="147" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="6" fill="#05471b">NUTRIEN</text>
+      <text x="95" y="155" text-anchor="middle" font-family="sans-serif" font-weight="800" font-size="5" fill="#0f6e2e">SEAL OK</text>
+    </g>
+
+    <line x1="205" y1="20" x2="205" y2="180" stroke="#cbd5e1" stroke-width="1"/>
+
+    <!-- 2. Corteva Director Signature -->
+    <g transform="translate(215, 15)">
+      <path d="M25 60 Q45 20 70 35 T110 25 T145 60 T165 40" fill="none" stroke="#004080" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="20" y1="72" x2="170" y2="72" stroke="#94a3b8" stroke-width="1"/>
+      <text x="95" y="88" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="12" fill="#0f172a">M. Chuck MAGRO</text>
+      <text x="95" y="103" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="10" fill="#64748b">Directeur Général</text>
+      <text x="95" y="117" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="10" fill="#0056b3">CORTEVA AGRISCIENCE</text>
+      <circle cx="95" cy="150" r="22" fill="#eff6ff" stroke="#0056b3" stroke-width="2" stroke-dasharray="3,2"/>
+      <circle cx="95" cy="150" r="17" fill="none" stroke="#0099ff" stroke-width="1"/>
+      <text x="95" y="147" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="6" fill="#002b49">CORTEVA</text>
+      <text x="95" y="155" text-anchor="middle" font-family="sans-serif" font-weight="800" font-size="5" fill="#0056b3">SEAL OK</text>
+    </g>
+
+    <line x1="395" y1="20" x2="395" y2="180" stroke="#cbd5e1" stroke-width="1"/>
+
+    <!-- 3. Bayer Director Signature -->
+    <g transform="translate(405, 15)">
+      <path d="M15 35 Q35 60 75 25 T120 45 T160 30" fill="none" stroke="#003366" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="20" y1="72" x2="170" y2="72" stroke="#94a3b8" stroke-width="1"/>
+      <text x="95" y="88" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="12" fill="#0f172a">M. Werner BAUMANN</text>
+      <text x="95" y="103" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="10" fill="#64748b">Directeur Général</text>
+      <text x="95" y="117" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="10" fill="#0091df">BAYER AG</text>
+      <circle cx="95" cy="150" r="22" fill="#f0fdfa" stroke="#0091df" stroke-width="2" stroke-dasharray="3,2"/>
+      <circle cx="95" cy="150" r="17" fill="none" stroke="#89d000" stroke-width="1"/>
+      <text x="95" y="147" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="6" fill="#0091df">BAYER</text>
+      <text x="95" y="155" text-anchor="middle" font-family="sans-serif" font-weight="800" font-size="5" fill="#89d000">SEAL OK</text>
+    </g>
+
+    <line x1="585" y1="20" x2="585" y2="180" stroke="#cbd5e1" stroke-width="1"/>
+
+    <!-- 4. Syngenta Director Signature -->
+    <g transform="translate(595, 15)">
+      <path d="M20 40 Q50 15 80 50 T130 25 T160 55" fill="none" stroke="#3b0764" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="20" y1="72" x2="170" y2="72" stroke="#94a3b8" stroke-width="1"/>
+      <text x="95" y="88" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="12" fill="#0f172a">M. Erik FJÄLLSTRÖM</text>
+      <text x="95" y="103" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="10" fill="#64748b">Directeur Général</text>
+      <text x="95" y="117" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="10" fill="#5c2d91">SYNGENTA</text>
+      <circle cx="95" cy="150" r="22" fill="#faf5ff" stroke="#5c2d91" stroke-width="2" stroke-dasharray="3,2"/>
+      <circle cx="95" cy="150" r="17" fill="none" stroke="#a855f7" stroke-width="1"/>
+      <text x="95" y="147" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="6" fill="#5c2d91">SYNGENTA</text>
+      <text x="95" y="155" text-anchor="middle" font-family="sans-serif" font-weight="800" font-size="5" fill="#5c2d91">SEAL OK</text>
+    </g>
+
+    <line x1="775" y1="20" x2="775" y2="180" stroke="#cbd5e1" stroke-width="1"/>
+
+    <!-- 5. Yara Director Signature -->
+    <g transform="translate(785, 15)">
+      <path d="M25 55 Q50 20 90 45 T140 20 T165 50" fill="none" stroke="#00205b" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="20" y1="72" x2="170" y2="72" stroke="#94a3b8" stroke-width="1"/>
+      <text x="95" y="88" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="11" fill="#0f172a">M. Svein TORE HOLSETHER</text>
+      <text x="95" y="103" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="10" fill="#64748b">Directeur Général</text>
+      <text x="95" y="117" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="10" fill="#00205b">YARA INTERNATIONAL</text>
+      <circle cx="95" cy="150" r="22" fill="#eef2ff" stroke="#00205b" stroke-width="2" stroke-dasharray="3,2"/>
+      <circle cx="95" cy="150" r="17" fill="none" stroke="#4338ca" stroke-width="1"/>
+      <text x="95" y="147" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="6" fill="#00205b">YARA</text>
+      <text x="95" y="155" text-anchor="middle" font-family="sans-serif" font-weight="800" font-size="5" fill="#00205b">SEAL OK</text>
+    </g>
+
+    <line x1="965" y1="20" x2="965" y2="180" stroke="#cbd5e1" stroke-width="1"/>
+
+    <!-- 6. FMC Director Signature -->
+    <g transform="translate(975, 15)">
+      <path d="M15 45 Q40 15 75 55 T125 30 T155 50" fill="none" stroke="#990000" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="20" y1="72" x2="170" y2="72" stroke="#94a3b8" stroke-width="1"/>
+      <text x="80" y="88" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="12" fill="#0f172a">M. Pierre BRONDY</text>
+      <text x="80" y="103" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="10" fill="#64748b">Directeur Général</text>
+      <text x="80" y="117" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="10" fill="#dc2626">FMC CORPORATION</text>
+      <circle cx="80" cy="150" r="22" fill="#fef2f2" stroke="#dc2626" stroke-width="2" stroke-dasharray="3,2"/>
+      <circle cx="80" cy="150" r="17" fill="none" stroke="#b91c1c" stroke-width="1"/>
+      <text x="80" y="147" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="6" fill="#dc2626">FMC</text>
+      <text x="80" y="155" text-anchor="middle" font-family="sans-serif" font-weight="800" font-size="5" fill="#dc2626">SEAL OK</text>
+    </g>
+  </g>
+
+  <!-- FOOTER LOCATION & DATE BANNER -->
+  <g transform="translate(600, 792)">
+    <rect x="-600" y="-22" width="1200" height="40" fill="#043815"/>
+    <text x="0" y="2" text-anchor="middle" font-family="'Plus Jakarta Sans', Arial, sans-serif" font-weight="900" font-size="14" fill="#ffffff" letter-spacing="3">
+      Fait à Lomé, le 05 Mai 2024
+    </text>
+  </g>
+</svg>

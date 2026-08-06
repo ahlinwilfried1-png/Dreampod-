@@ -20,6 +20,51 @@ export function removeToken() {
   localStorage.removeItem(TOKEN_KEY);
 }
 
+// --- REALTIME SYNCHRONIZATION SYSTEM ---
+type SyncListener = () => void;
+const syncListeners = new Set<SyncListener>();
+
+export function onSync(listener: SyncListener) {
+  syncListeners.add(listener);
+  return () => {
+    syncListeners.delete(listener);
+  };
+}
+
+export function notifySyncListeners() {
+  syncListeners.forEach((fn) => {
+    try {
+      fn();
+    } catch (err) {
+      console.warn("Sync listener error:", err);
+    }
+  });
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("nutrien_realtime_update"));
+  }
+}
+
+const syncChannel = typeof window !== "undefined" && "BroadcastChannel" in window 
+  ? new BroadcastChannel("nutrien_realtime_sync_channel") 
+  : null;
+
+if (syncChannel) {
+  syncChannel.onmessage = (event) => {
+    if (event.data === "db_updated") {
+      notifySyncListeners();
+    }
+  };
+}
+
+export function broadcastLocalChange() {
+  if (syncChannel) {
+    try {
+      syncChannel.postMessage("db_updated");
+    } catch (e) {}
+  }
+  notifySyncListeners();
+}
+
 const BACKEND_URL = "https://ais-pre-wpq5a34ir5qewcez66evtj-473372860465.europe-west1.run.app";
 
 // Determine if we are running in a real full-stack environment where Express serves frontend + backend
@@ -69,16 +114,16 @@ let useLocalFallback = false;
 
 function getLocalDb() {
   const defaultProducts: Product[] = [
-    { id: "vip0", name: "VIP 0 - Plan Découverte", price: 1000, dailyIncome: 480, durationDays: 3, totalIncome: 1440, level: 0, category: "wellbeing", image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80" },
-    { id: "vip1", name: "VIP 1 - Plan Élite", price: 3000, dailyIncome: 400, durationDays: 200, totalIncome: 80000, level: 1, category: "stability", image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80" },
-    { id: "vip2", name: "VIP 2 - Plan Premium", price: 7000, dailyIncome: 850, durationDays: 200, totalIncome: 170000, level: 2, category: "stability", image: "https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=800&q=80" },
-    { id: "vip3", name: "VIP 3 - Plan Gold", price: 15000, dailyIncome: 1600, durationDays: 200, totalIncome: 320000, level: 3, category: "wellbeing", image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80" },
-    { id: "vip4", name: "VIP 4 - Plan Platinum", price: 20000, dailyIncome: 2200, durationDays: 200, totalIncome: 440000, level: 4, category: "wellbeing", image: "https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=800&q=80" },
-    { id: "vip5", name: "VIP 5 - Plan Infini", price: 30000, dailyIncome: 3600, durationDays: 200, totalIncome: 720000, level: 5, category: "activity", image: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=800&q=80" },
-    { id: "vip6", name: "VIP 6 - Plan Saphir", price: 50000, dailyIncome: 5600, durationDays: 200, totalIncome: 1120000, level: 6, category: "activity", image: "https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=800&q=80" },
-    { id: "vip7", name: "VIP 7 - Plan Diamant", price: 75000, dailyIncome: 7700, durationDays: 200, totalIncome: 1540000, level: 7, category: "activity", image: "https://images.unsplash.com/photo-1586771107445-d3ca888129ff?auto=format&fit=crop&w=800&q=80" },
-    { id: "vip8", name: "VIP 8 - Plan Rubis", price: 100000, dailyIncome: 12500, durationDays: 200, totalIncome: 2500000, level: 8, category: "activity", image: "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80" },
-    { id: "vip9", name: "VIP 9 - Plan Émeraude", price: 150000, dailyIncome: 25000, durationDays: 200, totalIncome: 5000000, level: 9, category: "activity", image: "https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip1", name: "VIP 1", price: 4000, dailyIncome: 500, durationDays: 200, totalIncome: 100000, level: 1, category: "stability", image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip2", name: "VIP 2", price: 15000, dailyIncome: 1600, durationDays: 200, totalIncome: 320000, level: 2, category: "stability", image: "https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip3", name: "VIP 3", price: 25000, dailyIncome: 3250, durationDays: 200, totalIncome: 650000, level: 3, category: "wellbeing", image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip4", name: "VIP 4", price: 50000, dailyIncome: 11100, durationDays: 200, totalIncome: 2220000, level: 4, category: "wellbeing", image: "https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip5", name: "VIP 5", price: 100000, dailyIncome: 24000, durationDays: 200, totalIncome: 4800000, level: 5, category: "activity", image: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip6", name: "VIP 6", price: 150000, dailyIncome: 36000, durationDays: 200, totalIncome: 7200000, level: 6, category: "activity", image: "https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip7", name: "VIP 7", price: 200000, dailyIncome: 50000, durationDays: 200, totalIncome: 10000000, level: 7, category: "activity", image: "https://images.unsplash.com/photo-1586771107445-d3ca888129ff?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip8", name: "VIP 8", price: 300000, dailyIncome: 75000, durationDays: 200, totalIncome: 15000000, level: 8, category: "activity", image: "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip9", name: "VIP 9", price: 400000, dailyIncome: 115000, durationDays: 200, totalIncome: 23000000, level: 9, category: "activity", image: "https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip10", name: "VIP 10", price: 800000, dailyIncome: 250000, durationDays: 200, totalIncome: 50000000, level: 10, category: "activity", image: "https://images.unsplash.com/photo-1628102491629-778571d893a3?auto=format&fit=crop&w=800&q=80" },
   ];
 
   const defaultBonusCodes: BonusCode[] = [
@@ -90,18 +135,60 @@ function getLocalDb() {
   const defaultNotifications: GlobalNotification[] = [
     {
       id: "notif1",
-      title: "Bienvenue sur NUTRIEN !",
-      content: "Profitez d'un bonus gratuit à l'inscription. Partagez votre lien d'invitation pour gagner des commissions sur 3 niveaux : 15% (N1), 2% (N2), 1% (N3) !",
-      date: new Date().toISOString(),
+      title: "Récompenser les agents exceptionnels",
+      content: "Félicitations à tous nos agents d'équipe qui ont atteint un niveau de performance exceptionnel ce mois-ci. Des primes spéciales ont été créditées sur vos comptes.",
+      date: "2026-08-02T08:33:32.000Z",
       active: true,
     },
     {
       id: "notif2",
-      title: "Nouveau Plan Saphir VIP 6 !",
-      content: "Nous avons le plaisir de vous annoncer le lancement officiel du VIP 6. Découvrez des rendements exceptionnels dès aujourd'hui !",
-      date: new Date().toISOString(),
+      title: "Bonjour, bienvenue chez Veko !",
+      content: "Bienvenue sur notre plateforme officielle ! Profitez de nos offres d'investissement quotidiennes sécurisées et des retraits rapides vers Mobile Money.",
+      date: "2026-08-02T07:49:06.000Z",
       active: true,
-    }
+    },
+    {
+      id: "notif3",
+      title: "Preuve de retrait",
+      content: "Découvrez les derniers certificats de retrait validés par nos utilisateurs dans la rubrique dédiée.",
+      date: "2026-08-01T17:30:34.000Z",
+      active: true,
+    },
+    {
+      id: "notif4",
+      title: "Les 3 voitures ayant bénéficié du plus grand investissement des utilisateurs",
+      content: "Nos équipements phares de la semaine ont généré des plus-values record pour les investisseurs.",
+      date: "2026-08-01T15:20:52.000Z",
+      active: true,
+    },
+    {
+      id: "notif5",
+      title: "La meilleure preuve",
+      content: "Consultez les témoignages récents de nos investisseurs satisfaits.",
+      date: "2026-07-31T17:52:01.000Z",
+      active: true,
+    },
+    {
+      id: "notif6",
+      title: "Si vous invitez avec succès 6 utilisateurs réels à rejoindre notre entreprise, l'entreprise vous offrira une voiture d'une valeur de 100 000 XAF pour vous aider à gagner de l'argent.",
+      content: "Offre spéciale parrainage : Invitez 6 filleuls actifs et débloquez une prime géante instantanée.",
+      date: "2026-07-31T16:48:21.000Z",
+      active: true,
+    },
+    {
+      id: "notif7",
+      title: "Deux façons de gagner de l'argent",
+      content: "Combinez les revenus quotidiens de vos machines d'investissement et le programme de parrainage à 3 niveaux (15%, 2%, 1%).",
+      date: "2026-07-31T08:07:32.000Z",
+      active: true,
+    },
+    {
+      id: "notif8",
+      title: "Emprunter de l'argent pour investir dans des produits de niveau supérieur et gagner plus d'argent",
+      content: "Optimisez votre capital pour accéder aux plans VIP supérieurs et augmenter vos gains journaliers.",
+      date: "2026-07-30T17:05:50.000Z",
+      active: true,
+    },
   ];
 
   const defaultUsers = [
@@ -336,7 +423,7 @@ function getLocalDb() {
     }
     const parsed = JSON.parse(raw);
     if (!parsed.users) parsed.users = defaultUsers;
-    if (!parsed.products || !Array.isArray(parsed.products) || parsed.products.length === 0) {
+    if (!parsed.products || !Array.isArray(parsed.products)) {
       parsed.products = defaultProducts;
     } else {
       parsed.products = parsed.products.map((p: any) => ({
@@ -348,7 +435,7 @@ function getLocalDb() {
         isBlocked: p.isBlocked ?? false,
       }));
     }
-    if (!parsed.investments) parsed.investments = defaultInvestments;
+    if (!parsed.investments || !Array.isArray(parsed.investments)) parsed.investments = [];
     if (!parsed.transactions) parsed.transactions = defaultTransactions;
     if (!parsed.bonusCodes) parsed.bonusCodes = defaultBonusCodes;
     if (!parsed.notifications) parsed.notifications = defaultNotifications;
@@ -379,6 +466,7 @@ function saveLocalDb(db: any) {
   try {
     localStorage.setItem("dreampod_local_db_v3", JSON.stringify(db));
   } catch (e) {}
+  broadcastLocalChange();
 }
 
 function generateLocalId(prefix: string): string {
@@ -969,8 +1057,16 @@ async function handleLocalRequest<T>(path: string, options: RequestInit = {}): P
     const user = getLocalCurrentUser(db);
     const { amount, method: wtdMethod } = body;
     const wtdAmount = Number(amount);
-    if (!wtdAmount || wtdAmount <= 0) {
-      throw new Error("Montant de retrait invalide.");
+    if (!wtdAmount || wtdAmount < 1200) {
+      throw new Error("Le montant minimum de retrait est de 1 200 FCFA.");
+    }
+
+    // Rule 0: GMT time check (09:00 to 18:00 GMT)
+    if (user.role !== "admin") {
+      const currentGMTHour = new Date().getUTCHours();
+      if (currentGMTHour < 9 || currentGMTHour >= 18) {
+        throw new Error("Les retraits sont actuellement fermés. Veuillez revenir pendant les heures d'ouverture des retraits.");
+      }
     }
 
     // Rule 1: Must have active investment
@@ -978,7 +1074,7 @@ async function handleLocalRequest<T>(path: string, options: RequestInit = {}): P
       (inv: any) => inv.userId === user.id && inv.daysPassed < inv.durationDays
     );
     if (activeInvestments.length === 0 && user.role !== "admin") {
-      throw new Error("Action impossible : Vous devez posséder au moins un produit d'investissement actif pour pouvoir effectuer un retrait.");
+      throw new Error("Vous devez d'abord acheter un produit avant de pouvoir effectuer un retrait.");
     }
 
     // Rule 2: Max 2 withdrawals per day
@@ -994,26 +1090,40 @@ async function handleLocalRequest<T>(path: string, options: RequestInit = {}): P
       throw new Error("Solde insuffisant pour effectuer ce retrait.");
     }
 
-    const feeAmount = Math.round(wtdAmount * 0.14);
-    const netAmount = wtdAmount - feeAmount;
+    const feeAmount = Math.round(wtdAmount * 0.18);
+    const netAmount = Math.max(0, wtdAmount - feeAmount);
 
     user.balance -= wtdAmount;
+    const nowD = new Date();
+    const yy = String(nowD.getFullYear()).slice(-2);
+    const mm = String(nowD.getMonth() + 1).padStart(2, "0");
+    const dd = String(nowD.getDate()).padStart(2, "0");
+    const hh = String(nowD.getHours()).padStart(2, "0");
+    const min = String(nowD.getMinutes()).padStart(2, "0");
+    const ss = String(nowD.getSeconds()).padStart(2, "0");
+    const rand4 = String(Math.floor(1000 + Math.random() * 9000));
+    const txRefId = `B${yy}${mm}${dd}${hh}${min}${ss}${rand4}`;
+
     const tx = {
       id: generateLocalId("tx"),
+      txRefId: txRefId,
       userId: user.id,
       userName: user.name,
       userPhone: user.phone,
       type: "withdrawal",
       amount: wtdAmount,
       status: "pending",
-      date: new Date().toISOString(),
-      method: `${wtdMethod || "Mobile Money"} (Frais 14%: -${feeAmount} | Net: ${netAmount})`,
+      date: nowD.toISOString(),
+      method: `${user.linkedWalletOperator ? user.linkedWalletOperator.toUpperCase() : "Mobile Money"} (${user.linkedWalletNumber || ""})`,
+      linkedWalletOperator: user.linkedWalletOperator,
+      linkedWalletNumber: user.linkedWalletNumber,
+      linkedWalletOwnerName: user.linkedWalletOwnerName,
     };
     db.transactions.push(tx);
     saveLocalDb(db);
     const userCurrency = getCurrencySymbol(user.phone);
     return { 
-      message: `Demande de retrait de ${wtdAmount.toLocaleString()} ${userCurrency} soumise avec succès ! Montant net à recevoir (après 14% de frais) : ${netAmount.toLocaleString()} ${userCurrency}.`, 
+      message: `Demande de retrait de ${wtdAmount.toLocaleString()} ${userCurrency} soumise avec succès ! Montant net à recevoir (après 18% de frais) : ${netAmount.toLocaleString()} ${userCurrency}.`, 
       transaction: tx, 
       balance: user.balance 
     } as any;
@@ -1242,6 +1352,9 @@ async function handleLocalRequest<T>(path: string, options: RequestInit = {}): P
     const idx = db.products.findIndex((p: any) => p.id === id);
     if (idx !== -1) {
       db.products.splice(idx, 1);
+      if (db.investments) {
+        db.investments = db.investments.filter((i: any) => i.productId !== id);
+      }
       saveLocalDb(db);
     }
     return { message: "Plan supprimé." } as any;
@@ -1281,11 +1394,12 @@ async function handleLocalRequest<T>(path: string, options: RequestInit = {}): P
   if (path === "/api/admin/notifications/send" && method === "POST") {
     const admin = getLocalCurrentUser(db);
     if (admin.role !== "admin") throw new Error("Accès refusé.");
-    const { title, content } = body;
+    const { title, content, image } = body;
     const newNotif = {
       id: generateLocalId("notif"),
       title,
       content,
+      image: image ? String(image).trim() : undefined,
       date: new Date().toISOString(),
       active: true,
     };
@@ -1419,7 +1533,11 @@ async function handleLocalRequest<T>(path: string, options: RequestInit = {}): P
     const id = path.split("/")[4];
     const idx = db.investments.findIndex((i: any) => i.id === id);
     if (idx !== -1) {
-      db.investments.splice(idx, 1);
+      const deleted = db.investments.splice(idx, 1)[0];
+      const user = db.users.find((u: any) => u.id === deleted.userId);
+      if (user && user.dailyRevenue !== undefined) {
+        user.dailyRevenue = Math.max(0, user.dailyRevenue - (deleted.dailyIncome || 0));
+      }
       saveLocalDb(db);
     }
     return { message: "Investissement supprimé." } as any;
@@ -1530,6 +1648,10 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     throw err;
   }
 
+  if (options.method && ["POST", "PUT", "DELETE"].includes(options.method.toUpperCase())) {
+    broadcastLocalChange();
+  }
+
   return json as T;
 }
 
@@ -1627,9 +1749,9 @@ export const api = {
       body: JSON.stringify({ code, amount, maxUses }),
     }),
     getBonusCodes: () => request<{ bonusCodes: BonusCode[] }>("/api/admin/bonus-codes"),
-    sendNotification: (title: string, content: string) => request<any>("/api/admin/notifications/send", {
+    sendNotification: (title: string, content: string, image?: string) => request<any>("/api/admin/notifications/send", {
       method: "POST",
-      body: JSON.stringify({ title, content }),
+      body: JSON.stringify({ title, content, image }),
     }),
     deleteNotification: (id: string) => request<any>(`/api/admin/notifications/${id}`, {
       method: "DELETE",
@@ -1686,4 +1808,48 @@ export function getUseLocalFallback() {
 
 export function setUseLocalFallback(val: boolean) {
   // Mode simulation locale définitivement désactivé pour forcer la synchronisation avec le serveur
+}
+
+let lastKnownVersion = 0;
+
+export function initRealtimeSync() {
+  if (typeof window === "undefined") return;
+
+  try {
+    const streamUrl = `${API_BASE}/api/sync/stream`;
+    const eventSource = new EventSource(streamUrl);
+
+    eventSource.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        if (payload && payload.version) {
+          if (lastKnownVersion > 0 && payload.version !== lastKnownVersion) {
+            notifySyncListeners();
+          }
+          lastKnownVersion = payload.version;
+        }
+      } catch (e) {}
+    };
+  } catch (e) {
+    console.warn("SSE stream init error:", e);
+  }
+
+  setInterval(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/sync/version`, { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.version) {
+          if (lastKnownVersion > 0 && data.version !== lastKnownVersion) {
+            notifySyncListeners();
+          }
+          lastKnownVersion = data.version;
+        }
+      }
+    } catch (e) {}
+  }, 2500);
+}
+
+if (typeof window !== "undefined") {
+  initRealtimeSync();
 }

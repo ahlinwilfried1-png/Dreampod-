@@ -206,7 +206,7 @@ export default function TeamView({ user, transactions = [], team = [] }: TeamVie
         <div className="grid grid-cols-3 gap-2 text-center py-1">
           {/* L1 */}
           <div className="py-2 px-1">
-            <span className="text-[10px] text-emerald-700 font-extrabold bg-emerald-50 px-2 py-0.5 rounded uppercase border border-emerald-200/50">Niveau 1 (20%)</span>
+            <span className="text-[10px] text-emerald-700 font-extrabold bg-emerald-50 px-2 py-0.5 rounded uppercase border border-emerald-200/50">Niveau 1 (15%)</span>
             <span className="text-xl font-black text-slate-900 mt-1.5 block">{user?.referralsN1 || 0}</span>
             <span className="text-[9px] text-slate-500 font-semibold block">Filleuls directs</span>
           </div>
@@ -236,7 +236,7 @@ export default function TeamView({ user, transactions = [], team = [] }: TeamVie
             Chaque fois qu'un utilisateur s'inscrit via votre lien, il rejoint votre équipe. S'il investit dans une machine :
           </p>
           <ul className="list-disc pl-4 text-slate-600 text-[10.5px] space-y-0.5 leading-relaxed font-semibold">
-            <li>S'il s'agit de votre <span className="text-blue-600 font-bold">N1 direct</span>, vous recevez instantanément <span className="text-emerald-600 font-extrabold">20%</span> du prix de son plan.</li>
+            <li>S'il s'agit de votre <span className="text-blue-600 font-bold">N1 direct</span>, vous recevez instantanément <span className="text-emerald-600 font-extrabold">15%</span> du prix de son plan.</li>
             <li>S'il s'agit d'un filleul <span className="text-cyan-600 font-bold">N2 d'équipe</span>, vous recevez instantanément <span className="text-emerald-600 font-extrabold">2%</span>.</li>
             <li>S'il s'agit d'un filleul <span className="text-amber-600 font-bold">N3 d'équipe</span>, vous recevez instantanément <span className="text-emerald-600 font-extrabold">1%</span>.</li>
           </ul>

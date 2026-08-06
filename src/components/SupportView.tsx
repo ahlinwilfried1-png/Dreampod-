@@ -34,19 +34,19 @@ interface SupportViewProps {
 const AUTO_REPLIES: { keywords: string[]; response: string }[] = [
   {
     keywords: ["dépôt", "depot", "recharge", "payer", "crédit", "argent"],
-    response: "Pour vérifier votre dépôt, veuillez nous transmettre la référence de transaction SMS (ex: Mobile Money / T-Money / Airtel / Moov) ainsi que le montant. L'administrateur va valider votre compte !"
+    response: "Le dépôt minimum est de 4 000 FCFA / XAF. Pour vérifier votre dépôt, veuillez nous transmettre la référence de transaction SMS (ex: Mobile Money / T-Money / Airtel / Moov) ainsi que le montant. L'administrateur va valider votre compte !"
   },
   {
-    keywords: ["retrait", "retirer", "virement", "moyen de retrait", "délai"],
-    response: "Les retraits sont traités par nos agents financiers dans un délai garanti de 1 à 2 heures d'horloge. Assurez-vous d'avoir bien renseigné votre numéro Mobile Money dans votre profil."
+    keywords: ["retrait", "retirer", "virement", "moyen de retrait", "délai", "frais"],
+    response: "Le montant minimum de retrait est de 1 200 FCFA / XAF avec 18% de frais de retrait. Les retraits sont traités par nos agents de 09h00 à 18h00 GMT."
   },
   {
     keywords: ["vip", "plan", "investir", "produit", "rendement", "gain"],
-    response: "Chaque plan VIP vous rapporte un gain quotidien fixe cumulé automatiquement toutes les 24h. Vous pouvez cumuler vos bénéfices et demander un retrait dès que votre solde atteint le seuil minimum."
+    response: "Chaque plan VIP vous rapporte un gain quotidien fixe cumulé automatiquement toutes les 24h. Vous pouvez cumuler vos bénéfices et demander un retrait dès que votre solde atteint 1 200 FCFA."
   },
   {
     keywords: ["parrainage", "inviter", "filleul", "niveau", "commission", "code"],
-    response: "Notre programme de parrainage vous accorde 15% sur les achats de vos filleuls directs (N1), 2% au Niveau 2, et 1% au Niveau 3. Partagez votre lien depuis l'onglet Équipe !"
+    response: "Notre programme de parrainage à 3 niveaux vous accorde 15% sur les achats de vos filleuls directs (N1), 2% au Niveau 2, et 1% au Niveau 3. Partagez votre lien !"
   },
   {
     keywords: ["bonjour", "salut", "hello", "bonsoir", "coucou"],
@@ -113,7 +113,7 @@ export default function SupportView({ onBack, userPhone, initialMode = "chat" }:
 
       if (userMessageCount === 0) {
         // Official welcome message on first user message
-        replyText = `🚀 LANCEMENT OFFICIEL 🌱💰\n\n🌍 Pays concernés\n🇧🇫 Burkina Faso\n🇨🇲 Cameroun \n🇹🇬 Togo\n🇧🇯 Bénin \n🇨🇮 Côte d'Ivoire \n━━━━━━━━━━━━━━━\n🎁 Avantages offerts\n\n🎉 Bonus d’inscription : 200 FCFA\n🎯 Bonus de pointage quotidien : 20 XAF \n\n━━━━━━━━━━━━━━━\n💰 Conditions financières\n\n📥 Dépôt minimum : 3 000 XAF\n💸 Retrait minimum : 1 000 XAF\n📊 Frais de retrait : 14%\n🕘 Heures de retrait : De 09h à 17h00\n━━━━━━━━━━━━━━━\n👥 Programme de parrainage\n🥇 Niveau 1 : 20 %\n🥈 Niveau 2 : 3 %\n🥉 Niveau 3 : 2 %\n\n🚀 Rejoignez`;
+        replyText = `🚀 LANCEMENT OFFICIEL 🌱💰\n\n🌍 Pays concernés\n🇧🇫 Burkina Faso | 🇨🇲 Cameroun | 🇹🇬 Togo | 🇧🇯 Bénin | 🇨🇮 Côte d'Ivoire\n━━━━━━━━━━━━━━━\n🎁 Avantages offerts\n\n🎉 Bonus d’inscription : 200 FCFA\n🎯 Bonus de pointage quotidien : 100 FCFA \n\n━━━━━━━━━━━━━━━\n💰 Conditions financières\n\n📥 Dépôt minimum : 4 000 FCFA / XAF\n💸 Retrait minimum : 1 200 FCFA / XAF\n📊 Frais de retrait : 18%\n🕘 Heures de retrait : De 09h00 à 18h00 GMT\n━━━━━━━━━━━━━━━\n👥 Programme de parrainage\n🥇 Niveau 1 (Directs) : 15 %\n🥈 Niveau 2 : 2 %\n🥉 Niveau 3 : 1 %\n\n🚀 Rejoignez notre communauté !`;
       } else {
         replyText = "Merci pour votre message. L'Administrateur a bien reçu votre demande et vous répondra très rapidement.";
 

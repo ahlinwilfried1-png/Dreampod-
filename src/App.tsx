@@ -8,7 +8,8 @@ import {
   setToken, 
   getToken, 
   removeToken, 
-  api 
+  api,
+  onSync 
 } from "./lib/api";
 import { User, Investment, Transaction, Product, TeamMember } from "./types";
 import LoginPage from "./components/LoginPage";
@@ -27,6 +28,7 @@ import AboutView from "./components/AboutView";
 import SettingsView from "./components/SettingsView";
 import InvestmentsView from "./components/InvestmentsView";
 import BankCardView from "./components/BankCardView";
+import WithdrawRecordsView from "./components/WithdrawRecordsView";
 import VipView from "./components/VipView";
 import { getCurrencySymbol } from "./lib/currency";
 import SpinWheelView from "./components/SpinWheelView";
@@ -40,7 +42,12 @@ export default function App() {
   // Session States
   const [token, setSessionToken] = useState<string | null>(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.has("ref")) {
+    const refVal = params.get("ref") || params.get("invitation") || params.get("code") || params.get("invite") || params.get("referrer");
+    if (refVal) {
+      try {
+        sessionStorage.setItem("nutrien_referral_code", refVal.trim().toUpperCase());
+        localStorage.setItem("nutrien_referral_code", refVal.trim().toUpperCase());
+      } catch (e) {}
       removeToken(); // Clear previous session when joining with a referral link to force new registration
       return null;
     }
@@ -130,10 +137,10 @@ export default function App() {
       // Persist in local storage cache for instant subsequent renders
       try {
         localStorage.setItem("nutrien_user_cache", JSON.stringify(stats.user));
-        if (stats.investments) localStorage.setItem("nutrien_investments_cache", JSON.stringify(stats.investments));
-        if (stats.transactions) localStorage.setItem("nutrien_transactions_cache", JSON.stringify(stats.transactions));
-        if (stats.products) localStorage.setItem("nutrien_products_cache", JSON.stringify(stats.products));
-        if (stats.team) localStorage.setItem("nutrien_team_cache", JSON.stringify(stats.team));
+        localStorage.setItem("nutrien_investments_cache", JSON.stringify(stats.investments || []));
+        localStorage.setItem("nutrien_transactions_cache", JSON.stringify(stats.transactions || []));
+        localStorage.setItem("nutrien_products_cache", JSON.stringify(stats.products || []));
+        localStorage.setItem("nutrien_team_cache", JSON.stringify(stats.team || []));
       } catch (e) {
         // Ignore cache write errors
       }
@@ -164,14 +171,28 @@ export default function App() {
     }
   }, [token]);
 
+  // Automatic real-time synchronization between Admin panel and frontend
+  useEffect(() => {
+    const unsubscribe = onSync(() => {
+      if (getToken()) {
+        syncAccountStats();
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
   // If the user visits with a referral code, display the register page directly
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const ref = params.get("ref");
+    const ref = params.get("ref") || params.get("invitation") || params.get("code") || params.get("invite") || params.get("referrer");
     if (ref) {
-      sessionStorage.setItem("nutrien_referral_code", ref);
+      const cleanRef = ref.trim().toUpperCase();
+      try {
+        sessionStorage.setItem("nutrien_referral_code", cleanRef);
+        localStorage.setItem("nutrien_referral_code", cleanRef);
+      } catch (e) {}
     }
-    if (params.has("ref") || window.location.pathname.toLowerCase().includes("register")) {
+    if (ref || window.location.pathname.toLowerCase().includes("register")) {
       removeToken();
       setSessionToken(null);
       setUser(null);
@@ -333,6 +354,18 @@ export default function App() {
               setPreviousTab("withdraw");
               setActiveTab("bankcard");
             }}
+            onNavigateToRecords={() => {
+              setPreviousTab("withdraw");
+              setActiveTab("withdraw_records");
+            }}
+          />
+        )}
+
+        {(activeTab === "withdraw_records" || activeTab === "withdraw_history") && (
+          <WithdrawRecordsView
+            transactions={transactions}
+            onBack={() => setActiveTab(previousTab)}
+            onRefresh={handleRefreshData}
           />
         )}
 
@@ -491,11 +524,11 @@ export default function App() {
                 <div className="grid grid-cols-2 gap-2 font-bold text-xs">
                   <div className="p-2 rounded-lg bg-emerald-50/60 border border-emerald-100">
                     <span className="text-slate-500 text-[10px] block">Dépôt Minimum</span>
-                    <span className="text-slate-900 font-black">3 000 {getCurrencySymbol(user.phone)}</span>
+                    <span className="text-slate-900 font-black">4 000 {getCurrencySymbol(user.phone)}</span>
                   </div>
                   <div className="p-2 rounded-lg bg-emerald-50/60 border border-emerald-100">
                     <span className="text-slate-500 text-[10px] block">Retrait Minimum</span>
-                    <span className="text-slate-900 font-black">1 000 {getCurrencySymbol(user.phone)}</span>
+                    <span className="text-slate-900 font-black">1 200 {getCurrencySymbol(user.phone)}</span>
                   </div>
                 </div>
               </div>

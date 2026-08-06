@@ -53,16 +53,16 @@ function generateReferralCode(): string {
 
 // Initial/Mock database structures
 const initialProducts: Product[] = [
-  { id: "vip0", name: "VIP 0 - Plan Découverte", price: 1000, dailyIncome: 480, durationDays: 3, totalIncome: 1440, level: 0, category: "wellbeing", image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80" },
-  { id: "vip1", name: "VIP 1 - Plan Élite", price: 3000, dailyIncome: 400, durationDays: 200, totalIncome: 80000, level: 1, category: "stability", image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80" },
-  { id: "vip2", name: "VIP 2 - Plan Premium", price: 7000, dailyIncome: 850, durationDays: 200, totalIncome: 170000, level: 2, category: "stability", image: "https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=800&q=80" },
-  { id: "vip3", name: "VIP 3 - Plan Gold", price: 15000, dailyIncome: 1600, durationDays: 200, totalIncome: 320000, level: 3, category: "wellbeing", image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80" },
-  { id: "vip4", name: "VIP 4 - Plan Platinum", price: 20000, dailyIncome: 2200, durationDays: 200, totalIncome: 440000, level: 4, category: "wellbeing", image: "https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=800&q=80" },
-  { id: "vip5", name: "VIP 5 - Plan Infini", price: 30000, dailyIncome: 3600, durationDays: 200, totalIncome: 720000, level: 5, category: "activity", image: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=800&q=80" },
-  { id: "vip6", name: "VIP 6 - Plan Saphir", price: 50000, dailyIncome: 5600, durationDays: 200, totalIncome: 1120000, level: 6, category: "activity", image: "https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=800&q=80" },
-  { id: "vip7", name: "VIP 7 - Plan Diamant", price: 75000, dailyIncome: 7700, durationDays: 200, totalIncome: 1540000, level: 7, category: "activity", image: "https://images.unsplash.com/photo-1586771107445-d3ca888129ff?auto=format&fit=crop&w=800&q=80" },
-  { id: "vip8", name: "VIP 8 - Plan Rubis", price: 100000, dailyIncome: 12500, durationDays: 200, totalIncome: 2500000, level: 8, category: "activity", image: "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80" },
-  { id: "vip9", name: "VIP 9 - Plan Émeraude", price: 150000, dailyIncome: 25000, durationDays: 200, totalIncome: 5000000, level: 9, category: "activity", image: "https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=800&q=80" },
+  { id: "vip1", name: "VIP 1", price: 4000, dailyIncome: 500, durationDays: 200, totalIncome: 100000, level: 1, category: "stability", image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80" },
+  { id: "vip2", name: "VIP 2", price: 15000, dailyIncome: 1600, durationDays: 200, totalIncome: 320000, level: 2, category: "stability", image: "https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=800&q=80" },
+  { id: "vip3", name: "VIP 3", price: 25000, dailyIncome: 3250, durationDays: 200, totalIncome: 650000, level: 3, category: "wellbeing", image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80" },
+  { id: "vip4", name: "VIP 4", price: 50000, dailyIncome: 11100, durationDays: 200, totalIncome: 2220000, level: 4, category: "wellbeing", image: "https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=800&q=80" },
+  { id: "vip5", name: "VIP 5", price: 100000, dailyIncome: 24000, durationDays: 200, totalIncome: 4800000, level: 5, category: "activity", image: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=800&q=80" },
+  { id: "vip6", name: "VIP 6", price: 150000, dailyIncome: 36000, durationDays: 200, totalIncome: 7200000, level: 6, category: "activity", image: "https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=800&q=80" },
+  { id: "vip7", name: "VIP 7", price: 200000, dailyIncome: 50000, durationDays: 200, totalIncome: 10000000, level: 7, category: "activity", image: "https://images.unsplash.com/photo-1586771107445-d3ca888129ff?auto=format&fit=crop&w=800&q=80" },
+  { id: "vip8", name: "VIP 8", price: 300000, dailyIncome: 75000, durationDays: 200, totalIncome: 15000000, level: 8, category: "activity", image: "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80" },
+  { id: "vip9", name: "VIP 9", price: 400000, dailyIncome: 115000, durationDays: 200, totalIncome: 23000000, level: 9, category: "activity", image: "https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=800&q=80" },
+  { id: "vip10", name: "VIP 10", price: 800000, dailyIncome: 250000, durationDays: 200, totalIncome: 50000000, level: 10, category: "activity", image: "https://images.unsplash.com/photo-1628102491629-778571d893a3?auto=format&fit=crop&w=800&q=80" },
 ];
 
 const initialBonusCodes: BonusCode[] = [
@@ -74,18 +74,60 @@ const initialBonusCodes: BonusCode[] = [
 const initialNotifications: GlobalNotification[] = [
   {
     id: "notif1",
-    title: "Bienvenue sur NUTRIEN !",
-    content: "Profitez d'un bonus gratuit de 200 FCFA à l'inscription. Partagez votre lien d'invitation pour gagner des commissions sur 3 niveaux : 20% (N1), 2% (N2), 1% (N3) !",
-    date: new Date().toISOString(),
+    title: "Récompenser les agents exceptionnels",
+    content: "Félicitations à tous nos agents d'équipe qui ont atteint un niveau de performance exceptionnel ce mois-ci. Des primes spéciales ont été créditées sur vos comptes.",
+    date: "2026-08-02T08:33:32.000Z",
     active: true,
   },
   {
     id: "notif2",
-    title: "Nouveau Plan Saphir VIP 6 !",
-    content: "Nous avons le plaisir de vous annoncer le lancement officiel du VIP 6. Gagnez 95 000 FCFA par jour avec un dépôt de 250 000 FCFA !",
-    date: new Date().toISOString(),
+    title: "Bonjour, bienvenue chez Veko !",
+    content: "Bienvenue sur notre plateforme officielle ! Profitez de nos offres d'investissement quotidiennes sécurisées et des retraits rapides vers Mobile Money.",
+    date: "2026-08-02T07:49:06.000Z",
     active: true,
-  }
+  },
+  {
+    id: "notif3",
+    title: "Preuve de retrait",
+    content: "Découvrez les derniers certificats de retrait validés par nos utilisateurs dans la rubrique dédiée.",
+    date: "2026-08-01T17:30:34.000Z",
+    active: true,
+  },
+  {
+    id: "notif4",
+    title: "Les 3 voitures ayant bénéficié du plus grand investissement des utilisateurs",
+    content: "Nos équipements phares de la semaine ont généré des plus-values record pour les investisseurs.",
+    date: "2026-08-01T15:20:52.000Z",
+    active: true,
+  },
+  {
+    id: "notif5",
+    title: "La meilleure preuve",
+    content: "Consultez les témoignages récents de nos investisseurs satisfaits.",
+    date: "2026-07-31T17:52:01.000Z",
+    active: true,
+  },
+  {
+    id: "notif6",
+    title: "Si vous invitez avec succès 6 utilisateurs réels à rejoindre notre entreprise, l'entreprise vous offrira une voiture d'une valeur de 100 000 XAF pour vous aider à gagner de l'argent.",
+    content: "Offre spéciale parrainage : Invitez 6 filleuls actifs et débloquez une prime géante instantanée.",
+    date: "2026-07-31T16:48:21.000Z",
+    active: true,
+  },
+  {
+    id: "notif7",
+    title: "Deux façons de gagner de l'argent",
+    content: "Combinez les revenus quotidiens de vos machines d'investissement et le programme de parrainage à 3 niveaux (15%, 2%, 1%).",
+    date: "2026-07-31T08:07:32.000Z",
+    active: true,
+  },
+  {
+    id: "notif8",
+    title: "Emprunter de l'argent pour investir dans des produits de niveau supérieur et gagner plus d'argent",
+    content: "Optimisez votre capital pour accéder aux plans VIP supérieurs et augmenter vos gains journaliers.",
+    date: "2026-07-30T17:05:50.000Z",
+    active: true,
+  },
 ];
 
 interface DatabaseSchema {
@@ -125,6 +167,21 @@ let supabaseStatus = supabase ? "disconnected" : "disconnected";
 let lastDbLoadedTime = 0;
 const DB_LOAD_CACHE_MS = 200;
 let db: DatabaseSchema;
+
+let globalDbVersion = Date.now();
+const sseClients = new Set<any>();
+
+function broadcastSyncEvent() {
+  globalDbVersion = Date.now();
+  const payload = `data: ${JSON.stringify({ version: globalDbVersion, timestamp: new Date().toISOString() })}\n\n`;
+  for (const clientRes of Array.from(sseClients)) {
+    try {
+      clientRes.write(payload);
+    } catch (e) {
+      sseClients.delete(clientRes);
+    }
+  }
+}
 
 if (supabase) {
   console.log("Supabase Client initialized with URL:", supabaseUrl);
@@ -357,19 +414,19 @@ function migrateDatabase(parsed: any): DatabaseSchema {
 
   // Migrate existing products or populate default VIP plans
   const defaultProducts = [
-    { id: "vip0", name: "VIP 0 - Plan Découverte", price: 1000, dailyIncome: 480, durationDays: 3, totalIncome: 1440, level: 0, category: "wellbeing", image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80" },
-    { id: "vip1", name: "VIP 1 - Plan Élite", price: 3000, dailyIncome: 400, durationDays: 200, totalIncome: 80000, level: 1, category: "stability", image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80" },
-    { id: "vip2", name: "VIP 2 - Plan Premium", price: 7000, dailyIncome: 850, durationDays: 200, totalIncome: 170000, level: 2, category: "stability", image: "https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=800&q=80" },
-    { id: "vip3", name: "VIP 3 - Plan Gold", price: 15000, dailyIncome: 1600, durationDays: 200, totalIncome: 320000, level: 3, category: "wellbeing", image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80" },
-    { id: "vip4", name: "VIP 4 - Plan Platinum", price: 20000, dailyIncome: 2200, durationDays: 200, totalIncome: 440000, level: 4, category: "wellbeing", image: "https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=800&q=80" },
-    { id: "vip5", name: "VIP 5 - Plan Infini", price: 30000, dailyIncome: 3600, durationDays: 200, totalIncome: 720000, level: 5, category: "activity", image: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=800&q=80" },
-    { id: "vip6", name: "VIP 6 - Plan Saphir", price: 50000, dailyIncome: 5600, durationDays: 200, totalIncome: 1120000, level: 6, category: "activity", image: "https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=800&q=80" },
-    { id: "vip7", name: "VIP 7 - Plan Diamant", price: 75000, dailyIncome: 7700, durationDays: 200, totalIncome: 1540000, level: 7, category: "activity", image: "https://images.unsplash.com/photo-1586771107445-d3ca888129ff?auto=format&fit=crop&w=800&q=80" },
-    { id: "vip8", name: "VIP 8 - Plan Rubis", price: 100000, dailyIncome: 12500, durationDays: 200, totalIncome: 2500000, level: 8, category: "activity", image: "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80" },
-    { id: "vip9", name: "VIP 9 - Plan Émeraude", price: 150000, dailyIncome: 25000, durationDays: 200, totalIncome: 5000000, level: 9, category: "activity", image: "https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip1", name: "VIP 1", price: 4000, dailyIncome: 500, durationDays: 200, totalIncome: 100000, level: 1, category: "stability", image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip2", name: "VIP 2", price: 15000, dailyIncome: 1600, durationDays: 200, totalIncome: 320000, level: 2, category: "stability", image: "https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip3", name: "VIP 3", price: 25000, dailyIncome: 3250, durationDays: 200, totalIncome: 650000, level: 3, category: "wellbeing", image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip4", name: "VIP 4", price: 50000, dailyIncome: 11100, durationDays: 200, totalIncome: 2220000, level: 4, category: "wellbeing", image: "https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip5", name: "VIP 5", price: 100000, dailyIncome: 24000, durationDays: 200, totalIncome: 4800000, level: 5, category: "activity", image: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip6", name: "VIP 6", price: 150000, dailyIncome: 36000, durationDays: 200, totalIncome: 7200000, level: 6, category: "activity", image: "https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip7", name: "VIP 7", price: 200000, dailyIncome: 50000, durationDays: 200, totalIncome: 10000000, level: 7, category: "activity", image: "https://images.unsplash.com/photo-1586771107445-d3ca888129ff?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip8", name: "VIP 8", price: 300000, dailyIncome: 75000, durationDays: 200, totalIncome: 15000000, level: 8, category: "activity", image: "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip9", name: "VIP 9", price: 400000, dailyIncome: 115000, durationDays: 200, totalIncome: 23000000, level: 9, category: "activity", image: "https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=800&q=80" },
+    { id: "vip10", name: "VIP 10", price: 800000, dailyIncome: 250000, durationDays: 200, totalIncome: 50000000, level: 10, category: "activity", image: "https://images.unsplash.com/photo-1628102491629-778571d893a3?auto=format&fit=crop&w=800&q=80" },
   ];
 
-  if (!parsed.products || !Array.isArray(parsed.products) || parsed.products.length === 0) {
+  if (!parsed.products || !Array.isArray(parsed.products)) {
     parsed.products = defaultProducts;
   } else {
     parsed.products = parsed.products.map((p: any) => ({
@@ -439,33 +496,8 @@ function migrateDatabase(parsed: any): DatabaseSchema {
     ];
   }
 
-  if (!parsed.investments || !Array.isArray(parsed.investments) || parsed.investments.length === 0) {
-    parsed.investments = [
-      {
-        id: "inv_1",
-        userId: "usr_demo",
-        productId: "vip1",
-        productName: "VIP 1 - Plan Élite",
-        price: 5000,
-        dailyIncome: 1000,
-        durationDays: 30,
-        daysPassed: 4,
-        activatedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-        lastClaimAt: new Date().toISOString(),
-      },
-      {
-        id: "inv_2",
-        userId: "usr_demo",
-        productId: "vip2",
-        productName: "VIP 2 - Plan Premium",
-        price: 10000,
-        dailyIncome: 2500,
-        durationDays: 30,
-        daysPassed: 2,
-        activatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        lastClaimAt: new Date().toISOString(),
-      }
-    ];
+  if (!parsed.investments || !Array.isArray(parsed.investments)) {
+    parsed.investments = [];
   }
 
   if (!parsed.bonusCodes || !Array.isArray(parsed.bonusCodes) || parsed.bonusCodes.length === 0) {
@@ -834,6 +866,7 @@ async function loadDatabase(force = false): Promise<DatabaseSchema> {
 async function saveDatabase(db: DatabaseSchema) {
   fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), "utf8");
   await saveToSupabase(db);
+  broadcastSyncEvent();
 }
 
 function processDailyRevenues(db: DatabaseSchema) {
@@ -1106,6 +1139,38 @@ async function startServer() {
   };
 
   // Extended Express Request types are declared globally at top-level
+
+  // --- REALTIME SYNC API ROUTES ---
+  app.get("/api/sync/stream", (req, res) => {
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    if (typeof (res as any).flushHeaders === "function") {
+      (res as any).flushHeaders();
+    }
+
+    res.write(`data: ${JSON.stringify({ version: globalDbVersion, timestamp: new Date().toISOString() })}\n\n`);
+    sseClients.add(res);
+
+    const keepAlive = setInterval(() => {
+      try {
+        res.write(": keepalive\n\n");
+      } catch (e) {
+        clearInterval(keepAlive);
+        sseClients.delete(res);
+      }
+    }, 15000);
+
+    req.on("close", () => {
+      clearInterval(keepAlive);
+      sseClients.delete(res);
+    });
+  });
+
+  app.get("/api/sync/version", (req, res) => {
+    res.json({ version: globalDbVersion, timestamp: new Date().toISOString() });
+  });
 
   // --- API ROUTES ---
 
@@ -1525,11 +1590,11 @@ async function startServer() {
     db.transactions.push(tx);
 
     // --- REVENUE MULTILEVEL DISTRIBUTION (PARRAINAGE COMMISSIONS) ---
-    // Level 1: 20%
+    // Level 1: 15%
     if (user.referrerId) {
       const l1Idx = db.users.findIndex(u => u.id === user.referrerId);
       if (l1Idx !== -1) {
-        const commN1 = Math.round(product.price * 0.20);
+        const commN1 = Math.round(product.price * 0.15);
         db.users[l1Idx].balance += commN1;
         db.users[l1Idx].commissionEarned += commN1;
 
@@ -1610,8 +1675,8 @@ async function startServer() {
     const { amount, method, simOwnerName, receiverNumber, screenshot, txRefId } = req.body;
     const userId = req.user!.id;
 
-    if (!amount || amount < 3000) {
-      return res.status(400).json({ error: "Le montant minimum de dépôt est de 3 000 FCFA / XAF." });
+    if (!amount || amount < 4000) {
+      return res.status(400).json({ error: "Le montant minimum de dépôt est de 4 000 FCFA / XAF." });
     }
 
     if (!method) {
@@ -1652,27 +1717,27 @@ async function startServer() {
     if (uIdx === -1) return res.status(404).json({ error: "Utilisateur non trouvé" });
     const user = db.users[uIdx];
 
-    // Check withdrawal time restriction: 9h to 17h (Niger/Niamey time, UTC+1) - admins can bypass
+    // Check withdrawal time restriction: 9h to 18h GMT - admins can bypass
     if (user.role !== "admin") {
       try {
-        const niameyFormatter = new Intl.DateTimeFormat("en-US", {
-          timeZone: "Africa/Niamey",
+        const utcFormatter = new Intl.DateTimeFormat("en-US", {
+          timeZone: "UTC",
           hour: "numeric",
           hour12: false,
         });
-        const currentNiameyHour = parseInt(niameyFormatter.format(new Date()), 10);
+        const currentGMTHour = parseInt(utcFormatter.format(new Date()), 10);
 
-        if (currentNiameyHour < 9 || currentNiameyHour >= 17) {
+        if (currentGMTHour < 9 || currentGMTHour >= 18) {
           return res.status(400).json({
-            error: "Les retraits ne sont autorisés qu'entre 09:00 et 17:00 (Heure de Niamey, Niger). Veuillez réessayer pendant cette plage horaire."
+            error: "Les retraits sont actuellement fermés. Veuillez revenir pendant les heures d'ouverture des retraits."
           });
         }
       } catch (e) {
-        // Fallback to local server hour if timezone formatting is unsupported
-        const currentLocalHour = new Date().getHours();
-        if (currentLocalHour < 9 || currentLocalHour >= 17) {
+        // Fallback to UTC hour if timezone formatting fails
+        const currentGMTHour = new Date().getUTCHours();
+        if (currentGMTHour < 9 || currentGMTHour >= 18) {
           return res.status(400).json({
-            error: "Les retraits ne sont autorisés qu'entre 09:00 et 17:00. Veuillez réessayer pendant cette plage horaire."
+            error: "Les retraits sont actuellement fermés. Veuillez revenir pendant les heures d'ouverture des retraits."
           });
         }
       }
@@ -1690,12 +1755,12 @@ async function startServer() {
 
     // Check if user has at least one active product (daysPassed < durationDays)
     const hasActiveProduct = db.investments.some(inv => inv.userId === userId && inv.daysPassed < inv.durationDays);
-    if (!hasActiveProduct) {
-      return res.status(400).json({ error: "Vous devez posséder au moins un produit actif (un investissement en cours) pour pouvoir effectuer un retrait sur la plateforme." });
+    if (!hasActiveProduct && user.role !== "admin") {
+      return res.status(400).json({ error: "Vous devez d'abord acheter un produit avant de pouvoir effectuer un retrait." });
     }
 
-    if (!amount || amount < 500) {
-      return res.status(400).json({ error: "Le montant minimum de retrait est de 500 FCFA." });
+    if (!amount || amount < 1200) {
+      return res.status(400).json({ error: "Le montant minimum de retrait est de 1 200 FCFA." });
     }
 
     if (user.balance < amount) {
@@ -1705,15 +1770,26 @@ async function startServer() {
     // Deduct user balance immediately for safety
     user.balance -= amount;
 
+    const d = new Date();
+    const yy = String(d.getFullYear()).slice(-2);
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    const hh = String(d.getHours()).padStart(2, "0");
+    const min = String(d.getMinutes()).padStart(2, "0");
+    const ss = String(d.getSeconds()).padStart(2, "0");
+    const rand4 = String(Math.floor(1000 + Math.random() * 9000));
+    const txRefId = `B${yy}${mm}${dd}${hh}${min}${ss}${rand4}`;
+
     const tx: Transaction = {
       id: generateId("tx"),
+      txRefId: txRefId,
       userId: userId,
       userName: user.name,
       userPhone: user.phone,
       type: "withdrawal",
       amount: Number(amount),
       status: "pending", // Withdrawal pending admin evaluation
-      date: new Date().toISOString(),
+      date: d.toISOString(),
       method: `${user.linkedWalletOperator.toUpperCase()} (${user.linkedWalletNumber})`,
       linkedWalletOperator: user.linkedWalletOperator,
       linkedWalletNumber: user.linkedWalletNumber,
@@ -1854,7 +1930,7 @@ async function startServer() {
     const uIdx = db.users.findIndex(u => u.id === userId);
     if (uIdx === -1) return res.status(404).json({ error: "Utilisateur non trouvé" });
 
-    const checkInReward = 20; // 20 FCFA
+    const checkInReward = 100; // 100 FCFA (Bonus journalier de pointage)
     db.users[uIdx].balance += checkInReward;
     db.users[uIdx].totalRevenue += checkInReward;
 
@@ -2316,6 +2392,12 @@ async function startServer() {
     }
 
     const deleted = db.products.splice(prodIdx, 1)[0];
+    
+    // Also remove any active paid investments associated with this deleted product
+    if (db.investments) {
+      db.investments = db.investments.filter(i => i.productId !== id);
+    }
+
     await saveDatabase(db);
 
     res.json({ message: `Produit ${deleted.name} supprimé avec succès.` });
@@ -2395,6 +2477,13 @@ async function startServer() {
       return res.status(404).json({ error: "Investissement introuvable." });
     }
     const deleted = db.investments.splice(invIdx, 1)[0];
+
+    // Recalculate user daily revenue
+    const user = db.users.find(u => u.id === deleted.userId);
+    if (user && user.dailyRevenue !== undefined) {
+      user.dailyRevenue = Math.max(0, user.dailyRevenue - (deleted.dailyIncome || 0));
+    }
+
     await saveDatabase(db);
     res.json({ message: `Investissement "${deleted.productName}" a été supprimé avec succès.` });
   });
@@ -2449,7 +2538,7 @@ async function startServer() {
 
   // Admin: Broadcast dynamic notification
   app.post("/api/admin/notifications/send", authenticateAdmin, async (req, res) => {
-    const { title, content } = req.body;
+    const { title, content, image } = req.body;
     if (!title || !content) {
       return res.status(400).json({ error: "Titre et contenu requis." });
     }
@@ -2458,6 +2547,7 @@ async function startServer() {
       id: generateId("notif"),
       title,
       content,
+      image: image ? String(image).trim() : undefined,
       date: new Date().toISOString(),
       active: true,
     };

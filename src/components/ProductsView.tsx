@@ -173,31 +173,38 @@ export default function ProductsView({
   return (
     <div className="space-y-4 text-slate-800 select-none">
       
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 gap-3 pb-3 border-b border-slate-200/60">
-        {/* Left Card: Nombre de produits */}
-        <div className="bg-slate-100/80 rounded-2xl p-3 flex flex-col justify-center border border-slate-200/60">
+      {/* Summary Stats - Borderless & Cardless */}
+      <div className="grid grid-cols-2 gap-4 pb-2">
+        {/* Left Stat */}
+        <div className="flex flex-col justify-center">
           <span className="text-xs text-slate-500 font-extrabold uppercase tracking-wider block">
             Formules Actives
           </span>
-          <span className="text-lg sm:text-xl font-black text-emerald-600 mt-1 font-mono">
+          <span className="text-xl sm:text-2xl font-black text-emerald-600 mt-0.5 font-mono">
             {investments.length}
           </span>
         </div>
 
-        {/* Right Card: Revenus collectés */}
-        <div className="bg-slate-100/80 rounded-2xl p-3 flex flex-col justify-center text-right border border-slate-200/60">
+        {/* Right Stat */}
+        <div className="flex flex-col justify-center text-right">
           <span className="text-xs text-slate-500 font-extrabold uppercase tracking-wider block">
             Revenus collectés
           </span>
-          <span className="text-lg sm:text-xl font-black text-green-600 mt-1 font-mono">
+          <span className="text-xl sm:text-2xl font-black text-green-600 mt-0.5 font-mono">
             {investments.reduce((sum, inv) => sum + (inv.daysPassed * inv.dailyIncome), 0).toLocaleString()} <span className="text-xs font-extrabold text-slate-500 font-sans">{currency}</span>
           </span>
         </div>
       </div>
 
-      {/* List of Products */}
-      <div className="space-y-4">
+      {/* Section Header */}
+      <div className="pt-2">
+        <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+          Centre de produits
+        </h2>
+      </div>
+
+      {/* List of Products - Matching reference image style and typography */}
+      <div className="space-y-4 pt-1">
         {(() => {
           const userHasVip0 = investments.some(
             inv => inv.productId === "vip0" || inv.productId === "vp0" || inv.productName?.toLowerCase().includes("vip 0") || inv.productName?.toLowerCase().includes("vp 0") || inv.productName?.toLowerCase().includes("découverte") || inv.productName?.toLowerCase().includes("decouverte")
@@ -213,9 +220,9 @@ export default function ProductsView({
 
           if (visibleProducts.length === 0) {
             return (
-              <div className="text-center py-12 px-4">
+              <div className="text-center py-12 px-4 bg-white rounded-2xl border border-slate-100 shadow-xs">
                 <Cpu className="h-8 w-8 text-slate-300 mx-auto animate-pulse mb-2" />
-                <p className="text-sm font-black text-slate-600">Aucun produit disponible</p>
+                <p className="text-sm font-black text-slate-700">Aucun produit disponible</p>
                 <p className="text-xs text-slate-400 mt-0.5">Revenez bientôt pour de nouveaux plans.</p>
               </div>
             );
@@ -231,115 +238,92 @@ export default function ProductsView({
               <div 
                 id={`product-card-${prod.id}`}
                 key={prod.id}
-                className={`rounded-3xl p-3.5 sm:p-4 border transition-all space-y-3 relative overflow-hidden ${
-                  isBlocked ? "bg-slate-100/90 border-slate-300/80 opacity-80" : "bg-white/90 border-slate-200/80 shadow-xs hover:shadow-md"
+                className={`bg-white rounded-2xl p-4 border border-slate-100 shadow-2xs space-y-3.5 relative transition-all ${
+                  isBlocked ? "opacity-75" : ""
                 }`}
               >
-                {/* Product Image Showcase Banner with Text Overlay */}
-                <div className="w-full h-52 sm:h-60 md:h-64 rounded-2xl bg-gradient-to-br from-slate-100 via-emerald-50/30 to-slate-200 relative overflow-hidden flex items-center justify-center border border-slate-200/80 shadow-inner">
-                  {/* Image */}
-                  <ProductImage
-                    src={prod.image || config.url}
-                    alt={prod.name || config.label}
-                    level={prod.level}
-                    isBlocked={isBlocked}
-                    className="w-full h-full transition-transform duration-300 hover:scale-105"
-                  />
-
-                  {/* Top Overlay Row: Badges */}
-                  <div className="absolute top-3 inset-x-3 flex justify-between items-center z-10">
-                    <div className="flex items-center gap-1.5">
-                      <span className="bg-slate-900/85 backdrop-blur-md text-white text-[11px] font-mono font-black px-2.5 py-1 rounded-xl shadow-md border border-slate-700/50">
-                        POD {prod.level}
-                      </span>
-                      <span className="bg-amber-400 text-slate-950 font-black text-xs px-2.5 py-1 rounded-xl shadow-md border border-amber-300 flex items-center gap-1">
-                        <span>💎</span> {prod.name.replace(/-/g, " ").trim()}
-                      </span>
+                {/* Top Row: Product Name & Cycle Days on Left, Product Image on Right */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1 flex-1 min-w-0 pr-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-base sm:text-lg font-black text-slate-900 leading-snug">
+                        {prod.name}
+                      </h3>
+                      {ownedCount > 0 && !isBlocked && (
+                        <span className="bg-emerald-500 text-white text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-0.5 uppercase">
+                          <Check className="h-3 w-3 stroke-[3]" /> {ownedCount} Actif
+                        </span>
+                      )}
                     </div>
-
-                    {ownedCount > 0 && !isBlocked && (
-                      <span className="bg-green-600 text-white text-xs font-black px-2.5 py-1 rounded-xl shadow-md flex items-center gap-1 uppercase border border-green-500">
-                        <Check className="h-3.5 w-3.5 stroke-[3]" /> {ownedCount} Actif{ownedCount > 1 ? "s" : ""}
-                      </span>
-                    )}
-
-                    {isBlocked && (
-                      <span className="inline-flex items-center gap-1 bg-amber-400 text-slate-950 text-xs font-black px-2.5 py-1 rounded-xl shadow-md border border-amber-300/80">
-                        <Lock className="h-3.5 w-3.5 text-slate-950" /> Désactivé
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Gradient Overlay for Text Readability at Bottom of Image */}
-                  <div className={`absolute inset-x-0 bottom-0 pt-10 pb-3 px-3 sm:px-4 bg-gradient-to-t from-slate-950/85 via-slate-950/50 to-transparent flex flex-col justify-end z-10 ${isBlocked ? "blur-[1px]" : ""}`}>
-                    <h4 className="text-base sm:text-lg font-black text-white leading-tight drop-shadow-sm">
-                      {config.label}
-                    </h4>
-                    <p className="text-xs sm:text-sm text-slate-200 font-bold mt-0.5 drop-shadow-sm truncate">
-                      {prod.name}
-                    </p>
-                  </div>
-
-                  {/* Blocked Full Overlay with Blur */}
-                  {isBlocked && (
-                    <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-md flex items-center justify-center p-3 text-center z-20">
-                      <span className="bg-amber-400 text-slate-950 font-black text-xs px-3.5 py-2 rounded-2xl uppercase tracking-wider flex items-center gap-1.5 shadow-2xl border border-amber-300">
-                        <Clock className="h-4 w-4 animate-spin" />
-                        EN COURS DE PRÉPARATION
-                      </span>
+                    <div className="flex items-center text-xs font-semibold text-slate-700 pt-0.5">
+                      <span>Faire du vélo(Jours)</span>
+                      <span className="font-black text-slate-900 text-sm sm:text-base ml-1.5">{prod.durationDays}</span>
                     </div>
-                  )}
-                </div>
-
-                {/* Larger Key-Value Pairs Specification Box (Blurred if isBlocked) */}
-                <div className={`space-y-1.5 text-xs font-bold text-slate-600 bg-slate-50/90 p-3 rounded-2xl border border-slate-200/60 ${isBlocked ? "blur-[2px] opacity-70 select-none" : ""}`}>
-                  <div className="flex justify-between items-center py-0.5">
-                    <span className="text-slate-500">Durée du contrat</span>
-                    <span className="text-slate-900 font-extrabold text-xs sm:text-sm">{prod.durationDays} Jours</span>
                   </div>
 
-                  <div className="flex justify-between items-center py-0.5">
-                    <span className="text-slate-500">Revenus Quotidiens</span>
-                    <span className="text-emerald-700 font-black text-xs sm:text-sm">{currency} {prod.dailyIncome.toLocaleString()}</span>
-                  </div>
-
-                  <div className="flex justify-between items-center py-0.5">
-                    <span className="text-slate-500">Rendement Total</span>
-                    <span className="text-blue-700 font-black text-xs sm:text-sm">{currency} {prod.totalIncome.toLocaleString()}</span>
+                  {/* Product Image on Top Right */}
+                  <div className="w-20 h-16 sm:w-24 sm:h-20 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-100/80 shadow-2xs">
+                    <ProductImage
+                      src={prod.image || config.url}
+                      alt={prod.name}
+                      level={prod.level}
+                      isBlocked={isBlocked}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                 </div>
 
-                {/* Larger Integrated Pill Button */}
-                <div className="flex h-11 sm:h-12 items-center bg-slate-100/90 rounded-2xl overflow-hidden border border-slate-200/80 shadow-xs">
-                  {/* Price display side */}
-                  <div className="flex-[5] flex items-center justify-center h-full px-3 text-[#1e3a8a] font-black text-xs sm:text-sm tracking-wide">
-                    {currency} {prod.price.toLocaleString()}
+                {/* Grey Inner Box: Daily Income and Total Income */}
+                <div className="bg-[#f1f5f9] rounded-xl p-3 sm:p-3.5 grid grid-cols-2 gap-2 text-center">
+                  {/* Daily Income Column */}
+                  <div className="space-y-0.5">
+                    <div className="text-base sm:text-xl font-black text-[#ef4444] tracking-tight">
+                      {prod.dailyIncome.toLocaleString()}
+                    </div>
+                    <div className="text-xs sm:text-sm font-bold text-slate-800">
+                      Revenu quotidien
+                    </div>
                   </div>
 
-                  {/* Invest button side */}
+                  {/* Total Income Column */}
+                  <div className="space-y-0.5">
+                    <div className="text-base sm:text-xl font-black text-[#ef4444] tracking-tight">
+                      {prod.totalIncome.toLocaleString()}
+                    </div>
+                    <div className="text-xs sm:text-sm font-bold text-slate-800">
+                      Revenu total
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Row: Price on Left, Invest Button on Right */}
+                <div className="flex items-center justify-between pt-0.5">
+                  <div className="text-xs sm:text-sm font-bold text-slate-800 flex items-center">
+                    <span>Prix(XAF):</span>
+                    <span className="text-[#ef4444] font-black text-sm sm:text-base ml-1">
+                      {prod.price.toLocaleString()}
+                    </span>
+                  </div>
+
                   {isBlocked ? (
                     <button
                       id={`btn-invest-action-${prod.id}`}
                       disabled
-                      className="flex-[7] bg-amber-500/90 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 h-full cursor-not-allowed opacity-90 uppercase tracking-wider"
+                      className="bg-slate-300 text-slate-600 font-extrabold text-xs sm:text-sm py-2 px-5 sm:px-6 rounded-lg uppercase tracking-wider cursor-not-allowed"
                     >
-                      <Lock className="h-4 w-4 text-slate-900" />
-                      <span>En cours</span>
+                      <span>Verrouillé</span>
                     </button>
                   ) : (
                     <button
                       id={`btn-invest-action-${prod.id}`}
                       onClick={() => handleInvest(prod)}
                       disabled={isBuying}
-                      className="flex-[7] bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 h-full text-white font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                      className="bg-[#ff0000] hover:bg-red-700 active:bg-red-800 text-white font-extrabold text-xs sm:text-sm py-2 px-5 sm:px-6 rounded-lg uppercase tracking-wider transition-colors cursor-pointer disabled:opacity-50 shadow-2xs"
                     >
                       {isBuying ? (
-                        <div className="h-4 w-4 border-2 border-white/35 border-t-white rounded-full animate-spin" />
+                        <div className="h-4 w-4 border-2 border-white/40 border-t-white rounded-full animate-spin mx-auto" />
                       ) : (
-                        <>
-                          <span className="text-yellow-300 text-sm">⚡</span>
-                          <span>Souscrire</span>
-                        </>
+                        "INVESTIR"
                       )}
                     </button>
                   )}

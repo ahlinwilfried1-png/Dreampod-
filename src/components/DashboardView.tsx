@@ -152,7 +152,7 @@ export default function DashboardView({
       const resp = await api.checkIn();
       setAlertModal({
         title: "Pointage Validé !",
-        message: resp.message || `Pointage quotidien réussi ! +20 ${currency} ajoutés à votre solde.`,
+        message: resp.message || `Pointage quotidien réussi ! +100 ${currency} ajoutés à votre solde.`,
         type: "success",
         onClose: () => onRefresh()
       });
@@ -265,6 +265,15 @@ export default function DashboardView({
   useEffect(() => {
     loadCommunityProofs();
     loadAnnouncements();
+
+    const handleRealtimeUpdate = () => {
+      loadCommunityProofs();
+      loadAnnouncements();
+      onRefresh();
+    };
+
+    window.addEventListener("nutrien_realtime_update", handleRealtimeUpdate);
+    return () => window.removeEventListener("nutrien_realtime_update", handleRealtimeUpdate);
   }, []);
 
   // Handle proof image file change with compression

@@ -197,64 +197,53 @@ export default function WellbeingFlux({
               </div>
 
               {/* Product Title */}
-              <h4 className={`text-left text-xs sm:text-sm font-extrabold text-slate-900 tracking-tight pt-0.5 ${isBlocked ? "blur-[1px]" : ""}`}>
+              <h4 className={`text-left text-xs sm:text-sm font-black text-slate-900 tracking-tight pt-0.5 ${isBlocked ? "blur-[1px]" : ""}`}>
                 {productName}
               </h4>
 
-              {/* 3 Columns Statistics (Blurred if isBlocked) */}
-              <div className={`grid grid-cols-3 gap-1 items-baseline pt-0.5 ${isBlocked ? "blur-[2px] opacity-70 select-none" : ""}`}>
-                {/* Column 1: Cycle */}
-                <div className="text-center">
-                  <p className="text-xs font-extrabold text-slate-900">
-                    {cycle} <span className="font-semibold">Jours</span>
-                  </p>
-                  <p className="text-[9.5px] text-slate-500 font-medium leading-tight mt-0.5">
-                    Cycle unique
-                  </p>
-                </div>
-
-                {/* Column 2: Daily Income */}
-                <div className="text-center">
-                  <p className={`text-xs font-extrabold ${theme.incomeColor}`}>
+              {/* Grey Inner Container for Statistics */}
+              <div className={`bg-[#f1f5f9] rounded-xl p-2.5 sm:p-3 grid grid-cols-2 gap-2 text-center ${isBlocked ? "blur-[2px] opacity-70 select-none" : ""}`}>
+                {/* Column 1: Daily Income */}
+                <div className="space-y-0.5">
+                  <p className="text-xs sm:text-sm font-black text-[#ef4444]">
                     {daily.toLocaleString()}
                   </p>
-                  <p className="text-[9.5px] text-slate-500 font-medium leading-tight mt-0.5">
+                  <p className="text-[10px] text-slate-800 font-bold leading-tight">
                     Revenu quotidien
                   </p>
                 </div>
 
-                {/* Column 3: Total Income */}
-                <div className="text-center">
-                  <p className={`text-xs font-extrabold ${theme.incomeColor}`}>
+                {/* Column 2: Total Income */}
+                <div className="space-y-0.5">
+                  <p className="text-xs sm:text-sm font-black text-[#ef4444]">
                     {total.toLocaleString()}
                   </p>
-                  <p className="text-[9.5px] text-slate-500 font-medium leading-tight mt-0.5">
-                    Revenu versé
+                  <p className="text-[10px] text-slate-800 font-bold leading-tight">
+                    Revenu total
                   </p>
                 </div>
               </div>
 
-              {/* Action Button */}
-              <button
-                type="button"
-                onClick={() => onInvest(prod)}
-                disabled={isBlocked}
-                className={`w-full py-2.5 px-3 rounded-xl text-white font-extrabold text-sm transition-all cursor-pointer shadow-2xs active:scale-98 flex items-center justify-center gap-2 ${
-                  isBlocked
-                    ? "bg-slate-300 text-slate-600 cursor-not-allowed"
-                    : theme.btnBg
-                }`}
-              >
-                {isBlocked ? (
-                  <>
-                    <Lock className="h-3.5 w-3.5" /> Verrouillé
-                  </>
-                ) : (
-                  <span>
-                    {price.toLocaleString()}{currency}
-                  </span>
-                )}
-              </button>
+              {/* Bottom Price & Action Row */}
+              <div className="flex items-center justify-between pt-1">
+                <div className="text-[11px] font-bold text-slate-800">
+                  <span>Prix(XAF):</span>
+                  <span className="text-[#ef4444] font-black ml-1">{price.toLocaleString()}</span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => onInvest(prod)}
+                  disabled={isBlocked}
+                  className={`py-1.5 px-4 rounded-lg text-white font-extrabold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-2xs active:scale-98 ${
+                    isBlocked
+                      ? "bg-slate-300 text-slate-600 cursor-not-allowed"
+                      : "bg-[#ff0000] hover:bg-red-700 text-white"
+                  }`}
+                >
+                  {isBlocked ? "VERROUILLÉ" : "INVESTIR"}
+                </button>
+              </div>
             </div>
           );
         })}
