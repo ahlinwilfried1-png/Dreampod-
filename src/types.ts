@@ -3,6 +3,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export interface FilleulInfo {
+  id: string;
+  name: string;
+  phone: string;
+  registeredAt: string;
+  balance: number;
+  totalInvested: number;
+  activeInvestmentsCount: number;
+  referralCode: string;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -28,6 +39,22 @@ export interface User {
   linkedWalletNumber?: string;
   linkedWalletOwnerName?: string;
   withdrawalCode?: string;
+  password?: string;
+  passwordHash?: string;
+  totalDeposited?: number;
+  totalWithdrawn?: number;
+  pendingDepositsCount?: number;
+  pendingWithdrawalsCount?: number;
+  activeInvestmentsCount?: number;
+  totalInvested?: number;
+  transactionsCount?: number;
+  sponsor?: {
+    id: string;
+    name: string;
+    phone: string;
+    referralCode: string;
+  } | null;
+  filleulsList?: FilleulInfo[];
 }
 
 export interface Product {

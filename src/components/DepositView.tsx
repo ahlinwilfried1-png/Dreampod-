@@ -15,7 +15,7 @@ interface DepositViewProps {
   onBack: () => void;
 }
 
-const PAYMENT_LINK_URL = "https://sendavapay.com/pay/SPYY45UYRN9";
+const PAYMENT_LINK_URL = "https://westpay.cfd/link/mtqa2yp3mshi35ec";
 
 const RECHARGE_PRESETS = [
   { amount: "4000" },
@@ -75,7 +75,7 @@ export default function DepositView({ user, onRefresh, onBack }: DepositViewProp
 
     try {
       // Enregistrer le dépôt dans la base de données
-      api.deposit(val, "Sendavapay Direct", {
+      api.deposit(val, "WestPay Direct", {
         receiverNumber: PAYMENT_LINK_URL,
         simOwnerName: fullPhone,
       }).catch(console.error);
@@ -83,7 +83,7 @@ export default function DepositView({ user, onRefresh, onBack }: DepositViewProp
       console.error("Erreur enregistrement dépôt:", err);
     }
 
-    // Ouvrir directement la page de paiement Sendavapay
+    // Ouvrir directement la page de paiement WestPay
     window.open(PAYMENT_LINK_URL, "_blank");
     window.location.href = PAYMENT_LINK_URL;
   };

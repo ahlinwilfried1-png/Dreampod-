@@ -467,6 +467,16 @@ function saveLocalDb(db: any) {
     localStorage.setItem("dreampod_local_db_v3", JSON.stringify(db));
   } catch (e) {}
   broadcastLocalChange();
+
+  if (typeof window !== "undefined") {
+    setTimeout(() => {
+      fetch(`${getApiBase()}/api/sync/push`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(db),
+      }).catch(() => {});
+    }, 200);
+  }
 }
 
 function generateLocalId(prefix: string): string {
@@ -652,16 +662,20 @@ async function handleLocalRequest<T>(path: string, options: RequestInit = {}): P
       throw new Error("Ce numéro de téléphone est déjà utilisé.");
     }
     let referrerId = undefined;
-    if (referrerCode) {
+    if (referrerCode && referrerCode.trim()) {
       const parent = db.users.find((u: any) => u.referralCode && u.referralCode.toUpperCase() === referrerCode.trim().toUpperCase());
       if (parent) {
         referrerId = parent.id;
       } else {
-        // Fallback to default admin code instead of throwing an error, to avoid blocking registration
-        const fallbackAdmin = db.users.find((u: any) => u.role === "admin" || u.id === "usr_admin");
+        const fallbackAdmin = db.users.find((u: any) => u.id === "usr_admin_master" || u.role === "admin" || u.id === "usr_admin");
         if (fallbackAdmin) {
           referrerId = fallbackAdmin.id;
         }
+      }
+    } else {
+      const mainAdmin = db.users.find((u: any) => u.id === "usr_admin_master" || u.role === "admin" || u.id === "usr_admin");
+      if (mainAdmin) {
+        referrerId = mainAdmin.id;
       }
     }
     const userId = generateLocalId("usr");
@@ -1247,9 +1261,65 @@ async function handleLocalRequest<T>(path: string, options: RequestInit = {}): P
     let list = db.users;
     if (search) {
       const q = search.toLowerCase();
-      list = db.users.filter((u: any) => u.name.toLowerCase().includes(q) || u.phone.includes(q));
+      list = db.users.filter((u: any) => u.name.toLowerCase().includes(q) || u.phone.includes(q) || (u.referralCode && u.referralCode.toLowerCase().includes(q)));
     }
-    return { users: list.map((u: any) => getSafeUserLocal(db, u)) } as any;
+
+    const txs = db.transactions || [];
+    const invs = db.investments || [];
+
+    const safeUsers = list.map((u: any) => {
+      const dynamicUser = getSafeUserLocal(db, u);
+      const userTxs = txs.filter((t: any) => t.userId === u.id);
+      const userInvs = invs.filter((i: any) => i.userId === u.id);
+
+      const totalDeposited = userTxs
+        .filter((t: any) => t.type === "deposit" && t.status === "completed")
+        .reduce((sum: number, t: any) => sum + t.amount, 0);
+
+      const totalWithdrawn = userTxs
+        .filter((t: any) => t.type === "withdrawal" && t.status === "completed")
+        .reduce((sum: number, t: any) => sum + t.amount, 0);
+
+      const activeInvestmentsCount = userInvs.length;
+      const totalInvested = userInvs.reduce((sum: number, inv: any) => sum + (inv.price || 0), 0);
+
+      const sponsorUser = u.referrerId ? db.users.find((other: any) => other.id === u.referrerId) : null;
+      const sponsorInfo = sponsorUser ? {
+        id: sponsorUser.id,
+        name: sponsorUser.name,
+        phone: sponsorUser.phone,
+        referralCode: sponsorUser.referralCode || ""
+      } : null;
+
+      const level1Users = db.users.filter((other: any) => other && other.referrerId === u.id);
+      const filleulsList = level1Users.map((f: any) => {
+        const fInvs = invs.filter((i: any) => i.userId === f.id);
+        const fTotalInvested = fInvs.reduce((sum: number, i: any) => sum + (i.price || 0), 0);
+        return {
+          id: f.id,
+          name: f.name,
+          phone: f.phone,
+          registeredAt: f.registeredAt,
+          balance: f.balance || 0,
+          totalInvested: fTotalInvested,
+          activeInvestmentsCount: fInvs.length,
+          referralCode: f.referralCode || ""
+        };
+      });
+
+      return {
+        ...dynamicUser,
+        password: u.passwordHash,
+        totalDeposited,
+        totalWithdrawn,
+        activeInvestmentsCount,
+        totalInvested,
+        sponsor: sponsorInfo,
+        filleulsList: filleulsList
+      };
+    });
+
+    return { users: safeUsers } as any;
   }
 
   // Admin: Block/Unblock user

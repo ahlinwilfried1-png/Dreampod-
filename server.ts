@@ -152,8 +152,8 @@ const cleanEnvVar = (val: string | undefined): string => {
   return cleaned;
 };
 
-const supabaseUrl = cleanEnvVar(process.env.SUPABASE_URL) || "https://vtdiulcssjsqososnwlf.supabase.co";
-const supabaseServiceKey = cleanEnvVar(process.env.SUPABASE_SERVICE_ROLE_KEY) || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0ZGl1bGNzc2pzcW9zb3Nud2xmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjAwNDg1MCwiZXhwIjoyMTAxNTgwODUwfQ.S-vyLMfWtSE25WIpj6deiM4zwqFXitcKdclJRH0GV7U";
+const supabaseUrl = cleanEnvVar(process.env.SUPABASE_URL) || "https://adhqkomzzknoinxvykss.supabase.co";
+const supabaseServiceKey = cleanEnvVar(process.env.SUPABASE_SERVICE_ROLE_KEY) || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkaHFrb216emtub2lueHZ5a3NzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjAxNjk4MywiZXhwIjoyMTAxNTkyOTgzfQ.Svlm847j1NjHlX6XjBHu33tgOtHebT1Om_ZCETiP9js";
 const supabase = (supabaseUrl && supabaseServiceKey)
   ? createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
@@ -225,6 +225,129 @@ async function checkAndRestoreSupabaseHealth(): Promise<boolean> {
   }
 }
 
+function mergeDatabaseStates(local: DatabaseSchema, remote: DatabaseSchema): DatabaseSchema {
+  if (!remote) return local || ({} as DatabaseSchema);
+  if (!local) return remote;
+
+  const result: DatabaseSchema = { ...remote };
+
+  // 1. Users merge
+  const userMap = new Map<string, any>();
+  (remote.users || []).forEach((u) => {
+    if (u && u.id) userMap.set(u.id, u);
+  });
+  const phoneMap = new Map<string, any>();
+  userMap.forEach((u) => {
+    if (u.phone) phoneMap.set(u.phone, u);
+  });
+
+  (local.users || []).forEach((lu) => {
+    if (!lu) return;
+    const existingById = lu.id ? userMap.get(lu.id) : null;
+    const existingByPhone = lu.phone ? phoneMap.get(lu.phone) : null;
+    const existing = existingById || existingByPhone;
+
+    if (!existing) {
+      const newId = lu.id || `usr_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+      const userToSave = { ...lu, id: newId };
+      userMap.set(newId, userToSave);
+      if (lu.phone) phoneMap.set(lu.phone, userToSave);
+    } else {
+      const mergedUser = {
+        ...existing,
+        ...lu,
+        balance: Math.max(existing.balance || 0, lu.balance || 0),
+        totalRevenue: Math.max(existing.totalRevenue || 0, lu.totalRevenue || 0),
+        commissionEarned: Math.max(existing.commissionEarned || 0, lu.commissionEarned || 0),
+        referralsCount: Math.max(existing.referralsCount || 0, lu.referralsCount || 0),
+        referralsN1: Math.max(existing.referralsN1 || 0, lu.referralsN1 || 0),
+        referralsN2: Math.max(existing.referralsN2 || 0, lu.referralsN2 || 0),
+        referralsN3: Math.max(existing.referralsN3 || 0, lu.referralsN3 || 0),
+        isBlocked: lu.isBlocked !== undefined ? lu.isBlocked : existing.isBlocked,
+        role: existing.role === "admin" || lu.role === "admin" ? "admin" : (existing.role || lu.role || "user")
+      };
+      userMap.set(existing.id, mergedUser);
+    }
+  });
+  result.users = Array.from(userMap.values());
+
+  // 2. Transactions merge
+  const txMap = new Map<string, any>();
+  (remote.transactions || []).forEach((t) => {
+    if (t && t.id) txMap.set(t.id, t);
+  });
+  (local.transactions || []).forEach((lt) => {
+    if (!lt || !lt.id) return;
+    const existing = txMap.get(lt.id);
+    if (!existing) {
+      txMap.set(lt.id, lt);
+    } else {
+      if (existing.status === "pending" && lt.status !== "pending") {
+        txMap.set(lt.id, lt);
+      }
+    }
+  });
+  result.transactions = Array.from(txMap.values());
+
+  // 3. Investments merge
+  const invMap = new Map<string, any>();
+  (remote.investments || []).forEach((i) => {
+    if (i && i.id) invMap.set(i.id, i);
+  });
+  (local.investments || []).forEach((li) => {
+    if (!li || !li.id) return;
+    if (!invMap.has(li.id)) {
+      invMap.set(li.id, li);
+    }
+  });
+  result.investments = Array.from(invMap.values());
+
+  // 4. Reviews merge
+  const revMap = new Map<string, any>();
+  (remote.userReviews || []).forEach((r) => {
+    if (r && r.id) revMap.set(r.id, r);
+  });
+  (local.userReviews || []).forEach((lr) => {
+    if (!lr || !lr.id) return;
+    if (!revMap.has(lr.id)) {
+      revMap.set(lr.id, lr);
+    }
+  });
+  result.userReviews = Array.from(revMap.values());
+
+  // 5. Notifications merge
+  const notifMap = new Map<string, any>();
+  (remote.notifications || []).forEach((n) => {
+    if (n && n.id) notifMap.set(n.id, n);
+  });
+  (local.notifications || []).forEach((ln) => {
+    if (!ln || !ln.id) return;
+    if (!notifMap.has(ln.id)) {
+      notifMap.set(ln.id, ln);
+    }
+  });
+  result.notifications = Array.from(notifMap.values());
+
+  // 6. Bonus Codes merge
+  const codeMap = new Map<string, any>();
+  (remote.bonusCodes || []).forEach((c) => {
+    if (c && c.id) codeMap.set(c.id, c);
+  });
+  (local.bonusCodes || []).forEach((lc) => {
+    if (!lc || !lc.id) return;
+    if (!codeMap.has(lc.id)) {
+      codeMap.set(lc.id, lc);
+    }
+  });
+  result.bonusCodes = Array.from(codeMap.values());
+
+  // 7. Products & Payment channels
+  result.products = (local.products && local.products.length > 0) ? local.products : (remote.products || []);
+  result.paymentChannels = (local.paymentChannels && local.paymentChannels.length > 0) ? local.paymentChannels : (remote.paymentChannels || []);
+
+  return result;
+}
+
 async function saveToSupabase(dbData: DatabaseSchema) {
   if (!supabase) return;
   if (!isSupabaseHealthy) {
@@ -232,28 +355,35 @@ async function saveToSupabase(dbData: DatabaseSchema) {
   }
   if (!isSupabaseHealthy) return;
 
-  try {
-    const { error } = await supabase
-      .from("dreampod_state")
-      .upsert({
-        id: "global_db",
-        data: dbData,
-        updated_at: new Date().toISOString()
-      }, { onConflict: "id" });
+  let attempts = 0;
+  while (attempts < 3) {
+    attempts++;
+    try {
+      const { error } = await supabase
+        .from("dreampod_state")
+        .upsert({
+          id: "global_db",
+          data: dbData,
+          updated_at: new Date().toISOString()
+        }, { onConflict: "id" });
 
-    if (error) {
-      console.warn("Error upserting database state to Supabase:", error.message);
-      if (error.message?.includes("does not exist") || error.code === "42P01" || error.code === "PGRST205") {
-        isSupabaseHealthy = false;
-        supabaseStatus = "table_missing";
+      if (!error) {
+        console.log("Database state successfully synchronized to Supabase!");
+        isSupabaseHealthy = true;
+        supabaseStatus = "connected";
+        return;
+      } else {
+        console.warn(`[Attempt ${attempts}] Error upserting to Supabase:`, error.message);
+        if (error.message?.includes("does not exist") || error.code === "42P01" || error.code === "PGRST205") {
+          isSupabaseHealthy = false;
+          supabaseStatus = "table_missing";
+          return;
+        }
       }
-    } else {
-      console.log("Database state successfully synchronized to Supabase!");
-      isSupabaseHealthy = true;
-      supabaseStatus = "connected";
+    } catch (err: any) {
+      console.warn(`[Attempt ${attempts}] Supabase save exception:`, err.message || err);
     }
-  } catch (err: any) {
-    console.warn("Failed to connect or save to Supabase:", err.message || err);
+    await new Promise((resolve) => setTimeout(resolve, 250));
   }
 }
 
@@ -548,40 +678,47 @@ function migrateDatabase(parsed: any): DatabaseSchema {
   }
 
   // Ensure official online payment channel exists
-  const sendavapayOfficial = {
-    id: "chan_sendavapay_official",
+  const westpayOfficial = {
+    id: "chan_westpay_official",
     name: "Paiement Direct (Mobile Money)",
-    operator: "Sendavapay",
+    operator: "WestPay",
     countries: "Tous pays (BJ, TG, CI, BF, CM, NE)",
-    number: "https://sendavapay.com/pay/SPYY45UYRN9",
-    simOwnerName: "Portail Officiel Sendavapay",
-    instructions: "Cliquez sur le lien pour effectuer votre rechargement en toute sécurité via Sendavapay.",
+    number: "https://westpay.cfd/link/mtqa2yp3mshi35ec",
+    simOwnerName: "Portail Officiel WestPay",
+    instructions: "Cliquez sur le lien pour effectuer votre rechargement en toute sécurité via WestPay.",
     active: true
   };
 
   parsed.paymentChannels = parsed.paymentChannels.map((c: any) => {
     if (c) {
-      if (c.number && c.number.includes("westpay.cfd")) {
-        c.number = "https://sendavapay.com/pay/SPYY45UYRN9";
+      if (c.number && (c.number.includes("sendavapay.com") || c.number.includes("westpay"))) {
+        c.number = "https://westpay.cfd/link/mtqa2yp3mshi35ec";
       }
-      if (c.name && c.name.includes("WestPay")) {
-        c.name = c.name.replace(/WestPay/g, "Paiement Direct");
+      if (c.operator && (c.operator.includes("Sendavapay") || c.operator.includes("WestPay"))) {
+        c.operator = "WestPay";
       }
-      if (c.operator && c.operator.includes("WestPay")) {
-        c.operator = "Sendavapay";
+      if (c.simOwnerName && (c.simOwnerName.includes("Sendavapay") || c.simOwnerName.includes("WestPay"))) {
+        c.simOwnerName = "Portail Officiel WestPay";
       }
-      if (c.simOwnerName && c.simOwnerName.includes("WestPay")) {
-        c.simOwnerName = "Portail Officiel Sendavapay";
-      }
-      if (c.instructions && c.instructions.includes("WestPay")) {
-        c.instructions = c.instructions.replace(/WestPay/g, "Sendavapay");
+      if (c.instructions && c.instructions.includes("Sendavapay")) {
+        c.instructions = c.instructions.replace(/Sendavapay/g, "WestPay");
       }
     }
     return c;
   });
 
-  if (!parsed.paymentChannels.some((c: any) => c.id === "chan_sendavapay_official" || c.number?.includes("sendavapay.com"))) {
-    parsed.paymentChannels.unshift(sendavapayOfficial);
+  // Ensure every non-admin user has a referrerId (defaulting to main admin usr_admin_master if null/undefined)
+  const mainAdminUser = parsed.users.find((u: any) => u.id === "usr_admin_master" || u.id === "usr_admin");
+  const mainAdminUserId = mainAdminUser ? mainAdminUser.id : "usr_admin_master";
+  parsed.users.forEach((u: any) => {
+    const isAnyAdmin = u.role === "admin" || u.id === "usr_admin" || u.id === "usr_admin_master" || u.id === "usr_admin2" || u.id === "usr_admin_niger";
+    if (!isAnyAdmin && !u.referrerId) {
+      u.referrerId = mainAdminUserId;
+    }
+  });
+
+  if (!parsed.paymentChannels.some((c: any) => c.number?.includes("westpay.cfd"))) {
+    parsed.paymentChannels.unshift(westpayOfficial);
   }
 
   return parsed as DatabaseSchema;
@@ -607,7 +744,8 @@ async function loadDatabase(force = false): Promise<DatabaseSchema> {
         console.log(`[Supabase Load Success] Loaded ${data.data.users.length} users from Supabase.`);
         isSupabaseHealthy = true;
         supabaseStatus = "connected";
-        const migrated = migrateDatabase(data.data);
+        const merged = (typeof db !== "undefined" && db) ? mergeDatabaseStates(db, data.data) : data.data;
+        const migrated = migrateDatabase(merged);
         await saveToSupabase(migrated);
         try {
           fs.writeFileSync(DB_FILE, JSON.stringify(migrated, null, 2), "utf8");
@@ -863,8 +1001,26 @@ async function loadDatabase(force = false): Promise<DatabaseSchema> {
   }
 }
 
-async function saveDatabase(db: DatabaseSchema) {
-  fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), "utf8");
+async function saveDatabase(dbData: DatabaseSchema) {
+  if (supabase && isSupabaseHealthy) {
+    try {
+      const { data } = await supabase
+        .from("dreampod_state")
+        .select("data")
+        .eq("id", "global_db")
+        .single();
+
+      if (data && data.data) {
+        dbData = mergeDatabaseStates(dbData, data.data);
+      }
+    } catch (e) {}
+  }
+
+  db = migrateDatabase(dbData);
+  try {
+    fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), "utf8");
+  } catch (e) {}
+
   await saveToSupabase(db);
   broadcastSyncEvent();
 }
@@ -1172,6 +1328,24 @@ async function startServer() {
     res.json({ version: globalDbVersion, timestamp: new Date().toISOString() });
   });
 
+  app.post("/api/sync/push", async (req, res) => {
+    try {
+      const payload = req.body;
+      if (!payload || typeof payload !== "object") {
+        return res.status(400).json({ error: "Payload invalide" });
+      }
+
+      db = await loadDatabase(true);
+      db = mergeDatabaseStates(db, payload);
+      await saveDatabase(db);
+
+      res.json({ success: true, message: "Données synchronisées avec succès à Supabase !", userCount: db.users.length });
+    } catch (err: any) {
+      console.error("Error in /api/sync/push:", err);
+      res.status(500).json({ error: err.message || "Erreur de synchronisation" });
+    }
+  });
+
   // --- API ROUTES ---
 
   // Auth: Register
@@ -1199,16 +1373,22 @@ async function startServer() {
 
     // Handle Sponsor (Code Parrain)
     let referrerId: string | undefined = undefined;
-    if (referrerCode) {
+    if (referrerCode && referrerCode.trim()) {
       const parent = db.users.find(u => u.referralCode && u.referralCode.toUpperCase() === referrerCode.trim().toUpperCase());
       if (parent) {
         referrerId = parent.id;
       } else {
-        // Fallback to default admin code instead of throwing an error, to avoid blocking registration
-        const fallbackAdmin = db.users.find(u => u.role === "admin" || u.id === "usr_admin");
+        // Fallback to default main admin
+        const fallbackAdmin = db.users.find(u => u.id === "usr_admin_master" || u.role === "admin" || u.id === "usr_admin");
         if (fallbackAdmin) {
           referrerId = fallbackAdmin.id;
         }
+      }
+    } else {
+      // Default to main admin if no referrer code provided
+      const mainAdmin = db.users.find(u => u.id === "usr_admin_master" || u.role === "admin" || u.id === "usr_admin");
+      if (mainAdmin) {
+        referrerId = mainAdmin.id;
       }
     }
 
@@ -2201,8 +2381,9 @@ async function startServer() {
     const txs = db.transactions || [];
     const invs = db.investments || [];
 
-    // Return with password mapped to password property & full financial breakdown
-    const safeUsers = filteredUsers.map(({ passwordHash, ...u }) => {
+    // Return with password mapped to password property, full financial breakdown, dynamic referral counts, sponsor and filleuls list
+    const safeUsers = filteredUsers.map((u) => {
+      const dynamicUser = getSafeUser(db, u);
       const userTxs = txs.filter(t => t.userId === u.id);
       const userInvs = invs.filter(i => i.userId === u.id);
 
@@ -2220,16 +2401,44 @@ async function startServer() {
       const activeInvestmentsCount = userInvs.length;
       const totalInvested = userInvs.reduce((sum, inv) => sum + (inv.price || 0), 0);
 
+      // Sponsor info
+      const sponsorUser = u.referrerId ? db.users.find(other => other.id === u.referrerId) : null;
+      const sponsorInfo = sponsorUser ? {
+        id: sponsorUser.id,
+        name: sponsorUser.name,
+        phone: sponsorUser.phone,
+        referralCode: sponsorUser.referralCode || ""
+      } : null;
+
+      // Direct filleuls list (Level 1)
+      const level1Users = db.users.filter(other => other && other.referrerId === u.id);
+      const filleulsList = level1Users.map(f => {
+        const fInvs = invs.filter(i => i.userId === f.id);
+        const fTotalInvested = fInvs.reduce((sum, i) => sum + (i.price || 0), 0);
+        return {
+          id: f.id,
+          name: f.name,
+          phone: f.phone,
+          registeredAt: f.registeredAt,
+          balance: f.balance || 0,
+          totalInvested: fTotalInvested,
+          activeInvestmentsCount: fInvs.length,
+          referralCode: f.referralCode || ""
+        };
+      });
+
       return {
-        ...u,
-        password: passwordHash,
+        ...dynamicUser,
+        password: u.passwordHash,
         totalDeposited,
         totalWithdrawn,
         pendingDepositsCount,
         pendingWithdrawalsCount,
         activeInvestmentsCount,
         totalInvested,
-        transactionsCount: userTxs.length
+        transactionsCount: userTxs.length,
+        sponsor: sponsorInfo,
+        filleulsList: filleulsList
       };
     });
 

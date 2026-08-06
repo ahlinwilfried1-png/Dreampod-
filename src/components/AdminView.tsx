@@ -37,7 +37,8 @@ import {
   Phone,
   Plus,
   Upload,
-  Camera
+  Camera,
+  ChevronDown
 } from "lucide-react";
 import { User, Transaction, Product, BonusCode, UserReview, Investment, GlobalNotification } from "../types";
 import { api, getLocalDbExport, saveLocalDbExport, getUseLocalFallback, setUseLocalFallback } from "../lib/api";
@@ -88,6 +89,19 @@ export default function AdminView({ onRefresh }: AdminViewProps) {
   // Server data states
   const [globalStats, setGlobalStats] = useState<any>(null);
   const [usersList, setUsersList] = useState<any[]>([]);
+  const [expandedFilleulsUserIds, setExpandedFilleulsUserIds] = useState<Set<string>>(new Set());
+
+  const toggleExpandFilleuls = (userId: string) => {
+    setExpandedFilleulsUserIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) {
+        next.delete(userId);
+      } else {
+        next.add(userId);
+      }
+      return next;
+    });
+  };
   const [txsList, setTxsList] = useState<Transaction[]>([]);
   const [productsList, setProductsList] = useState<Product[]>([]);
   const [productCategoryFilter, setProductCategoryFilter] = useState<"all" | "wellbeing" | "stability" | "activity">("all");
@@ -173,6 +187,7 @@ export default function AdminView({ onRefresh }: AdminViewProps) {
   const [syncing, setSyncing] = useState(false);
   const [isSupabaseHealthy, setIsSupabaseHealthy] = useState<boolean | null>(null);
   const [supabaseStatus, setSupabaseStatus] = useState<string>("disconnected");
+  const [copiedSql, setCopiedSql] = useState(false);
 
   // Sync with remote server logic
   const handleDatabaseSync = async () => {
@@ -982,6 +997,45 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
         </div>
       )}
 
+      {/* Supabase table missing notification banner */}
+      {supabaseStatus === "table_missing" && (
+        <div className="p-3.5 bg-amber-50/90 border border-amber-200/80 rounded-2xl space-y-2 text-slate-800 text-xs">
+          <div className="flex items-start gap-2">
+            <span className="text-base">⚡</span>
+            <div>
+              <h4 className="font-extrabold text-amber-900 text-[12px]">Configuration Supabase Nouveaux Identifiants</h4>
+              <p className="text-[11px] text-amber-800/90 mt-0.5">
+                URL : <code className="font-mono bg-white px-1.5 py-0.5 rounded border border-amber-200 text-amber-950">https://adhqkomzzknoinxvykss.supabase.co</code>
+              </p>
+              <p className="text-[11px] text-amber-800/90 mt-1">
+                La connexion aux nouveaux identifiants est établie. Il ne reste qu'à créer la table <strong className="font-extrabold">dreampod_state</strong> dans votre <strong>SQL Editor Supabase</strong> :
+              </p>
+            </div>
+          </div>
+
+          <div className="p-2.5 bg-slate-900 text-amber-300 rounded-xl font-mono text-[10px] overflow-x-auto relative group">
+            <pre className="whitespace-pre">{`CREATE TABLE IF NOT EXISTS public.dreampod_state (
+  id TEXT PRIMARY KEY,
+  data JSONB NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+ALTER TABLE public.dreampod_state DISABLE ROW LEVEL SECURITY;`}</pre>
+            <button
+              type="button"
+              onClick={() => {
+                const sql = `CREATE TABLE IF NOT EXISTS public.dreampod_state (\n  id TEXT PRIMARY KEY,\n  data JSONB NOT NULL,\n  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL\n);\nALTER TABLE public.dreampod_state DISABLE ROW LEVEL SECURITY;`;
+                navigator.clipboard.writeText(sql);
+                setCopiedSql(true);
+                setTimeout(() => setCopiedSql(false), 3000);
+              }}
+              className="mt-2 px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-sans font-bold text-[10px] rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1"
+            >
+              {copiedSql ? "✅ SQL Copié !" : "📋 Copier le code SQL"}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* --- PANEL 1: STATISTICS ANALYTICOS --- */}
       {adminTab === "stats" && globalStats && (
         <div className="space-y-6">
@@ -1289,8 +1343,13 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
                 >
                   <div className="flex justify-between items-start gap-3">
                     <div>
-                      <h4 className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
-                        {usr.name}
+                      <h4 className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5 flex-wrap">
+                        <span>{usr.name}</span>
+                        {usr.referralCode && (
+                          <span className="text-[8.5px] bg-indigo-50 border border-indigo-200/80 px-1.5 py-0.5 text-indigo-700 rounded-md font-black font-mono">
+                            Code: {usr.referralCode}
+                          </span>
+                        )}
                         {usr.id === "usr_admin" && (
                           <span className="text-[8px] bg-red-50 px-1.5 py-0.5 text-red-600 rounded-md font-black">ADMIN PRINCIPAL</span>
                         )}
@@ -1299,6 +1358,19 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
                         )}
                       </h4>
                       <p className="text-[10px] text-slate-500 font-mono mt-1">📞 {usr.phone} | MDP: {usr.password}</p>
+
+                      {/* Parrain / Sponsor Info */}
+                      <div className="mt-1.5">
+                        {usr.sponsor ? (
+                          <span className="text-[9.5px] text-indigo-900 font-medium bg-indigo-50/80 px-2.5 py-1 rounded-lg inline-flex items-center gap-1 border border-indigo-100">
+                            👤 Parrain : <strong className="font-extrabold">{usr.sponsor.name}</strong> ({usr.sponsor.phone}) • Code: <code className="font-mono font-black text-indigo-700">{usr.sponsor.referralCode}</code>
+                          </span>
+                        ) : (
+                          <span className="text-[9.5px] text-slate-500 font-medium bg-slate-100/80 px-2.5 py-1 rounded-lg inline-flex items-center gap-1">
+                            👤 Parrain : Aucun (Inscription Directe / Administrateur)
+                          </span>
+                        )}
+                      </div>
                       
                       {/* Financial info */}
                       <div className="flex flex-wrap gap-x-3.5 gap-y-2 mt-2.5 text-[9.5px] text-slate-700 bg-slate-50/70 p-2.5 rounded-xl border border-slate-200/50">
@@ -1320,12 +1392,65 @@ Vous êtes maintenant connecté sur la base de données du serveur en temps rée
                         </div>
                         <div className="border-l border-slate-200/80 pl-3">
                           <span className="text-slate-400 block uppercase tracking-wider font-extrabold text-[8.5px]">Filleuls N1</span>
-                          <span className="font-black mt-0.5 block text-slate-800 text-[11px]">{usr.referralsN1 || 0}</span>
+                          <span className="font-black mt-0.5 block text-purple-700 text-[11px]">{usr.filleulsList?.length || usr.referralsN1 || 0}</span>
+                        </div>
+                        <div className="border-l border-slate-200/80 pl-3">
+                          <span className="text-slate-400 block uppercase tracking-wider font-extrabold text-[8.5px]">Filleuls N2/N3</span>
+                          <span className="font-black mt-0.5 block text-slate-700 text-[11px]">{(usr.referralsN2 || 0) + (usr.referralsN3 || 0)}</span>
                         </div>
                         <div className="border-l border-slate-200/80 pl-3">
                           <span className="text-slate-400 block uppercase tracking-wider font-extrabold text-[8.5px]">Com. Gagnées</span>
                           <span className="font-black mt-0.5 block text-purple-600 text-[11px]">{(usr.commissionEarned || 0).toLocaleString()} F</span>
                         </div>
+                      </div>
+
+                      {/* Expandable Filleuls N1 List */}
+                      <div className="mt-2.5">
+                        <button
+                          type="button"
+                          onClick={() => toggleExpandFilleuls(usr.id)}
+                          className="text-[10px] font-extrabold text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 border border-purple-200/80 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer transition-colors"
+                        >
+                          <Users className="w-3.5 h-3.5" />
+                          <span>Voir les filleuls directs N1 ({usr.filleulsList?.length || usr.referralsN1 || 0})</span>
+                          <ChevronDown className={`w-3.5 h-3.5 transition-transform ${expandedFilleulsUserIds.has(usr.id) ? "rotate-180" : ""}`} />
+                        </button>
+
+                        {expandedFilleulsUserIds.has(usr.id) && (
+                          <div className="mt-2 p-3 bg-purple-50/50 border border-purple-200/80 rounded-xl space-y-2">
+                            <div className="flex justify-between items-center">
+                              <h5 className="text-[10px] font-extrabold text-purple-900 uppercase tracking-wider flex items-center gap-1">
+                                👥 Liste des Filleuls Directs de {usr.name} ({usr.filleulsList?.length || 0})
+                              </h5>
+                              <span className="text-[9px] text-purple-700 font-bold bg-white px-1.5 py-0.5 rounded border border-purple-200">
+                                Code Parrain: {usr.referralCode}
+                              </span>
+                            </div>
+
+                            {usr.filleulsList && usr.filleulsList.length > 0 ? (
+                              <div className="space-y-1.5 max-h-60 overflow-y-auto no-scrollbar pr-1">
+                                {usr.filleulsList.map((f: any) => (
+                                  <div key={f.id} className="p-2.5 bg-white rounded-xl border border-purple-100 flex flex-wrap justify-between items-center text-[9.5px] gap-2 shadow-2xs">
+                                    <div>
+                                      <span className="font-black text-slate-900 block">{f.name}</span>
+                                      <span className="font-mono text-slate-500 block mt-0.5">📞 {f.phone} | Code: {f.referralCode}</span>
+                                    </div>
+                                    <div className="text-right">
+                                      <span className="text-emerald-700 font-black block">Investi: {(f.totalInvested || 0).toLocaleString()} F</span>
+                                      <span className="text-slate-400 text-[8.5px] block">
+                                        Inscrit le {f.registeredAt ? new Date(f.registeredAt).toLocaleDateString("fr-FR") : "N/A"}
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-[9.5px] text-slate-500 italic bg-white p-2.5 rounded-xl border border-purple-100">
+                                Aucun filleul direct (N1) inscrit sous ce compte pour l'instant.
+                              </p>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {/* Linked Wallet Info */}
